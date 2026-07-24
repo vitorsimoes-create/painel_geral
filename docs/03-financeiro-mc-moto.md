@@ -1,6 +1,17 @@
 # MC MOTO → Financeiro (e Recebimentos/Meta/CMV)
 
-A categoria **Financeiro** da MC MOTO tem duas sub-abas: **Contas a Pagar** (deep-link para dentro do Mapa de Vendas — documentada em [`02-vendas.md`](02-vendas.md); inclui o Painel de Caixa embutido) e **Contas a Receber** (documentada abaixo). Já a sub-aba **📦 Recebimentos**, apesar de ser conteúdo financeiro, vive dentro da categoria **Compras** de `index.html` — é a segunda metade deste documento.
+A categoria **Financeiro** da MC MOTO tem duas sub-abas: **Contas a Pagar** (deep-link para dentro do Mapa de Vendas; inclui o Painel de Caixa embutido — detalhes abaixo) e **Contas a Receber** (documentada adiante).
+
+## Contas a Pagar (dentro do Mapa de Vendas)
+
+Gerada por `atualizar_mapa.py` a partir da tabela `contas_pagar` do banco `mc_moto`. Desde 24/07/2026 tem um seletor **"Mostrar: A pagar (em aberto) | Já pagos (12 meses)"** (`setCapModo`), que troca KPIs, gráfico e a listagem:
+
+| Modo | Fonte | O que traz |
+|---|---|---|
+| **A pagar (em aberto)** | `buscar_contas_aberto()` — `SITUACAO='A'`, **sem corte de data** | **Todos** os títulos em aberto, inclusive os vencidos de meses anteriores. Saldo = `VALOR − VALOR_RECEBIDO`. KPIs de aging: total, vencidas, vencem em 30 dias, futuras. *(Antes havia um corte fixo em 01/07/2026 que escondia 29 títulos vencidos.)* |
+| **Já pagos (12 meses)** | `buscar_contas_pagas(12)` — `SITUACAO='Q'` e `DATA_PAGAMENTO` nos últimos 12 meses | Títulos quitados, valor = `VALOR + JUROS + ACRÉSCIMO − DESCONTO`. KPIs: total pago, nº de títulos e ticket médio. Acrescenta a coluna **Pagamento** (`DATA_PAGAMENTO`), rotula o valor como "Valor pago", lista os meses **mais recentes primeiro** e esconde o filtro de aging (não se aplica). |
+
+Nos dois modos os títulos são agrupados em accordion **por mês de vencimento**, com busca por fornecedor e expandir/recolher todos. O gráfico "por mês de vencimento" mostra os próximos 12 meses no modo aberto (com barra "Após 12m" para o resto) e os 12 meses mais recentes no modo pago. O **Painel de Caixa** (`painel-caixa.html`) continua embutido ao final da aba como snapshot histórico independente. Já a sub-aba **📦 Recebimentos**, apesar de ser conteúdo financeiro, vive dentro da categoria **Compras** de `index.html` — é a segunda metade deste documento.
 
 ## Contas a Receber (banco `mc_moto`)
 

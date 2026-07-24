@@ -10,7 +10,7 @@ A rotina tem duas partes:
 
 | Parte | Banco | O que atualiza |
 |---|---|---|
-| A — MC MOTO | `mc_moto` | `RAW_DATA` (campos `e`, `k`, `cf`, `f`, `nc`), `RECEBIMENTOS_DB`, `CMV_MENSAL` em `index.html`; roda `atualizar_mapa.py` para regenerar `Mapa de Vendas.html` e ressincroniza a cópia publicada `mapa-vendas.html`; ressincroniza `painel-caixa.html` a partir do snapshot local "painel_caixa feito.html" quando ele muda; roda `gerar_contas_receber_mcmoto.py` (→ `contas-receber-mcmoto.html`), `gerar_vendas_historicas_mcmoto.py` (→ `vendas-historicas.html`), `gerar_vendas_comissao_mcmoto.py` (→ `vendas-comissao.html`) e `gerar_graficos_mcmoto.py` (→ `graficos-mcmoto.html`) |
+| A — MC MOTO | `mc_moto` | `RAW_DATA` via `gerar_raw_data_mcmoto.py` (campos `e`, `k`, `s`, `nc`, `cf`, `f`), `RECEBIMENTOS_DB`, `CMV_MENSAL` em `index.html`; roda `atualizar_mapa.py` para regenerar `Mapa de Vendas.html` e ressincroniza a cópia publicada `mapa-vendas.html`; ressincroniza `painel-caixa.html` a partir do snapshot local "painel_caixa feito.html" quando ele muda; roda `gerar_contas_receber_mcmoto.py` (→ `contas-receber-mcmoto.html`), `gerar_vendas_historicas_mcmoto.py` (→ `vendas-historicas.html`), `gerar_vendas_comissao_mcmoto.py` (→ `vendas-comissao.html`) e `gerar_graficos_mcmoto.py` (→ `graficos-mcmoto.html`) |
 | B — SEVEN | `projeto_f7` (read-only) | Roda os 3 scripts da SEVEN: `gerar_risco_cliente.py` (→ `risco-cliente.html`), `gerar_raw_data_seven.py` (→ `RAW_DATA_SEVEN` em `index.html`) e `gerar_contas_seven.py` (→ `contas-pagar-seven.html` + `contas-receber-seven.html`) |
 
 Nota histórica: a antiga Tarefa Agendada do Windows que rodava `atualizar_mapa.py` às 19h ficou redundante — desde 20/07/2026 o Mapa é gerado pela própria rotina diária.
@@ -64,10 +64,12 @@ ORDER BY ym
 ```
 Arredondado a 2 casas decimais, montado como `{"YYYY-MM": valor, ...}`.
 
-3. Um script Python temporário (prefixo `_`, apagado após uso) lê `index.html`, localiza `RAW_DATA`/`RECEBIMENTOS_DB`/`CMV_MENSAL` via regex, faz `json.loads`/atualiza/`json.dumps(separators=(',',':'))` de volta, e atualiza a data em `<strong id="data-atualizacao">`.
+3. **`RAW_DATA` é atualizado por `gerar_raw_data_mcmoto.py` — nunca por script escrito à mão** (regra de 24/07/2026). O script lê o `index.html`, localiza `const RAW_DATA` via regex ancorado (não casa com `RAW_DATA_SEVEN`), atualiza `e`/`k`/`s`/`nc`/`cf`/`f` item a item e a data em `<strong id="data-atualizacao">`.
+   - **Por que a regra existe:** até 23/07/2026 a rotina mandava escrever um `_update_diario.py` novo toda noite. Nessa data o script falhou silenciosamente e gravou `f=null`, `e=0`, `k=0` nos **18.945 itens** — a aba **Montar Pedido ficou vazia em produção**. A causa provável foi o casamento do código: `RAW_DATA.c` é `int` (`2275`) e `produtos.PRODUTO` é string com zeros à esquerda (`'002275'`). O script fixo casa por `int(PRODUTO)`.
+   - **Checagens de sanidade que abortam sem gravar:** menos de 90% dos itens casados com o banco, menos de 80% com fornecedor, ou nenhum item com pico/estoque. Se abortar, investigar a conexão/consulta — não contornar com código novo.
    - Regra explícita: `nc` deve **sempre** estar presente em cada item, mesmo quando `0` — nunca omitir a chave.
-   - Checagem de sanidade obrigatória antes de publicar: conferir 3 produtos aleatórios com `k > 0` para confirmar que o valor bate com uma única linha do agrupamento mensal, não com uma soma; parar e revisar se `k` parecer anormalmente alto (ex. mais de 3x a mediana dos outros meses do mesmo produto).
    - Validação de sintaxe JS do resultado antes de publicar.
+   - `RECEBIMENTOS_DB` e `CMV_MENSAL` continuam sendo atualizados por script temporário (prefixo `_`, apagado após uso).
 4. **Sincronização obrigatória do Mapa de Vendas** (passo adicional desta mesma tarefa, porque o processo local que gera `Mapa de Vendas.html` não atualiza sozinho a cópia publicada):
    a. Copia `Mapa de Vendas.html` → `mapa-vendas.html` (sobrescrevendo).
    b. Na cópia, troca a regra CSS `.tabs { display:flex; ... }` por `.tabs { display:none !important; }` (evita barra de abas nativa duplicada, já que a navegação é controlada pelo `index.html` externamente).

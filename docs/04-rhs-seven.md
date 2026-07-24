@@ -12,6 +12,8 @@ Mecânica compartilhada com o restante do Mapa de Vendas: mesmo cálculo de MC (
 
 Iframe separado, `crm-seven.html`, escopo declarado "Unidades 3 e 4". Painel próprio, independente do sistema de navegação por senha/categoria do restante do painel. Não detalhado nesta documentação (arquivo autocontido, fora do escopo revisado).
 
+**Grupos de cliente pelo nome** (24/07/2026): o filtro "Grupo de cliente" exibia os códigos crus (`001`, `002`, `07`, `A`…). Passou a exibir o **nome** via o mapa `GRUPO_NOMES` + helper `nomeGrupo()`, com os valores de `projeto_f7.TCLI_GRUPO` (`TCLI_GRUPO_PK` → `TCLI_GRUPO_NOME`): GRUPO PADRAO, CARTAO, LEADS ATACADO, LEADS VAREJO, FUNCIONARIOS, AMBEV, GRUPO UNIFORT, INSTAGRAM/FACE, GOOGLE, A–D, CLIENTE FECHOU. Código desconhecido cai no fallback `Grupo <cod>`; vazio vira "Sem grupo". ⚠️ `crm-seven.html` **não tem script gerador** no projeto — o mapa está embutido no HTML, então se a página for regerada de outra fonte é preciso reaplicá-lo.
+
 ## Compras
 
 Réplica da aba **MC MOTO → Compras** (mesmo fluxo, mesmas regras de interface), mas alimentada pelo banco **`projeto_f7`** da SEVEN, unidades **3, 4 e 5**. Conteúdo nativo de `index.html` (`app-tab-comprasseven`), com 3 sub-abas: Montar Pedido, Cotação, Pedidos Salvos. **Recebimentos ficou de fora por decisão explícita** — não existe fonte confiável de notas de entrada no espelho da SEVEN (a candidata `TMOV_EXTRA` filtrada por fornecedor tem só ~1 registro por unidade em ~3 anos).
@@ -25,7 +27,7 @@ Array JS embutido em `index.html` (~21.800 itens), gerado pelo script local `ger
 | `c` | Código do produto | `TMER_ESTOQUE.TMER_CODIGO_PRI_FK_PK` |
 | `u` | Unidade de negócio (3, 4 ou 5) | `TMER_ESTOQUE.TMER_UNIDADE_FK_PK` |
 | `d` | Descrição | `TMER_MERCADORIA.TMER_NOME` |
-| `p` | Custo médio | `TMER_ESTOQUE.TMER_CUSTO_MEDIO` |
+| `p` | Custo médio | `TMER_ESTOQUE.TMER_CUSTO_MEDIO_REAL` — **sempre o `_REAL`, nunca o `TMER_CUSTO_MEDIO`** (decisão do usuário 24/07/2026): o `_REAL` está preenchido em mais itens (18.765 vs 17.386 nas unidades 3/4/5) e corrigiu 4.980 itens, vários que apareciam com custo 0 |
 | `k` | Pico de vendas mensal (máximo por mês nos últimos 12m, **nunca soma** — mesma regra da MC MOTO) | `vendas_para_ponto_de_pedido_12m` |
 | `e` | Estoque total | `TMER_ESTOQUE.TMER_ESTOQUE_TOTAL` — **sempre o TOTAL, nunca o `TMER_ESTOQUE_ATUAL`** (decisão do usuário 21/07/2026): o `ATUAL` fica muito negativo e não reflete o estoque real; `TOTAL = ATUAL + HIST` |
 | `s` | Sugestão de compra = **`pico − estoque` (`k − e`)**, recalculada ao vivo (igual à MC MOTO) e **editável na interface** — ver diferenças abaixo | calculada no navegador a partir de `k`/`e`; a rotina diária também grava `s = k − e` |
@@ -40,6 +42,7 @@ Filtros aplicados na geração: só itens com `TMER_ATIVO_COMPRA='S'` e forneced
 1. **Filtro de Unidade** (checkboxes 3/4/5, todas marcadas por padrão) — não existe na MC MOTO.
 2. **Sem badge "Comprar?"/regra de comissão** — o banco da SEVEN não tem o campo de comissão que alimenta essa regra na MC MOTO; a coluna foi removida por decisão explícita.
 3. **Sugestão de compra editável** — a coluna "Sugestão" mostra `pico − estoque` por padrão, mas é um **campo editável por item**. A edição manual sobrepõe o padrão e é persistida em `localStorage` (chave `seven_sugestao_override`, por `código_unidade`); a célula editada fica destacada em roxo. A sugestão (editada ou padrão) vira a **quantidade default** ao adicionar o item ao pedido ou à cotação — `sug > 0 ? sug : 1` (igual à MC MOTO). Como a chave é por produto+unidade, a mesma peça pode ter sugestões diferentes em cada unidade. O filtro padrão continua "Todos os itens".
+   Desde 24/07/2026 a sugestão também alimenta os controles de filtro/ordem (paridade com a MC MOTO): **"Mostrar apenas" → "Com sugestão de compra"** (mantém só `sugestão > 0`) e **"Ordenar por" → "Sugestão (maior)" / "Sugestão (menor)"**. Todos usam `sugestaoSeven()`, ou seja, **respeitam as edições manuais** — um item cuja sugestão foi editada para 0 sai do filtro, e a ordenação usa o valor editado.
 4. Armazenamento separado em `localStorage`: `seven_pedidos_salvos` e `seven_cotacoes` (não se misturam com os da MC MOTO).
 5. O modal de exportação é **compartilhado** entre MC MOTO e SEVEN — a variável `_pedidoAtivoFonte` decide título, builders de CSV/PDF (com coluna Unidade, sem Sugestão/Comprar?) e qual pedido o botão "Salvar" grava.
 6. Na cotação, o preço respondido pelo fornecedor é **por código de produto** (não por unidade) — se o mesmo produto estiver na cotação para duas unidades, o preço importado vale para as duas linhas.
