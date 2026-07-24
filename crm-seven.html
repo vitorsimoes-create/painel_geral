@@ -87,11 +87,19 @@ function fmt(n){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:
 function fmtN(n){return new Intl.NumberFormat('pt-BR').format(Math.round(n||0))}
 function mesAtual(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 
+// Nomes dos grupos de cliente (projeto_f7.TCLI_GRUPO: TCLI_GRUPO_PK -> TCLI_GRUPO_NOME).
+// Exibimos o NOME em vez do código (decisão do usuário 24/07/2026).
+const GRUPO_NOMES = {"001":"GRUPO PADRAO","002":"CARTAO","003":"LEADS ATACADO","004":"LEADS VAREJO","005":"FUNCIONARIOS","07":"AMBEV","10":"GRUPO UNIFORT","11":"INSTAGRAM/FACE","12":"GOOGLE","A":"A","B":"B","C":"C","D":"D","E":"CLIENTE FECHOU"};
+function nomeGrupo(g){
+  if(g==='SEM_GRUPO'||g==null||g==='') return 'Sem grupo';
+  return GRUPO_NOMES[g] || ('Grupo '+g);   // código desconhecido: mostra o código como estava
+}
+
 function init(){
   const sel=document.getElementById('sel-grupo');
   GRUPOS.forEach(g=>{
     const o=document.createElement('option');
-    o.value=g; o.textContent = g==='SEM_GRUPO' ? 'Sem grupo' : ('Grupo '+g);
+    o.value=g; o.textContent = nomeGrupo(g);
     sel.appendChild(o);
   });
   render();
