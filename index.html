@@ -1541,16 +1541,19 @@ const TODAS_ABAS=Object.keys(ABAS_CATALOGO);
 const ABAS_MC=TODAS_ABAS.filter(k=>ABAS_CATALOGO[k].g==='mcmoto');
 const ABAS_SV=TODAS_ABAS.filter(k=>ABAS_CATALOGO[k].g==='rhsseven');
 
+// Unidades de negócio da SEVEN — cada usuário pode ser limitado a algumas delas
+const UNIDADES_SEVEN=['3','4','5'];
+
 // Configuração publicada (default). O master pode alterar pela tela de gestão.
 const USUARIOS_PADRAO=[
-  {id:'master', nome:'Master',   senha:'RHSMC', master:true,  abas:[]},
-  {id:'u_mc',   nome:'MC MOTO',  senha:'DIOGO', master:false, abas:ABAS_MC.slice()},
-  {id:'u_sv',   nome:'RHS/SEVEN',senha:'VITOR', master:false, abas:ABAS_SV.slice()},
-  {id:'u1', nome:'Usuário 1', senha:'USER1', master:false, abas:[]},
-  {id:'u2', nome:'Usuário 2', senha:'USER2', master:false, abas:[]},
-  {id:'u3', nome:'Usuário 3', senha:'USER3', master:false, abas:[]},
-  {id:'u4', nome:'Usuário 4', senha:'USER4', master:false, abas:[]},
-  {id:'u5', nome:'Usuário 5', senha:'USER5', master:false, abas:[]}
+  {id:'master', nome:'Master',   senha:'RHSMC', master:true,  abas:[], unidades:UNIDADES_SEVEN.slice()},
+  {id:'u_mc',   nome:'MC MOTO',  senha:'DIOGO', master:false, abas:ABAS_MC.slice(), unidades:UNIDADES_SEVEN.slice()},
+  {id:'u_sv',   nome:'RHS/SEVEN',senha:'VITOR', master:false, abas:ABAS_SV.slice(), unidades:UNIDADES_SEVEN.slice()},
+  {id:'u1', nome:'Usuário 1', senha:'USER1', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()},
+  {id:'u2', nome:'Usuário 2', senha:'USER2', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()},
+  {id:'u3', nome:'Usuário 3', senha:'USER3', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()},
+  {id:'u4', nome:'Usuário 4', senha:'USER4', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()},
+  {id:'u5', nome:'Usuário 5', senha:'USER5', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()}
 ];
 const LS_USUARIOS='painel_usuarios_cfg';
 
@@ -1576,6 +1579,15 @@ function abasDoUsuario(u){
   return u.master ? TODAS_ABAS.slice() : (u.abas||[]).filter(k=>ABAS_CATALOGO[k]);
 }
 function podeAba(chave){ return abasDoUsuario(usuarioAtual()).includes(chave); }
+/* Unidades da SEVEN liberadas para o usuário logado. Master vê todas; usuário sem
+   a chave `unidades` (config antiga) também vê todas, para não quebrar acesso. */
+function unidadesPermitidas(){
+  const u=usuarioAtual();
+  if(!u || u.master || !Array.isArray(u.unidades)) return UNIDADES_SEVEN.slice();
+  const lista=u.unidades.map(String).filter(x=>UNIDADES_SEVEN.includes(x));
+  return lista.length?lista:UNIDADES_SEVEN.slice();
+}
+function podeUnidade(u){ return unidadesPermitidas().includes(String(u)); }
 function podeGrupo(grupo){ return abasDoUsuario(usuarioAtual()).some(k=>ABAS_CATALOGO[k].g===grupo); }
 function podeCategoria(cat){ return abasDoUsuario(usuarioAtual()).some(k=>ABAS_CATALOGO[k].cat===cat); }
 
@@ -1599,6 +1611,7 @@ function aplicarPermissoes(){
   if(btnFinSv) btnFinSv.classList.toggle('hidden', !podeCategoria('sevenfin'));
   document.getElementById('grupobtn-mcmoto').classList.toggle('hidden', !podeGrupo('mcmoto'));
   document.getElementById('grupobtn-rhsseven').classList.toggle('hidden', !podeGrupo('rhsseven'));
+  aplicarUnidadesPermitidas();
   // identificação do usuário no cabeçalho
   const badge=document.getElementById('user-badge');
   if(badge){
@@ -1607,6 +1620,86 @@ function aplicarPermissoes(){
     document.getElementById('btn-gerenciar-users').classList.toggle('hidden', !u.master);
   }
   irParaPrimeiraAbaPermitida();
+}
+
+/* Limita a unidade de negócio da SEVEN em todos os lugares onde ela aparece:
+   filtro do Compras (nativo), iframes do Financeiro (contas a pagar/receber e
+   risco) e o seletor de unidade da aba Unidades de Negócio (Mapa de Vendas). */
+function aplicarUnidadesPermitidas(){
+  const permitidas=unidadesPermitidas();
+
+  // 1) Compras SEVEN (checkboxes nativos)
+  document.querySelectorAll('.chk-unidade-seven').forEach(chk=>{
+    const ok=permitidas.includes(chk.value);
+    const lbl=chk.closest('label');
+    if(lbl) lbl.classList.toggle('hidden',!ok);
+    if(!ok) chk.checked=false;
+  });
+  if(typeof unidadesSelecionadasSeven!=='undefined'){
+    [...unidadesSelecionadasSeven].forEach(u=>{ if(!permitidas.includes(String(u))) unidadesSelecionadasSeven.delete(u); });
+    permitidas.forEach(u=>{ if(document.querySelector('.chk-unidade-seven[value="'+u+'"]:checked')) unidadesSelecionadasSeven.add(u); });
+    if(!unidadesSelecionadasSeven.size) permitidas.forEach(u=>unidadesSelecionadasSeven.add(u));
+    if(typeof renderSeven==='function' && document.getElementById('tbl-body-seven')) { try{ pageSeven=0; renderSeven(); }catch(e){} }
+  }
+  // 2) iframes do Financeiro da SEVEN (mesma origem): esconde as unidades bloqueadas.
+  //    Roda mesmo sem restrição para ser idempotente (reexibe o que voltou a ser permitido).
+  ['iframe-contaspagar-seven','iframe-contasreceber-seven','iframe-riscocliente'].forEach(id=>{
+    const ifr=document.getElementById(id);
+    if(!ifr) return;
+    const aplicar=()=>{
+      try{
+        const doc=ifr.contentDocument;
+        if(!doc) return;
+        const chks=doc.querySelectorAll('.filtro-unidade');
+        if(!chks.length) return false;
+        let mudou=false;
+        chks.forEach(c=>{
+          const ok=permitidas.includes(String(c.value));
+          const lbl=c.closest('label');
+          if(lbl) lbl.style.display=ok?'':'none';
+          if(!ok && c.checked){ c.checked=false; mudou=true; }
+        });
+        if(mudou) chks[0].dispatchEvent(new Event('change',{bubbles:true}));
+        return true;
+      }catch(e){ return false; }
+    };
+    if(!aplicar()){                       // conteúdo ainda não carregou: tenta de novo
+      ifr.addEventListener('load',aplicar,{once:true});
+      let n=0; const t=setInterval(()=>{ if(aplicar()||++n>20) clearInterval(t); },300);
+    }
+  });
+
+  // 3) seletor de unidade da aba Unidades de Negócio (dentro do Mapa de Vendas)
+  const ifrMapa=document.getElementById('iframe-mapavendas');
+  if(ifrMapa){
+    const aplicarMapa=()=>{
+      try{
+        const doc=ifrMapa.contentDocument;
+        const sel=doc && doc.getElementById('uni-filtro');
+        if(!sel || !sel.options.length) return false;
+        let visiveis=0;
+        [...sel.options].forEach(o=>{
+          const ok=(o.value==='todas')||permitidas.includes(String(o.value));
+          o.hidden=!ok; o.disabled=!ok;
+          if(ok && o.value!=='todas') visiveis++;
+        });
+        // com apenas uma unidade liberada, trava o filtro nela (some o "Todas")
+        if(visiveis===1){
+          const unica=permitidas[0];
+          const opTodas=[...sel.options].find(o=>o.value==='todas');
+          if(opTodas){ opTodas.hidden=true; opTodas.disabled=true; }
+          if(sel.value!==unica){ sel.value=unica; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+        }else if(!permitidas.includes(String(sel.value)) && sel.value!=='todas'){
+          sel.value='todas'; sel.dispatchEvent(new Event('change',{bubbles:true}));
+        }
+        return true;
+      }catch(e){ return false; }
+    };
+    if(!aplicarMapa()){
+      ifrMapa.addEventListener('load',aplicarMapa,{once:true});
+      let n=0; const t=setInterval(()=>{ if(aplicarMapa()||++n>20) clearInterval(t); },300);
+    }
+  }
 }
 
 function irParaPrimeiraAbaPermitida(){
@@ -1672,10 +1765,13 @@ function renderGestaoUsuarios(){
   lista.innerHTML=_usersEdit.map(u=>{
     const n=u.master?TODAS_ABAS.length:(u.abas||[]).length;
     const sel=(u.id===_userSelId);
+    const un=(u.unidades||UNIDADES_SEVEN).map(String);
+    const temSeven=u.master||(u.abas||[]).some(k=>ABAS_CATALOGO[k]&&ABAS_CATALOGO[k].g==='rhsseven');
+    const rotUn=(temSeven&&un.length&&un.length<UNIDADES_SEVEN.length)?' · un. '+un.join('/'):'';
     return '<div onclick="selecionarUsuario(\''+u.id+'\')" style="padding:9px 10px;border-radius:7px;cursor:pointer;margin-bottom:4px;'+
       (sel?'background:#1a1a2e;color:#fff':'background:#fff;border:1px solid #e2e8f0')+'">'+
       '<div style="font-weight:700;font-size:13px">'+escHtml(u.nome)+(u.master?' 👑':'')+'</div>'+
-      '<div style="font-size:11px;opacity:.7">'+(u.master?'acesso total':n+' aba'+(n===1?'':'s'))+'</div></div>';
+      '<div style="font-size:11px;opacity:.7">'+(u.master?'acesso total':n+' aba'+(n===1?'':'s')+rotUn)+'</div></div>';
   }).join('');
   renderFormUsuario();
 }
@@ -1715,6 +1811,18 @@ function renderFormUsuario(){
     '</div>'+
     bloco('🏍️ MC MOTO',ABAS_MC,'mc')+
     bloco('🏢 RHS/SEVEN',ABAS_SV,'sv')+
+    // unidades de negócio da SEVEN que este usuário pode enxergar
+    (function(){
+      const un=new Set((u.unidades||UNIDADES_SEVEN).map(String));
+      return '<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">'+
+        '<div style="background:#f1f5f9;padding:8px 12px"><strong style="font-size:12px">🏢 Unidades de negócio (RHS/SEVEN)</strong></div>'+
+        '<div style="padding:8px 12px;display:flex;gap:18px;flex-wrap:wrap">'+
+          UNIDADES_SEVEN.map(x=>'<label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">'+
+            '<input type="checkbox" class="uf-unidade" value="'+x+'"'+(un.has(x)?' checked':'')+'> Unidade '+x+'</label>').join('')+
+        '</div>'+
+        '<div style="padding:0 12px 8px;font-size:11px;color:#94a3b8">Vale para Compras, Financeiro (contas a pagar/receber e risco) e Unidades de Negócio. Se nenhuma for marcada, o usuário vê todas.</div>'+
+      '</div>';
+    })()+
     '<div style="display:flex;gap:8px">'+
       '<button class="btn btn-primary" onclick="salvarUsuario()">💾 Salvar</button>'+
       '<button class="btn btn-outline" style="color:#b91c1c;border-color:#fecaca" onclick="excluirUsuario()">🗑 Excluir usuário</button>'+
@@ -1736,6 +1844,8 @@ function salvarUsuario(){
     if(!nome){ alert('O nome não pode ficar em branco.'); return; }
     u.nome=nome;
     u.abas=[...document.querySelectorAll('.uf-aba')].filter(c=>c.checked).map(c=>c.value);
+    const un=[...document.querySelectorAll('.uf-unidade')].filter(c=>c.checked).map(c=>c.value);
+    u.unidades=un.length?un:UNIDADES_SEVEN.slice();   // nenhuma marcada = todas
   }
   setUsuarios(_usersEdit);
   renderGestaoUsuarios();
@@ -2695,8 +2805,10 @@ function getFiltersSeven(){
 function limparFiltrosSeven(){
   fornecedoresSelecionadosSeven.clear();
   atualizarLabelFornecedorSeven();
-  unidadesSelecionadasSeven=new Set(['3','4','5']);
-  document.querySelectorAll('.chk-unidade-seven').forEach(c=>c.checked=true);
+  // "limpar" volta só às unidades que o usuário pode ver
+  const _permUn=unidadesPermitidas();
+  unidadesSelecionadasSeven=new Set(_permUn);
+  document.querySelectorAll('.chk-unidade-seven').forEach(c=>c.checked=_permUn.includes(c.value));
   document.getElementById('sel-grupo-seven').value='';
   document.getElementById('fg-grupo-seven').classList.remove('grupo-ativo');
   document.getElementById('inp-busca-seven').value='';
