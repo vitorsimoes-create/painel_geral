@@ -128,12 +128,36 @@
 <div id="lock-overlay" style="position:fixed;inset:0;background:#1a1a2e;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
   <div style="font-size:40px">🔒</div>
   <div style="color:#fff;font-size:18px;font-weight:700">Painel de Pedidos de Compra</div>
-  <div style="color:rgba(255,255,255,.6);font-size:13px;margin-bottom:8px;text-align:center">Digite a senha de MC MOTO, de RHS/SEVEN, ou a senha de administrador (acesso total)</div>
+  <div style="color:rgba(255,255,255,.6);font-size:13px;margin-bottom:8px;text-align:center">Digite sua senha de acesso.<br>Cada usuário enxerga apenas as abas liberadas pelo master.</div>
   <form onsubmit="return tentarDesbloquear(event)" style="display:flex;gap:8px">
     <input type="password" id="lock-senha" autofocus style="padding:10px 14px;border-radius:6px;border:none;font-size:14px;width:220px" placeholder="Senha">
     <button type="submit" class="btn btn-primary" style="padding:10px 18px">Entrar</button>
   </form>
   <div id="lock-erro" style="color:#f87171;font-size:12px;display:none">Senha incorreta.</div>
+</div>
+
+<!-- ===== GESTÃO DE USUÁRIOS (somente master) ===== -->
+<div id="users-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:1000px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+    <div style="background:#1a1a2e;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px">
+      <strong style="font-size:16px">👥 Usuários e permissões de aba</strong>
+      <button class="btn btn-outline" style="margin-left:auto;font-size:12px;padding:6px 12px" onclick="fecharGestaoUsuarios()">✕ Fechar</button>
+    </div>
+    <div style="display:flex;gap:0;flex:1;min-height:0">
+      <div style="width:250px;border-right:1px solid #e2e8f0;display:flex;flex-direction:column;background:#f8fafc">
+        <div id="users-lista" style="flex:1;overflow:auto;padding:8px"></div>
+        <button class="btn btn-primary" style="margin:8px;font-size:12px" onclick="novoUsuario()">+ Novo usuário</button>
+      </div>
+      <div style="flex:1;overflow:auto;padding:16px 20px" id="users-form"></div>
+    </div>
+    <div style="border-top:1px solid #e2e8f0;padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f8fafc">
+      <span style="font-size:11px;color:#64748b;flex:1;min-width:280px">
+        As alterações valem <strong>neste navegador</strong>. Para valer para todos, clique em "Copiar configuração" e me envie o texto para eu publicar.
+      </span>
+      <button class="btn btn-outline" style="font-size:12px" onclick="copiarConfigUsuarios()">📋 Copiar configuração para publicar</button>
+      <button class="btn btn-outline" style="font-size:12px" onclick="restaurarConfigPadrao()">↺ Restaurar publicado</button>
+    </div>
+  </div>
 </div>
 
 <div class="header">
@@ -143,6 +167,11 @@
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;opacity:.85">
     <span>Página atualizada em <strong id="data-atualizacao">29/07/2026</strong></span>
+    <span id="user-badge" class="hidden" style="display:inline-flex;align-items:center;gap:8px">
+      <span style="opacity:.75">👤 <strong id="user-nome"></strong></span>
+      <button id="btn-gerenciar-users" class="btn btn-outline hidden" style="font-size:11px;padding:5px 10px" onclick="abrirGestaoUsuarios()">👥 Usuários</button>
+      <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="sairUsuario()">Sair</button>
+    </span>
     <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="pedirAtualizacao()">🔄 Pedir atualização</button>
   </div>
 </div>
@@ -855,11 +884,10 @@ function atualizarLabelFornecedor(){
 }
 
 function init(){
-  const mcmotoOk=sessionStorage.getItem('aba_desbloqueada_mcmoto')==='1';
-  const rhssevenOk=sessionStorage.getItem('aba_desbloqueada_rhsseven')==='1';
-  if(mcmotoOk || rhssevenOk){
+  // sessão já autenticada: reaplica as permissões do usuário logado
+  if(usuarioAtual()){
     document.getElementById('lock-overlay').classList.add('hidden');
-    if(!mcmotoOk && rhssevenOk) switchGrupo('rhsseven');
+    aplicarPermissoes();
   }
 
   document.addEventListener('click',(e)=>{
@@ -1477,49 +1505,271 @@ let _mapaTabPendente=null;
 let _ultimaCategoriaMcMoto='compras';
 let _grupoAtual='mcmoto';
 
-const TAB_PASSWORDS={mcmoto:'DIOGO',rhsseven:'VITOR'};
-const ADMIN_PASSWORD='RHSMC';
-function abaDesbloqueada(grupo){
-  return sessionStorage.getItem('aba_desbloqueada_'+grupo)==='1';
+/* ===================== USUÁRIOS E PERMISSÕES DE ABA =====================
+   O usuário MASTER cria/edita usuários e marca quais abas cada um enxerga.
+   ATENÇÃO (limite da arquitetura): este painel é um site estático, sem servidor —
+   as senhas ficam no código da página. Serve como controle de acesso entre a equipe,
+   NÃO como segurança contra alguém mal-intencionado.
+   A configuração default fica em USUARIOS_PADRAO (publicada, vale para todos); o master
+   pode editar ao vivo (grava em localStorage, vale só naquele navegador) e usar
+   "Copiar configuração" para publicar a alteração para todo mundo. */
+
+// Catálogo de abas: chave -> {g:grupo, cat:categoria, rot:rótulo, sel:seletor do botão}
+const ABAS_CATALOGO={
+  'mc.montar':        {g:'mcmoto', cat:'compras',    rot:'Montar Pedido',            sel:'#tabbtn-montar'},
+  'mc.cotacao':       {g:'mcmoto', cat:'compras',    rot:'Cotação',                  sel:'#tabbtn-cotacao'},
+  'mc.salvos':        {g:'mcmoto', cat:'compras',    rot:'Pedidos Salvos',           sel:'#tabbtn-salvos'},
+  'mc.recebimentos':  {g:'mcmoto', cat:'compras',    rot:'Recebimentos',             sel:'#tabbtn-recebimentos'},
+  'mc.painel':        {g:'mcmoto', cat:'vendas',     rot:'Painel Mensal',            sel:'#subtabs-vendas [data-mapatab="painel"]'},
+  'mc.diarias':       {g:'mcmoto', cat:'vendas',     rot:'Vendas Diárias',           sel:'#subtabs-vendas [data-mapatab="diarias"]'},
+  'mc.grupos':        {g:'mcmoto', cat:'vendas',     rot:'Grupo de Produto',         sel:'#subtabs-vendas [data-mapatab="grupos"]'},
+  'mc.consistencia':  {g:'mcmoto', cat:'vendas',     rot:'Consistência por Grupo',   sel:'#subtabs-vendas [data-mapatab="consistencia"]'},
+  'mc.fornecedor':    {g:'mcmoto', cat:'vendas',     rot:'Venda por Fornecedor',     sel:'#subtabs-vendas [data-mapatab="fornecedor"]'},
+  'mc.historicas':    {g:'mcmoto', cat:'vendas',     rot:'Vendas Históricas',        sel:'#subtabs-vendas [data-target="vendashistoricas"]'},
+  'mc.comissao':      {g:'mcmoto', cat:'vendas',     rot:'Vendas por Grupo de Comissão', sel:'#subtabs-vendas [data-target="vendascomissao"]'},
+  'mc.graficos':      {g:'mcmoto', cat:'vendas',     rot:'Gráficos',                 sel:'#subtabs-vendas [data-target="graficos"]'},
+  'mc.contaspagar':   {g:'mcmoto', cat:'financeiro', rot:'Contas a Pagar',           sel:'#subtabs-financeiro [data-mapatab="contaspagar"]'},
+  'mc.contasreceber': {g:'mcmoto', cat:'financeiro', rot:'Contas a Receber',         sel:'#subtabs-financeiro [data-target="contasrecebermc"]'},
+  'sv.unidades':      {g:'rhsseven', cat:'seven',    rot:'Unidades de Negócio',      sel:'#subtabs-rhsseven [data-target="unidades"]'},
+  'sv.crm':           {g:'rhsseven', cat:'seven',    rot:'CRM',                      sel:'#subtabs-rhsseven [data-target="crm"]'},
+  'sv.compras':       {g:'rhsseven', cat:'seven',    rot:'Compras',                  sel:'#subtabs-rhsseven [data-target="comprasseven"]'},
+  'sv.fin.pagar':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Pagar',   sel:'#catbtn-fs-contaspagar'},
+  'sv.fin.receber':   {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Receber', sel:'#catbtn-fs-contasreceber'},
+  'sv.fin.risco':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Risco/Cliente',    sel:'#catbtn-fs-riscocliente'}
+};
+const TODAS_ABAS=Object.keys(ABAS_CATALOGO);
+const ABAS_MC=TODAS_ABAS.filter(k=>ABAS_CATALOGO[k].g==='mcmoto');
+const ABAS_SV=TODAS_ABAS.filter(k=>ABAS_CATALOGO[k].g==='rhsseven');
+
+// Configuração publicada (default). O master pode alterar pela tela de gestão.
+const USUARIOS_PADRAO=[
+  {id:'master', nome:'Master',   senha:'RHSMC', master:true,  abas:[]},
+  {id:'u_mc',   nome:'MC MOTO',  senha:'DIOGO', master:false, abas:ABAS_MC.slice()},
+  {id:'u_sv',   nome:'RHS/SEVEN',senha:'VITOR', master:false, abas:ABAS_SV.slice()},
+  {id:'u1', nome:'Usuário 1', senha:'USER1', master:false, abas:[]},
+  {id:'u2', nome:'Usuário 2', senha:'USER2', master:false, abas:[]},
+  {id:'u3', nome:'Usuário 3', senha:'USER3', master:false, abas:[]},
+  {id:'u4', nome:'Usuário 4', senha:'USER4', master:false, abas:[]},
+  {id:'u5', nome:'Usuário 5', senha:'USER5', master:false, abas:[]}
+];
+const LS_USUARIOS='painel_usuarios_cfg';
+
+function getUsuarios(){
+  try{
+    const raw=localStorage.getItem(LS_USUARIOS);
+    if(raw){
+      const arr=JSON.parse(raw);
+      if(Array.isArray(arr) && arr.length) return arr;
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(USUARIOS_PADRAO));
 }
-function desbloquearAba(grupo){
-  sessionStorage.setItem('aba_desbloqueada_'+grupo,'1');
+function setUsuarios(arr){ localStorage.setItem(LS_USUARIOS,JSON.stringify(arr)); }
+
+function usuarioAtual(){
+  const id=sessionStorage.getItem('painel_usuario');
+  if(!id) return null;
+  return getUsuarios().find(u=>u.id===id)||null;
 }
+function abasDoUsuario(u){
+  if(!u) return [];
+  return u.master ? TODAS_ABAS.slice() : (u.abas||[]).filter(k=>ABAS_CATALOGO[k]);
+}
+function podeAba(chave){ return abasDoUsuario(usuarioAtual()).includes(chave); }
+function podeGrupo(grupo){ return abasDoUsuario(usuarioAtual()).some(k=>ABAS_CATALOGO[k].g===grupo); }
+function podeCategoria(cat){ return abasDoUsuario(usuarioAtual()).some(k=>ABAS_CATALOGO[k].cat===cat); }
+
+/* Aplica as permissões na interface: esconde botões de aba, categoria e grupo
+   que o usuário logado não pode ver, e abre a primeira aba permitida. */
+function aplicarPermissoes(){
+  const u=usuarioAtual();
+  if(!u) return;
+  const permitidas=abasDoUsuario(u);
+  TODAS_ABAS.forEach(k=>{
+    const el=document.querySelector(ABAS_CATALOGO[k].sel);
+    if(el) el.classList.toggle('hidden', !permitidas.includes(k));
+  });
+  // categorias da MC MOTO somem se nenhuma sub-aba delas for permitida
+  CATEGORIAS_MCMOTO.forEach(c=>{
+    const btn=document.getElementById('catbtn-'+c);
+    if(btn) btn.classList.toggle('hidden', !podeCategoria(c));
+  });
+  // a aba "Financeiro" da SEVEN aparece se ao menos uma das 3 pills for permitida
+  const btnFinSv=document.querySelector('#subtabs-rhsseven [data-target="financeiroseven"]');
+  if(btnFinSv) btnFinSv.classList.toggle('hidden', !podeCategoria('sevenfin'));
+  document.getElementById('grupobtn-mcmoto').classList.toggle('hidden', !podeGrupo('mcmoto'));
+  document.getElementById('grupobtn-rhsseven').classList.toggle('hidden', !podeGrupo('rhsseven'));
+  // identificação do usuário no cabeçalho
+  const badge=document.getElementById('user-badge');
+  if(badge){
+    badge.classList.remove('hidden');
+    document.getElementById('user-nome').textContent=u.nome+(u.master?' (master)':'');
+    document.getElementById('btn-gerenciar-users').classList.toggle('hidden', !u.master);
+  }
+  irParaPrimeiraAbaPermitida();
+}
+
+function irParaPrimeiraAbaPermitida(){
+  const permitidas=abasDoUsuario(usuarioAtual());
+  if(!permitidas.length) return;
+  const grupo=podeGrupo('mcmoto')?'mcmoto':'rhsseven';
+  switchGrupo(grupo);
+}
+
+/* Abre a primeira sub-aba permitida da categoria (usado ao trocar de categoria). */
+function abrirPrimeiraSubAba(cat){
+  const permitidas=abasDoUsuario(usuarioAtual());
+  const k=TODAS_ABAS.find(x=>ABAS_CATALOGO[x].cat===cat && permitidas.includes(x));
+  if(!k) return false;
+  const btn=document.querySelector(ABAS_CATALOGO[k].sel);
+  if(btn){ btn.click(); return true; }
+  return false;
+}
+
 function tentarDesbloquear(e){
   e.preventDefault();
   const senha=document.getElementById('lock-senha').value;
-  if(senha===ADMIN_PASSWORD){
-    desbloquearAba('mcmoto');
-    desbloquearAba('rhsseven');
+  const u=getUsuarios().find(x=>x.senha===senha);
+  if(u && (u.master || (u.abas&&u.abas.length))){
+    sessionStorage.setItem('painel_usuario',u.id);
     document.getElementById('lock-overlay').classList.add('hidden');
-  }else if(senha===TAB_PASSWORDS.mcmoto){
-    desbloquearAba('mcmoto');
-    document.getElementById('lock-overlay').classList.add('hidden');
-  }else if(senha===TAB_PASSWORDS.rhsseven){
-    desbloquearAba('rhsseven');
-    document.getElementById('lock-overlay').classList.add('hidden');
-    switchGrupo('rhsseven');
+    aplicarPermissoes();
+  }else if(u){
+    document.getElementById('lock-erro').textContent='Este usuário ainda não tem nenhuma aba liberada. Fale com o master.';
+    document.getElementById('lock-erro').style.display='block';
+    document.getElementById('lock-senha').value='';
   }else{
+    document.getElementById('lock-erro').textContent='Senha incorreta.';
     document.getElementById('lock-erro').style.display='block';
     document.getElementById('lock-senha').value='';
   }
   return false;
 }
-function verificarSenhaAba(grupo){
-  if(abaDesbloqueada(grupo)) return true;
-  const senha=prompt('Digite a senha para acessar esta aba (ou a senha de administrador):');
-  if(senha===null) return false;
-  if(senha===ADMIN_PASSWORD){
-    desbloquearAba('mcmoto');
-    desbloquearAba('rhsseven');
-    return true;
+function sairUsuario(){
+  sessionStorage.removeItem('painel_usuario');
+  location.reload();
+}
+function verificarSenhaAba(grupo){ return podeGrupo(grupo); }
+
+/* ---------- Tela de gestão de usuários (só o master abre) ---------- */
+let _usersEdit=null;      // cópia de trabalho
+let _userSelId=null;
+
+function abrirGestaoUsuarios(){
+  const u=usuarioAtual();
+  if(!u || !u.master){ alert('Somente o usuário master pode gerenciar usuários.'); return; }
+  _usersEdit=getUsuarios();
+  _userSelId=(_usersEdit.find(x=>!x.master)||_usersEdit[0]).id;
+  document.getElementById('users-overlay').classList.remove('hidden');
+  renderGestaoUsuarios();
+}
+function fecharGestaoUsuarios(){
+  document.getElementById('users-overlay').classList.add('hidden');
+  aplicarPermissoes();   // reflete na hora qualquer mudança feita no próprio master
+}
+function renderGestaoUsuarios(){
+  const lista=document.getElementById('users-lista');
+  lista.innerHTML=_usersEdit.map(u=>{
+    const n=u.master?TODAS_ABAS.length:(u.abas||[]).length;
+    const sel=(u.id===_userSelId);
+    return '<div onclick="selecionarUsuario(\''+u.id+'\')" style="padding:9px 10px;border-radius:7px;cursor:pointer;margin-bottom:4px;'+
+      (sel?'background:#1a1a2e;color:#fff':'background:#fff;border:1px solid #e2e8f0')+'">'+
+      '<div style="font-weight:700;font-size:13px">'+escHtml(u.nome)+(u.master?' 👑':'')+'</div>'+
+      '<div style="font-size:11px;opacity:.7">'+(u.master?'acesso total':n+' aba'+(n===1?'':'s'))+'</div></div>';
+  }).join('');
+  renderFormUsuario();
+}
+function selecionarUsuario(id){ _userSelId=id; renderGestaoUsuarios(); }
+
+function renderFormUsuario(){
+  const u=_usersEdit.find(x=>x.id===_userSelId);
+  const box=document.getElementById('users-form');
+  if(!u){ box.innerHTML='<div class="empty">Selecione um usuário.</div>'; return; }
+  if(u.master){
+    box.innerHTML='<div style="font-size:14px;font-weight:700;margin-bottom:10px">'+escHtml(u.nome)+' 👑</div>'+
+      '<label style="font-size:12px;color:#475569">Senha do master</label>'+
+      '<input id="uf-senha" value="'+escHtml(u.senha)+'" style="display:block;width:260px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin:4px 0 14px">'+
+      '<div class="empty" style="padding:14px">O master tem acesso a <strong>todas</strong> as abas, sempre — não é possível restringi-lo.</div>'+
+      '<button class="btn btn-primary" style="margin-top:14px" onclick="salvarUsuario()">💾 Salvar</button>';
+    return;
   }
-  if(senha===TAB_PASSWORDS[grupo]){
-    desbloquearAba(grupo);
-    return true;
+  const marcadas=new Set(u.abas||[]);
+  const bloco=(titulo,chaves,grupoId)=>
+    '<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">'+
+      '<div style="background:#f1f5f9;padding:8px 12px;display:flex;align-items:center;gap:10px">'+
+        '<strong style="font-size:12px">'+titulo+'</strong>'+
+        '<button class="btn btn-outline" style="margin-left:auto;font-size:11px;padding:3px 8px" onclick="marcarGrupo(\''+grupoId+'\',true)">marcar todas</button>'+
+        '<button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="marcarGrupo(\''+grupoId+'\',false)">limpar</button>'+
+      '</div>'+
+      '<div style="padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px">'+
+        chaves.map(k=>'<label style="font-size:12px;display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer">'+
+          '<input type="checkbox" class="uf-aba uf-'+grupoId+'" value="'+k+'"'+(marcadas.has(k)?' checked':'')+'>'+
+          escHtml(ABAS_CATALOGO[k].rot)+'</label>').join('')+
+      '</div></div>';
+  box.innerHTML=
+    '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">'+
+      '<div><label style="font-size:12px;color:#475569">Nome</label>'+
+      '<input id="uf-nome" value="'+escHtml(u.nome)+'" style="display:block;width:220px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px"></div>'+
+      '<div><label style="font-size:12px;color:#475569">Senha</label>'+
+      '<input id="uf-senha" value="'+escHtml(u.senha)+'" style="display:block;width:180px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px"></div>'+
+    '</div>'+
+    bloco('🏍️ MC MOTO',ABAS_MC,'mc')+
+    bloco('🏢 RHS/SEVEN',ABAS_SV,'sv')+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="btn btn-primary" onclick="salvarUsuario()">💾 Salvar</button>'+
+      '<button class="btn btn-outline" style="color:#b91c1c;border-color:#fecaca" onclick="excluirUsuario()">🗑 Excluir usuário</button>'+
+    '</div>';
+}
+function marcarGrupo(grupoId,valor){
+  document.querySelectorAll('.uf-'+grupoId).forEach(c=>c.checked=valor);
+}
+function salvarUsuario(){
+  const u=_usersEdit.find(x=>x.id===_userSelId);
+  if(!u) return;
+  const senha=(document.getElementById('uf-senha').value||'').trim();
+  if(!senha){ alert('A senha não pode ficar em branco.'); return; }
+  const dup=_usersEdit.find(x=>x.id!==u.id && x.senha===senha);
+  if(dup){ alert('Esta senha já é usada por "'+dup.nome+'". Cada usuário precisa de uma senha diferente.'); return; }
+  u.senha=senha;
+  if(!u.master){
+    const nome=(document.getElementById('uf-nome').value||'').trim();
+    if(!nome){ alert('O nome não pode ficar em branco.'); return; }
+    u.nome=nome;
+    u.abas=[...document.querySelectorAll('.uf-aba')].filter(c=>c.checked).map(c=>c.value);
   }
-  alert('Senha incorreta.');
-  return false;
+  setUsuarios(_usersEdit);
+  renderGestaoUsuarios();
+  alert('Usuário salvo.');
+}
+function novoUsuario(){
+  const id='u_'+Date.now().toString(36);
+  _usersEdit.push({id,nome:'Novo usuário',senha:'',master:false,abas:[]});
+  _userSelId=id;
+  setUsuarios(_usersEdit);
+  renderGestaoUsuarios();
+}
+function excluirUsuario(){
+  const u=_usersEdit.find(x=>x.id===_userSelId);
+  if(!u || u.master) return;
+  if(!confirm('Excluir o usuário "'+u.nome+'"? Ele perderá o acesso ao painel.')) return;
+  _usersEdit=_usersEdit.filter(x=>x.id!==u.id);
+  _userSelId=_usersEdit[0].id;
+  setUsuarios(_usersEdit);
+  renderGestaoUsuarios();
+}
+function copiarConfigUsuarios(){
+  const txt='const USUARIOS_PADRAO='+JSON.stringify(_usersEdit,null,2)+';';
+  navigator.clipboard.writeText(txt).then(
+    ()=>alert('Configuração copiada!\n\nCole/envie este texto para publicar as permissões para todos os usuários.'),
+    ()=>{ prompt('Copie o texto abaixo:',txt); }
+  );
+}
+function restaurarConfigPadrao(){
+  if(!confirm('Descartar as alterações feitas neste navegador e voltar à configuração publicada?')) return;
+  localStorage.removeItem(LS_USUARIOS);
+  _usersEdit=getUsuarios();
+  _userSelId=_usersEdit[0].id;
+  renderGestaoUsuarios();
 }
 
 function switchGrupo(grupo){
@@ -1542,12 +1792,20 @@ function switchGrupo(grupo){
     GRUPOS_MAIN.forEach(id=>document.getElementById(id).classList.add('hidden'));
     const chip=document.getElementById('ped-chip');
     if(chip) chip.classList.add('hidden');
-    const primeiraSub=document.querySelector('#subtabs-rhsseven .sub-rhsseven');
+    // abre a primeira sub-aba da SEVEN que o usuário pode ver
+    const primeiraSub=document.querySelector('#subtabs-rhsseven .sub-rhsseven:not(.hidden)')
+                    ||document.querySelector('#subtabs-rhsseven .sub-rhsseven');
     if(primeiraSub) abrirSubAbaRHSSeven(primeiraSub.dataset.target,primeiraSub);
   }
 }
 
 function switchCategoriaMcMoto(categoria){
+  // se o usuário não tem acesso a esta categoria, cai na primeira permitida
+  if(!podeCategoria(categoria)){
+    const alt=CATEGORIAS_MCMOTO.find(c=>podeCategoria(c));
+    if(!alt) return;
+    categoria=alt;
+  }
   _ultimaCategoriaMcMoto=categoria;
   CATEGORIAS_MCMOTO.forEach(c=>{
     document.getElementById('catbtn-'+c).classList.toggle('active',c===categoria);
@@ -1555,14 +1813,21 @@ function switchCategoriaMcMoto(categoria){
   });
 
   if(categoria==='compras'){
-    switchAppTab('montar');
+    // abre a primeira sub-aba de Compras permitida (Montar Pedido pode estar bloqueada)
+    const ordem=[['mc.montar','montar'],['mc.cotacao','cotacao'],['mc.salvos','salvos'],['mc.recebimentos','recebimentos']];
+    const alvo=(ordem.find(([k])=>podeAba(k))||[null,'montar'])[1];
+    switchAppTab(alvo);
   }else{
     GRUPOS_MAIN.forEach(id=>document.getElementById(id).classList.add('hidden'));
     document.getElementById('app-tab-mapavendas').classList.remove('hidden');
     const chip=document.getElementById('ped-chip');
     if(chip) chip.classList.add('hidden');
-    const primeiraSub=document.querySelector('#subtabs-'+categoria+' .sub-mapavendas');
-    if(primeiraSub) abrirSubAbaMapa(primeiraSub.dataset.mapatab,primeiraSub);
+    const primeiraSub=document.querySelector('#subtabs-'+categoria+' .sub-mapavendas:not(.hidden)')
+                    ||document.querySelector('#subtabs-'+categoria+' .sub-mapavendas');
+    if(primeiraSub){
+      if(primeiraSub.dataset.mapatab) abrirSubAbaMapa(primeiraSub.dataset.mapatab,primeiraSub);
+      else primeiraSub.click();
+    }
   }
 }
 
@@ -1589,7 +1854,14 @@ function abrirSubAbaRHSSeven(target,btnEl){
   }
 }
 
+const FS_PERM={contaspagar:'sv.fin.pagar',contasreceber:'sv.fin.receber',riscocliente:'sv.fin.risco'};
 function switchCategoriaFinanceiroSeven(categoria){
+  // respeita as permissões: se a pill não for permitida, abre a primeira liberada
+  if(!podeAba(FS_PERM[categoria])){
+    const alt=Object.keys(FS_PERM).find(c=>podeAba(FS_PERM[c]));
+    if(!alt) return;
+    categoria=alt;
+  }
   ['contaspagar','contasreceber','riscocliente'].forEach(c=>{
     document.getElementById('catbtn-fs-'+c).classList.toggle('active',c===categoria);
     document.getElementById('fs-'+c).classList.toggle('hidden',c!==categoria);

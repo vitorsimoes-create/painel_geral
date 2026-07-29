@@ -44,14 +44,19 @@ Cada clique passa primeiro pelo gate de senha (ver seção abaixo) antes de troc
 
 Se o iframe `mapa-vendas.html` ainda não terminou de carregar quando o usuário clica em uma sub-aba que depende dele, o `index.html` guarda o alvo pendente em `_mapaTabPendente` e dispara a troca assim que o evento `load` do iframe ocorre.
 
-## Controle de acesso (gate de senha)
+## Controle de acesso (usuários e permissões de aba)
 
-O painel tem um overlay de bloqueio em tela cheia (`#lock-overlay`) exibido ao carregar, exigindo uma senha antes de mostrar qualquer conteúdo. O esquema:
+Reformulado em 29/07/2026: antes eram 3 senhas fixas (MC MOTO / RHS-SEVEN / admin); agora há **usuários nomeados, cada um com sua senha e a lista de abas que enxerga**, gerenciados por um usuário **master**.
 
-- Existe uma senha própria para o grupo **MC MOTO** e outra para o grupo **RHS/SEVEN**, mais uma **senha de administrador** que libera os dois grupos de uma vez. As três estão definidas em texto simples dentro do JavaScript de `index.html`, nas constantes `TAB_PASSWORDS` (mapa `{mcmoto: ..., rhsseven: ...}`) e `ADMIN_PASSWORD`. **As senhas em si não são reproduzidas nesta documentação** — consulte o código-fonte diretamente se precisar delas.
-- O desbloqueio é lembrado apenas durante a sessão do navegador, via `sessionStorage` (chaves `aba_desbloqueada_mcmoto` e `aba_desbloqueada_rhsseven`, valor `'1'`). Fechar a aba/sessão do navegador exige senha de novo.
-- Ao trocar de grupo (`switchGrupo`), se aquele grupo ainda não foi desbloqueado nesta sessão, aparece um `prompt()` nativo do navegador pedindo a senha (aceita tanto a senha específica do grupo quanto a senha de admin).
-- **Isto não é segurança real.** É um "deterrent" client-side — qualquer pessoa com acesso ao código-fonte (Ctrl+U no navegador) vê as senhas em texto simples. Serve apenas para evitar acesso casual/acidental, não para proteger dados sensíveis de fato.
+- O overlay `#lock-overlay` continua exigindo senha ao carregar. **A senha identifica o usuário** (cada um tem a sua, e o sistema recusa senhas duplicadas), então o campo de login segue com um único input.
+- Cadastro publicado na constante `USUARIOS_PADRAO` de `index.html`: `{id, nome, senha, master, abas[]}`. Vem com o **master**, os dois usuários antigos preservados (MC MOTO com as 14 abas da MC, RHS/SEVEN com as 6 da SEVEN — as senhas antigas continuam valendo) e **5 usuários vazios** prontos para o master configurar.
+- **Catálogo de abas** em `ABAS_CATALOGO`: 20 chaves (`mc.montar`, `mc.graficos`, `sv.compras`, `sv.fin.risco`…), cada uma com grupo, categoria, rótulo e o seletor do botão correspondente. É a única fonte de verdade — **ao criar uma aba nova no painel, adicione a chave aqui**, senão ela não aparece na tela de permissões.
+- `aplicarPermissoes()` esconde o que não é permitido em cascata: botões de sub-aba, as categorias da MC MOTO (COMPRAS/VENDAS/FINANCEIRO), as pills do Financeiro da SEVEN e os próprios botões de grupo — e leva o usuário para a primeira aba liberada. `switchGrupo`/`switchCategoriaMcMoto`/`switchCategoriaFinanceiroSeven` também barram navegação forçada.
+- Um usuário **sem nenhuma aba liberada não consegue entrar** (mensagem orientando procurar o master). O master tem sempre acesso total — não é possível restringi-lo.
+- Sessão em `sessionStorage` (`painel_usuario` = id do usuário); há badge com o nome e botão **Sair** no cabeçalho.
+- **Tela de gestão** (botão 👥 Usuários, só aparece para o master): criar/renomear/excluir usuários, trocar senha e marcar as abas por checkbox (com "marcar todas"/"limpar" por empresa).
+- ⚠️ **Onde as alterações valem:** o master edita ao vivo e o resultado é gravado em `localStorage` (`painel_usuarios_cfg`) — ou seja, **vale só naquele navegador**. Para valer para todos, o botão **"📋 Copiar configuração para publicar"** gera o bloco `const USUARIOS_PADRAO=[...]` que precisa ser colado no `index.html` e publicado. "↺ Restaurar publicado" descarta o override local.
+- **Isto não é segurança real.** É um "deterrent" client-side — qualquer pessoa com acesso ao código-fonte (Ctrl+U) vê as senhas em texto simples. Serve para organizar o acesso da equipe, não para proteger dados de alguém mal-intencionado. Segurança de verdade exigiria backend com autenticação.
 
 ## Regras de manutenção que já regem este projeto
 
