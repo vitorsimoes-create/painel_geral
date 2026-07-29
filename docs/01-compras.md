@@ -96,6 +96,33 @@ Desde 22/07/2026, o pedido de compra da MC MOTO é apresentado como **lista úni
 - **PDF** — HTML A4 paisagem (tabela única com coluna Fornecedor), impresso via `window.print()`.
 - **Aba separada (janela nova, `abrirPedidoAba`)** — abre o pedido em uma página independente, tabela única com campos de quantidade/sugestão editáveis ao vivo e recálculo automático do total geral. **Os cabeçalhos das colunas são clicáveis para ordenar** (`sortTabela`): clique ordena crescente, novo clique inverte, com seta ▲/▼ indicando a coluna ativa. Colunas de texto (Descrição, Fornecedor, Cód. Fab., Comprar?) ordenam alfabeticamente; as numéricas (Cód., Custo, Estoque, Pico, Sugestão, Qtd, Total) ordenam por valor — inclusive parseando moeda "R$ 1.085,83" e lendo o valor atual dos inputs de Qtd/Sugestão. **Os arquivos Excel e PDF exportados pela janela saem na ordem escolhida na tela**: o `itensOrdenados()` lê a ordem atual das linhas do `<tbody>`, mapeia para `window.opener.pedido` e passa essa lista como 4º argumento (`orderedItems`) para `buildCSV`/`buildPDFHtml` (parâmetro opcional retrocompatível — quando ausente, cai no `Object.values(bySupplier).flat()` de antes). Obs: como o objeto `pedido` é indexado por código numérico, sua ordem "natural" é numérica por código; a ordenação escolhida só é carregada via `orderedItems`, não reordenando o objeto. Além de **💾 Salvar Pedido** e **🖨️ Imprimir**, a janela tem botões **⬇ Excel (.csv)** e **🖨 PDF** (iguais aos da RHS/SEVEN): eles primeiro sincronizam as edições de qtd/sugestão de volta para `window.opener.pedido`, depois montam o conteúdo com os builders da janela principal (`window.opener.buildCSV`/`buildPDFHtml`) e **fazem o download dentro da própria janela do pedido** (âncora anexada ao DOM, `revokeObjectURL` adiado). Importante: o download precisa acontecer no documento da janela do pedido — chamar diretamente `window.opener.exportarExcelDireto()` fazia o arquivo ser gerado na aba principal (em segundo plano) e o navegador não salvava nada visível.
 
+## Análise de Fornecedor (excesso de estoque)
+
+Sub-aba nativa criada em 29/07/2026, presente nas **duas** empresas: **MC MOTO › Compras › Análise de Fornecedor** (`app-tab-analise`, chave de permissão `mc.analise`) e **RHS/SEVEN › Compras › Análise de Fornecedor** (`app-tab-analise-seven`, chave `sv.analise`). É 100% client-side: usa o `RAW_DATA`/`RAW_DATA_SEVEN` já embutidos na página — **não consulta banco nem depende da rotina diária**.
+
+**Regra de negócio (definida pelo usuário):**
+```
+pedido ideal = (pico × fator) − estoque          // fator = 3 por padrão
+```
+Se o resultado for **negativo**, o item está com **estoque excedente** — dinheiro parado:
+```
+excesso (qtd)   = estoque − pico × fator
+excesso (valor) = excesso (qtd) × custo unitário
+```
+Itens com `pedido ≥ 0` são ignorados (não há excesso). O fator é editável na tela ("Cobertura (× pico)"), então dá para simular outras coberturas sem mudar código; o padrão continua 3.
+
+**Interface:**
+- **KPIs:** valor total em excesso, nº de fornecedores com excesso e nº de itens.
+- **Tabela por fornecedor**, ordenada pelo valor parado (maior primeiro): itens, quantidade excedente, valor parado e uma barra de participação % no total.
+- **Drill-down:** clicar no fornecedor expande os itens (código, [unidade na SEVEN], descrição, pico, estoque, ideal, excesso, custo e valor parado), ordenados por valor.
+- **Busca** por nome de fornecedor. Importante: a busca filtra a lista mas **o % de participação continua sobre o total geral**, não sobre o subconjunto.
+- **Exportação Excel (CSV):** dois botões — "resumo" (uma linha por fornecedor) e "itens" (uma linha por item, com o fornecedor em cada linha). Ambos com BOM UTF-8, `;` como separador e decimal com vírgula (padrão pt-BR).
+- **SEVEN:** tem ainda um seletor de **unidade** (Todas / 3 / 4 / 5) e respeita a permissão de unidade do usuário — o seletor só lista as unidades liberadas e o cálculo considera apenas elas.
+
+**Permissões:** na SEVEN a Análise é uma sub-aba *dentro* de Compras, então o botão "Compras" aparece se o usuário tiver `sv.compras` **ou** `sv.analise`; com apenas `sv.analise`, as sub-abas Montar Pedido/Cotação/Pedidos Salvos ficam ocultas e a Análise abre direto.
+
+**Números de referência** (validados em 29/07/2026 contra os dados reais): MC MOTO **R$ 1.071.441,99** parados em 5.884 itens de 143 fornecedores; RHS/SEVEN **R$ 653.899,98** em 5.093 itens de 104 fornecedores.
+
 ## Pedidos Salvos
 
 Armazenamento: **`localStorage` do navegador**, chave `mc_moto_pedidos_salvos` — **não é persistência de servidor**, os dados vivem só naquele perfil de navegador.

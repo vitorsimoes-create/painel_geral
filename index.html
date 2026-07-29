@@ -192,6 +192,7 @@
   <button id="tabbtn-cotacao" class="app-tab" onclick="switchAppTab('cotacao')">📊 Cotação <span id="cotacao-sel-badge" class="tab-count hidden">0</span></button>
   <button id="tabbtn-salvos" class="app-tab" onclick="switchAppTab('salvos')">📁 Pedidos Salvos <span id="salvos-count-badge" class="tab-count hidden">0</span></button>
   <button id="tabbtn-recebimentos" class="app-tab" onclick="switchAppTab('recebimentos')">📦 Recebimentos</button>
+  <button id="tabbtn-analise" class="app-tab" onclick="switchAppTab('analise')">🔎 Análise de Fornecedor</button>
 </div>
 <div id="subtabs-vendas" style="background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;display:flex;gap:4px" class="hidden">
   <button class="app-tab sub-mapavendas" data-mapatab="painel" onclick="abrirSubAbaMapa('painel',this)">📅 Painel Mensal</button>
@@ -537,11 +538,32 @@
   </div>
 </div>
 
+<div id="app-tab-analise" class="main hidden">
+  <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
+    <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">🔎 Análise de Fornecedor — excesso de estoque</h2>
+    <div style="font-size:12px;color:#64748b;margin-bottom:14px">
+      Pedido ideal = <strong>(pico × <span id="af-fator-lbl">3</span>) − estoque</strong>. Quando dá negativo, o item está <strong>com estoque excedente</strong> — dinheiro parado.
+      O valor em excesso é a quantidade excedente × custo unitário.
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Cobertura (× pico)</label>
+        <input type="number" id="af-fator" value="3" min="1" step="1" onchange="renderAnalise('mc')" style="width:90px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div>
+      <div style="flex:1;min-width:200px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar fornecedor</label>
+        <input type="text" id="af-busca" oninput="renderAnalise('mc')" placeholder="nome do fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
+      <button class="btn btn-outline" onclick="exportarAnaliseResumo('mc')">⬇ Excel (resumo)</button>
+      <button class="btn btn-outline" onclick="exportarAnaliseItens('mc')">⬇ Excel (itens)</button>
+    </div>
+  </div>
+  <div class="stats" id="af-kpis" style="margin-bottom:16px"></div>
+  <div id="af-tabela"></div>
+</div>
+
 <div id="app-tab-comprasseven" class="main hidden">
   <div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:0 8px;margin-bottom:16px;display:flex;gap:4px">
     <button id="tabbtn-montar-seven" class="app-tab active" onclick="switchAppTabSeven('montar')">🛒 Montar Pedido</button>
     <button id="tabbtn-cotacao-seven" class="app-tab" onclick="switchAppTabSeven('cotacao')">📊 Cotação <span id="cotacao-sel-badge-seven" class="tab-count hidden">0</span></button>
     <button id="tabbtn-salvos-seven" class="app-tab" onclick="switchAppTabSeven('salvos')">📁 Pedidos Salvos <span id="salvos-count-badge-seven" class="tab-count hidden">0</span></button>
+    <button id="tabbtn-analise-seven" class="app-tab" onclick="switchAppTabSeven('analise')">🔎 Análise de Fornecedor</button>
   </div>
 
   <div id="app-tab-montar-seven" class="main" style="padding:0">
@@ -701,6 +723,28 @@
       <input type="text" id="busca-salvos-seven" placeholder="Buscar por fornecedor ou data..." oninput="renderPedidosSalvosSeven()" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;min-width:260px;outline:none">
     </div>
     <div id="lista-pedidos-salvos-seven"></div>
+  </div>
+
+  <div id="app-tab-analise-seven" class="main hidden" style="padding:0">
+    <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
+      <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">🔎 Análise de Fornecedor — excesso de estoque</h2>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px">
+        Pedido ideal = <strong>(pico × <span id="afs-fator-lbl">3</span>) − estoque</strong>. Quando dá negativo, o item está <strong>com estoque excedente</strong> — dinheiro parado.
+        Considera apenas as unidades de negócio liberadas para você.
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Cobertura (× pico)</label>
+          <input type="number" id="afs-fator" value="3" min="1" step="1" onchange="renderAnalise('seven')" style="width:90px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Unidade</label>
+          <select id="afs-unidade" onchange="renderAnalise('seven')" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></select></div>
+        <div style="flex:1;min-width:200px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar fornecedor</label>
+          <input type="text" id="afs-busca" oninput="renderAnalise('seven')" placeholder="nome do fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
+        <button class="btn btn-outline" onclick="exportarAnaliseResumo('seven')">⬇ Excel (resumo)</button>
+        <button class="btn btn-outline" onclick="exportarAnaliseItens('seven')">⬇ Excel (itens)</button>
+      </div>
+    </div>
+    <div class="stats" id="afs-kpis" style="margin-bottom:16px"></div>
+    <div id="afs-tabela"></div>
   </div>
 
   <div id="app-tab-cotacao-seven" class="main hidden" style="padding:0">
@@ -1478,6 +1522,7 @@ function switchAppTab(tab){
   document.getElementById('app-tab-salvos').classList.toggle('hidden',tab!=='salvos');
   document.getElementById('app-tab-cotacao').classList.toggle('hidden',tab!=='cotacao');
   document.getElementById('app-tab-recebimentos').classList.toggle('hidden',tab!=='recebimentos');
+  document.getElementById('app-tab-analise').classList.toggle('hidden',tab!=='analise');
   document.getElementById('app-tab-mapavendas').classList.add('hidden');
   document.getElementById('app-tab-crmseven').classList.add('hidden');
   document.getElementById('app-tab-financeiroseven').classList.add('hidden');
@@ -1490,6 +1535,8 @@ function switchAppTab(tab){
   document.getElementById('tabbtn-salvos').classList.toggle('active',tab==='salvos');
   document.getElementById('tabbtn-cotacao').classList.toggle('active',tab==='cotacao');
   document.getElementById('tabbtn-recebimentos').classList.toggle('active',tab==='recebimentos');
+  document.getElementById('tabbtn-analise').classList.toggle('active',tab==='analise');
+  if(tab==='analise') renderAnalise('mc');
   if(tab==='salvos') renderPedidosSalvos();
   if(tab==='cotacao') renderCotacaoTab();
   if(tab==='recebimentos') renderRecebimentosTab();
@@ -1520,6 +1567,7 @@ const ABAS_CATALOGO={
   'mc.cotacao':       {g:'mcmoto', cat:'compras',    rot:'Cotação',                  sel:'#tabbtn-cotacao'},
   'mc.salvos':        {g:'mcmoto', cat:'compras',    rot:'Pedidos Salvos',           sel:'#tabbtn-salvos'},
   'mc.recebimentos':  {g:'mcmoto', cat:'compras',    rot:'Recebimentos',             sel:'#tabbtn-recebimentos'},
+  'mc.analise':       {g:'mcmoto', cat:'compras',    rot:'Análise de Fornecedor',    sel:'#tabbtn-analise'},
   'mc.painel':        {g:'mcmoto', cat:'vendas',     rot:'Painel Mensal',            sel:'#subtabs-vendas [data-mapatab="painel"]'},
   'mc.diarias':       {g:'mcmoto', cat:'vendas',     rot:'Vendas Diárias',           sel:'#subtabs-vendas [data-mapatab="diarias"]'},
   'mc.grupos':        {g:'mcmoto', cat:'vendas',     rot:'Grupo de Produto',         sel:'#subtabs-vendas [data-mapatab="grupos"]'},
@@ -1533,6 +1581,7 @@ const ABAS_CATALOGO={
   'sv.unidades':      {g:'rhsseven', cat:'seven',    rot:'Unidades de Negócio',      sel:'#subtabs-rhsseven [data-target="unidades"]'},
   'sv.crm':           {g:'rhsseven', cat:'seven',    rot:'CRM',                      sel:'#subtabs-rhsseven [data-target="crm"]'},
   'sv.compras':       {g:'rhsseven', cat:'seven',    rot:'Compras',                  sel:'#subtabs-rhsseven [data-target="comprasseven"]'},
+  'sv.analise':       {g:'rhsseven', cat:'seven',    rot:'Compras › Análise de Fornecedor', sel:'#tabbtn-analise-seven'},
   'sv.fin.pagar':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Pagar',   sel:'#catbtn-fs-contaspagar'},
   'sv.fin.receber':   {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Receber', sel:'#catbtn-fs-contasreceber'},
   'sv.fin.risco':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Risco/Cliente',    sel:'#catbtn-fs-riscocliente'}
@@ -1609,6 +1658,15 @@ function aplicarPermissoes(){
   // a aba "Financeiro" da SEVEN aparece se ao menos uma das 3 pills for permitida
   const btnFinSv=document.querySelector('#subtabs-rhsseven [data-target="financeiroseven"]');
   if(btnFinSv) btnFinSv.classList.toggle('hidden', !podeCategoria('sevenfin'));
+  /* A "Análise de Fornecedor" da SEVEN é uma sub-aba dentro de Compras. Então:
+     - o botão Compras aparece se o usuário tiver sv.compras OU sv.analise;
+     - com apenas sv.analise, escondemos Montar/Cotação/Pedidos Salvos. */
+  const btnComprasSv=document.querySelector('#subtabs-rhsseven [data-target="comprasseven"]');
+  if(btnComprasSv) btnComprasSv.classList.toggle('hidden', !(podeAba('sv.compras')||podeAba('sv.analise')));
+  ['tabbtn-montar-seven','tabbtn-cotacao-seven','tabbtn-salvos-seven'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b) b.classList.toggle('hidden', !podeAba('sv.compras'));
+  });
   document.getElementById('grupobtn-mcmoto').classList.toggle('hidden', !podeGrupo('mcmoto'));
   document.getElementById('grupobtn-rhsseven').classList.toggle('hidden', !podeGrupo('rhsseven'));
   aplicarUnidadesPermitidas();
@@ -1743,6 +1801,179 @@ function sairUsuario(){
   location.reload();
 }
 function verificarSenhaAba(grupo){ return podeGrupo(grupo); }
+
+/* ===================== ANÁLISE DE FORNECEDOR (excesso de estoque) =====================
+   Regra do usuário: pedido ideal = (pico × fator) − estoque, com fator 3 por padrão.
+   Quando o resultado é NEGATIVO o item tem estoque excedente:
+     excesso (qtd)   = estoque − pico × fator
+     excesso (valor) = excesso (qtd) × custo unitário   -> dinheiro parado
+   Agrega por fornecedor, permite abrir os itens e exportar para Excel (CSV).
+   Usa os dados já embutidos na página (RAW_DATA / RAW_DATA_SEVEN) — não consulta banco. */
+const ANALISE_FONTES={
+  mc:{
+    px:'af', titulo:'MC MOTO', temUnidade:false,
+    dados:()=>RAW_DATA
+  },
+  seven:{
+    px:'afs', titulo:'RHS-SEVEN', temUnidade:true,
+    dados:()=>{
+      const permitidas=unidadesPermitidas();
+      const sel=(document.getElementById('afs-unidade')||{}).value||'';
+      return RAW_DATA_SEVEN.filter(x=>permitidas.includes(String(x.u)) && (!sel || String(x.u)===sel));
+    }
+  }
+};
+let _analiseAberto={mc:null,seven:null};   // fornecedor com o detalhe expandido
+
+function calcularAnalise(fonte){
+  const cfg=ANALISE_FONTES[fonte];
+  const fatorEl=document.getElementById(cfg.px+'-fator');
+  let fator=parseInt(fatorEl&&fatorEl.value,10);
+  if(!(fator>0)) fator=3;
+  const busca=((document.getElementById(cfg.px+'-busca')||{}).value||'').trim().toUpperCase();
+
+  const porForn={};
+  let totalValor=0, totalItens=0;
+  cfg.dados().forEach(it=>{
+    const pico=it.k||0, estoque=it.e||0, custo=it.p||0;
+    const ideal=pico*fator;
+    const pedido=ideal-estoque;
+    if(pedido>=0) return;                 // não há excesso
+    const excQtd=estoque-ideal;           // = -pedido
+    const excValor=excQtd*custo;
+    const forn=it.f||'(sem fornecedor)';
+    const g=porForn[forn]||(porForn[forn]={fornecedor:forn,itens:[],qtd:0,valor:0});
+    g.itens.push({c:it.c,u:it.u,d:it.d,pico,estoque,ideal,excQtd,custo,excValor});
+    g.qtd+=excQtd; g.valor+=excValor;
+    totalValor+=excValor; totalItens++;
+  });
+  let lista=Object.values(porForn).sort((a,b)=>b.valor-a.valor);
+  lista.forEach(g=>g.itens.sort((a,b)=>b.excValor-a.excValor));
+  const totalGeral=totalValor, fornecedoresTotal=lista.length;
+  if(busca) lista=lista.filter(g=>g.fornecedor.toUpperCase().includes(busca));
+  return {lista,totalValor,totalItens,fator,totalGeral,fornecedoresTotal};
+}
+
+function renderAnalise(fonte){
+  const cfg=ANALISE_FONTES[fonte];
+  if(fonte==='seven') montarSelectUnidadeAnalise();
+  const r=calcularAnalise(fonte);
+  const lbl=document.getElementById(cfg.px+'-fator-lbl');
+  if(lbl) lbl.textContent=r.fator;
+
+  document.getElementById(cfg.px+'-kpis').innerHTML=
+    '<div class="stat red"><div class="val">'+fmt(r.totalValor)+'</div><div class="lbl">Valor em excesso</div></div>'+
+    '<div class="stat"><div class="val">'+r.fornecedoresTotal+'</div><div class="lbl">Fornecedores com excesso</div></div>'+
+    '<div class="stat"><div class="val">'+r.totalItens.toLocaleString('pt-BR')+'</div><div class="lbl">Itens com excesso</div></div>';
+
+  const cont=document.getElementById(cfg.px+'-tabela');
+  if(!r.lista.length){
+    cont.innerHTML='<div class="empty" style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:40px">Nenhum fornecedor com estoque excedente para este filtro. 🎉</div>';
+    return;
+  }
+  const maior=Math.max(...r.lista.map(g=>g.valor),1);
+  const linhas=r.lista.map(g=>{
+    const pct=r.totalGeral?g.valor/r.totalGeral*100:0;
+    const aberto=(_analiseAberto[fonte]===g.fornecedor);
+    let detalhe='';
+    if(aberto){
+      const cabUn=cfg.temUnidade?'<th class="num">Un.</th>':'';
+      detalhe='<tr><td colspan="5" style="padding:0;background:#f8fafc">'+
+        '<div style="padding:10px 14px"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'+
+        '<thead><tr style="background:#e2e8f0">'+
+          '<th style="padding:6px 8px;text-align:left">Cód.</th>'+cabUn+
+          '<th style="padding:6px 8px;text-align:left">Descrição</th>'+
+          '<th class="num" style="padding:6px 8px">Pico</th><th class="num" style="padding:6px 8px">Estoque</th>'+
+          '<th class="num" style="padding:6px 8px">Ideal (pico×'+r.fator+')</th><th class="num" style="padding:6px 8px">Excesso</th>'+
+          '<th class="num" style="padding:6px 8px">Custo</th><th class="num" style="padding:6px 8px">Valor parado</th>'+
+        '</tr></thead><tbody>'+
+        g.itens.map(i=>'<tr>'+
+          '<td style="padding:5px 8px;color:#94a3b8;font-size:11px">'+i.c+'</td>'+
+          (cfg.temUnidade?'<td class="num" style="padding:5px 8px;font-weight:700;color:#0369a1">'+i.u+'</td>':'')+
+          '<td style="padding:5px 8px">'+escHtml(i.d||'')+'</td>'+
+          '<td class="num" style="padding:5px 8px;color:#7c3aed;font-weight:600">'+i.pico+'</td>'+
+          '<td class="num" style="padding:5px 8px;font-weight:600">'+i.estoque+'</td>'+
+          '<td class="num" style="padding:5px 8px;color:#64748b">'+i.ideal+'</td>'+
+          '<td class="num" style="padding:5px 8px;color:#dc2626;font-weight:700">'+i.excQtd+'</td>'+
+          '<td class="num" style="padding:5px 8px">'+fmt(i.custo)+'</td>'+
+          '<td class="num" style="padding:5px 8px;color:#dc2626;font-weight:700">'+fmt(i.excValor)+'</td>'+
+        '</tr>').join('')+
+        '</tbody></table></div></td></tr>';
+    }
+    return '<tr onclick="toggleAnaliseForn(\''+fonte+'\',this.dataset.f)" data-f="'+escHtml(g.fornecedor)+'" style="cursor:pointer;border-bottom:1px solid #f1f5f9">'+
+      '<td style="padding:9px 12px;font-weight:600">'+(aberto?'▼ ':'▶ ')+escHtml(g.fornecedor)+'</td>'+
+      '<td class="num" style="padding:9px 12px">'+g.itens.length+'</td>'+
+      '<td class="num" style="padding:9px 12px">'+Math.round(g.qtd).toLocaleString('pt-BR')+'</td>'+
+      '<td class="num" style="padding:9px 12px;color:#dc2626;font-weight:700">'+fmt(g.valor)+'</td>'+
+      '<td style="padding:9px 12px;width:180px"><div style="background:#f1f5f9;border-radius:4px;height:14px"><div style="height:100%;border-radius:4px;background:#ef4444;width:'+Math.max(2,Math.round(g.valor/maior*100))+'%"></div></div>'+
+        '<span style="font-size:10px;color:#94a3b8">'+pct.toFixed(1)+'% do total</span></td>'+
+    '</tr>'+detalhe;
+  }).join('');
+
+  cont.innerHTML='<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
+    '<thead><tr style="background:#1a1a2e;color:#fff">'+
+      '<th style="padding:9px 12px;text-align:left;font-size:11px;text-transform:uppercase">Fornecedor</th>'+
+      '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">Itens</th>'+
+      '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">Qtd excedente</th>'+
+      '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">Valor parado</th>'+
+      '<th style="padding:9px 12px;font-size:11px;text-transform:uppercase">Participação</th>'+
+    '</tr></thead><tbody>'+linhas+'</tbody></table></div>'+
+    '<div style="font-size:11px;color:#94a3b8;margin-top:8px">Clique em um fornecedor para ver os itens em excesso.</div>';
+}
+
+function toggleAnaliseForn(fonte,forn){
+  _analiseAberto[fonte]=(_analiseAberto[fonte]===forn)?null:forn;
+  renderAnalise(fonte);
+}
+
+function montarSelectUnidadeAnalise(){
+  const sel=document.getElementById('afs-unidade');
+  if(!sel) return;
+  const permitidas=unidadesPermitidas();
+  const atual=sel.value;
+  const desejado='<option value="">Todas</option>'+permitidas.map(u=>'<option value="'+u+'">Unidade '+u+'</option>').join('');
+  if(sel.innerHTML!==desejado){
+    sel.innerHTML=desejado;
+    sel.value=permitidas.includes(atual)?atual:'';
+  }
+}
+
+function exportarAnaliseResumo(fonte){
+  const cfg=ANALISE_FONTES[fonte];
+  const r=calcularAnalise(fonte);
+  if(!r.lista.length){alert('Nada a exportar: nenhum fornecedor com excesso.');return;}
+  let csv='﻿';
+  csv+='ANALISE DE FORNECEDOR - EXCESSO DE ESTOQUE ('+cfg.titulo+')\n';
+  csv+='Regra:;(pico x '+r.fator+') - estoque; negativo = excesso\n';
+  csv+='Data:;'+new Date().toLocaleDateString('pt-BR')+'\n\n';
+  csv+='Fornecedor;Itens em excesso;Qtd excedente;Valor parado (R$)\n';
+  r.lista.forEach(g=>{
+    csv+='"'+String(g.fornecedor).replace(/"/g,'""')+'";'+g.itens.length+';'+Math.round(g.qtd)+';'+g.valor.toFixed(2).replace('.',',')+'\n';
+  });
+  csv+='\nTOTAL;;;'+r.totalValor.toFixed(2).replace('.',',')+'\n';
+  baixarArquivo(csv,'text/csv;charset=utf-8','analise_fornecedor_'+cfg.px+'_'+new Date().toLocaleDateString('pt-BR').split('/').join('-')+'.csv');
+}
+
+function exportarAnaliseItens(fonte){
+  const cfg=ANALISE_FONTES[fonte];
+  const r=calcularAnalise(fonte);
+  if(!r.lista.length){alert('Nada a exportar: nenhum item com excesso.');return;}
+  let csv='﻿';
+  csv+='ANALISE DE FORNECEDOR - ITENS COM EXCESSO ('+cfg.titulo+')\n';
+  csv+='Regra:;(pico x '+r.fator+') - estoque; negativo = excesso\n';
+  csv+='Data:;'+new Date().toLocaleDateString('pt-BR')+'\n\n';
+  csv+='Fornecedor;Codigo;'+(cfg.temUnidade?'Unidade;':'')+'Descricao;Pico mensal;Estoque;Ideal (pico x '+r.fator+');Qtd excedente;Custo unit. (R$);Valor parado (R$)\n';
+  r.lista.forEach(g=>{
+    g.itens.forEach(i=>{
+      csv+='"'+String(g.fornecedor).replace(/"/g,'""')+'";'+i.c+';'+(cfg.temUnidade?i.u+';':'')+
+        '"'+String(i.d||'').replace(/"/g,'""')+'";'+i.pico+';'+i.estoque+';'+i.ideal+';'+
+        i.excQtd+';'+i.custo.toFixed(2).replace('.',',')+';'+i.excValor.toFixed(2).replace('.',',')+'\n';
+    });
+  });
+  csv+='\nTOTAL;;;'+(cfg.temUnidade?';':'')+';;;;;'+r.totalValor.toFixed(2).replace('.',',')+'\n';
+  baixarArquivo(csv,'text/csv;charset=utf-8','analise_fornecedor_itens_'+cfg.px+'_'+new Date().toLocaleDateString('pt-BR').split('/').join('-')+'.csv');
+}
 
 /* ---------- Tela de gestão de usuários (só o master abre) ---------- */
 let _usersEdit=null;      // cópia de trabalho
@@ -2726,13 +2957,19 @@ window._buscaModoSeven='E';
 window._ultimoTabSeven='montar';
 
 function switchAppTabSeven(tab){
+  // respeita as permissões: sem sv.compras só resta a Análise de Fornecedor
+  if(tab!=='analise' && !podeAba('sv.compras') && podeAba('sv.analise')) tab='analise';
+  if(tab==='analise' && !podeAba('sv.analise') && podeAba('sv.compras')) tab='montar';
   window._ultimoTabSeven=tab;
   document.getElementById('app-tab-montar-seven').classList.toggle('hidden',tab!=='montar');
   document.getElementById('app-tab-salvos-seven').classList.toggle('hidden',tab!=='salvos');
   document.getElementById('app-tab-cotacao-seven').classList.toggle('hidden',tab!=='cotacao');
+  document.getElementById('app-tab-analise-seven').classList.toggle('hidden',tab!=='analise');
   document.getElementById('tabbtn-montar-seven').classList.toggle('active',tab==='montar');
   document.getElementById('tabbtn-salvos-seven').classList.toggle('active',tab==='salvos');
   document.getElementById('tabbtn-cotacao-seven').classList.toggle('active',tab==='cotacao');
+  document.getElementById('tabbtn-analise-seven').classList.toggle('active',tab==='analise');
+  if(tab==='analise') renderAnalise('seven');
   if(tab==='montar') renderSeven();
   if(tab==='salvos') renderPedidosSalvosSeven();
   if(tab==='cotacao') renderCotacaoTabSeven();
