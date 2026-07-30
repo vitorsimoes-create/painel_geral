@@ -2,6 +2,12 @@
 
 A categoria **Financeiro** da MC MOTO tem duas sub-abas: **Contas a Pagar** (deep-link para dentro do Mapa de Vendas; inclui o Painel de Caixa embutido — detalhes abaixo) e **Contas a Receber** (documentada adiante).
 
+### Ver itens da nota (30/07/2026)
+
+Na aba **Compras > Recebimentos** da MC MOTO, cada nota vinda do sistema (origem 🗄️ NF) é **clicável** e expande a lista de **itens que chegaram naquela nota** (código, produto, quantidade, valor). Lançamentos manuais não têm itens (não são clicáveis). Os dados ficam em `const RECEB_ITENS_DB = { "<id da nota>": [{c,d,q,v}], … }`, gerado por `gerar_receb_itens_mcmoto.py` a partir de `mc_moto.itens_entrada` (JOIN `notas_entrada`, últimos 12 meses) — o id da nota é o mesmo do `RECEBIMENTOS_DB`. Estado do expandido em `_recebItensAberto`; render por `linhaItensNota()` (compartilhado, colspan 6). Roda na rotina diária (passo A7b).
+
+> **SEVEN:** o mesmo recurso **não** existe na RHS/SEVEN porque o espelho `projeto_f7` não tem itens de compra — as "notas" de lá são reconstruídas de títulos a pagar (ver [`04-rhs-seven.md`](04-rhs-seven.md)).
+
 ## Contas a Pagar (dentro do Mapa de Vendas)
 
 Gerada por `atualizar_mapa.py` a partir da tabela `contas_pagar` do banco `mc_moto`. Desde 24/07/2026 tem um seletor **"Mostrar: A pagar (em aberto) | Já pagos (12 meses)"** (`setCapModo`), que troca KPIs, gráfico e a listagem:
