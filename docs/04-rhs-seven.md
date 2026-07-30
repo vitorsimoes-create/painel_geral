@@ -49,6 +49,21 @@ Filtros aplicados na geração: só itens com `TMER_ATIVO_COMPRA='S'` e forneced
 
 Todo o resto (busca E/OU, multi-seleção de fornecedor, "adicionar todos" com confirmação acima de 200 itens, exportações texto/CSV/PDF, fluxo completo de cotação com link HTML/planilha e "comprar pelo menor preço") segue as mesmas regras documentadas em [01-compras](01-compras.md).
 
+### Recebimentos (sub-aba de Compras)
+
+Criada em 30/07/2026 seguindo **as mesmas regras da aba Recebimentos da MC MOTO** (ver [`01-compras.md`](01-compras.md) / [`03-financeiro-mc-moto.md`](03-financeiro-mc-moto.md)): lista dos recebimentos do mês (sistema + lançamentos manuais), filtro de **fornecedores de mercadoria**, **meta do mês** (automática = CMV do mês anterior, ou manual pelo ✏️) com barra de progresso (85% âmbar / 100% vermelho) e **quadro anual** Recebido × Meta × Desvio. Chave de permissão: `sv.recebimentos`.
+
+**⚠️ Diferença estrutural importante — de onde vêm os dados.** O espelho `projeto_f7` **não tem tabela de notas de entrada** (a MC MOTO usa `notas_entrada`). A única fonte de compras de fornecedor no espelho são os **títulos a pagar**. Então `gerar_recebimentos_seven.py` **reconstrói a nota** agrupando `TPAG_ABERTO` + `TPAG_BAIXADO` por `(unidade, tipo, número, fornecedor)` e usando **`TPAG_VALOR_FATURA`** — que é o valor da **nota**, não da parcela; assim uma NF em 5× conta **uma vez**. `SELECT DISTINCT` é obrigatório (o `TPAG_BAIXADO` do espelho tem duplicação ~66×). Consequências a ter em mente:
+- entram também títulos que **não são mercadoria** (serviços, impostos…) — por isso o filtro de "fornecedores de mercadoria" existe aqui também, com lista **própria da SEVEN** (`seven_forn_nao_mercadoria`, separada da MC MOTO);
+- a data usada é a **emissão do título**, não a entrada física da mercadoria;
+- se `VALOR_FATURA` vier zerado, o script cai para a soma das parcelas.
+
+**Meta automática (CMV):** o espelho não guarda o custo da venda, então `CMV_MENSAL_SEVEN` é **aproximado** por `Σ(qtd vendida × TMER_CUSTO_MEDIO_REAL)` — a mesma aproximação que o painel já usa para a margem da SEVEN. Por isso a meta automática da SEVEN é uma estimativa, não um CMV contábil.
+
+**Diferenças de interface em relação à MC MOTO:** tem um **filtro de unidade** (Todas / 3 / 4 / 5) que respeita a permissão de unidade do usuário e vale também para o quadro anual, e o lançamento manual pede a unidade. Armazenamento próprio em `localStorage`: `seven_recebimentos` e `seven_metas_mensais`.
+
+Volume atual (30/07/2026): 1.294 notas nos últimos 12 meses, R$ 3.531.928,42.
+
 ## Financeiro
 
 Painel nativo de `index.html` (não iframe), com 3 sub-categorias via `switchCategoriaFinanceiroSeven`:
