@@ -134,6 +134,7 @@
     <button type="submit" class="btn btn-primary" style="padding:10px 18px">Entrar</button>
   </form>
   <div id="lock-erro" style="color:#f87171;font-size:12px;display:none">Senha incorreta.</div>
+  <div id="lock-cfg-ok" style="color:#4ade80;font-size:12px;display:none">✅ Acesso configurado neste dispositivo. Digite sua senha para entrar.</div>
 </div>
 
 <!-- ===== GESTÃO DE USUÁRIOS (somente master) ===== -->
@@ -152,8 +153,9 @@
     </div>
     <div style="border-top:1px solid #e2e8f0;padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f8fafc">
       <span style="font-size:11px;color:#64748b;flex:1;min-width:280px">
-        As alterações valem <strong>neste navegador</strong>. Para valer para todos, clique em "Copiar configuração" e me envie o texto para eu publicar.
+        As alterações valem <strong>neste navegador</strong>. Para os outros acessarem, use <strong>"Gerar link de acesso"</strong> e envie o link a cada pessoa — ela abre uma vez e depois entra só com a senha.
       </span>
+      <button class="btn btn-primary" style="font-size:12px" onclick="gerarLinkAcesso()">🔗 Gerar link de acesso</button>
       <button class="btn btn-outline" style="font-size:12px" onclick="copiarConfigUsuarios()">📋 Copiar configuração para publicar</button>
       <button class="btn btn-outline" style="font-size:12px" onclick="restaurarConfigPadrao()">↺ Restaurar publicado</button>
     </div>
@@ -934,6 +936,11 @@ function atualizarLabelFornecedor(){
 }
 
 function init(){
+  // acesso recebido por link: confirma para a pessoa que já pode entrar
+  if(_cfgImportada){
+    const okEl=document.getElementById('lock-cfg-ok');
+    if(okEl) okEl.style.display='block';
+  }
   // sessão já autenticada: reaplica as permissões do usuário logado
   if(usuarioAtual()){
     document.getElementById('lock-overlay').classList.add('hidden');
@@ -1624,6 +1631,37 @@ function getUsuarios(){
 }
 function setUsuarios(arr){ localStorage.setItem(LS_USUARIOS,JSON.stringify(arr)); }
 
+/* --- Distribuição da configuração por LINK ---------------------------------
+   O painel é estático: o que o master edita fica no localStorage DELE. Para os
+   outros usuários receberem os acessos sem depender de uma publicação no GitHub,
+   o master gera um link com a configuração embutida (#cfg=...). Quem abre o link
+   uma vez grava a configuração no próprio navegador e passa a entrar com sua senha.
+   Obs: o link carrega as senhas — enviar apenas para a própria equipe.          */
+function _cfgEncode(obj){
+  const bytes=new TextEncoder().encode(JSON.stringify(obj));
+  let bin=''; bytes.forEach(b=>{ bin+=String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function _cfgDecode(s){
+  s=s.replace(/-/g,'+').replace(/_/g,'/');
+  const bin=atob(s); const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+let _cfgImportada=false;
+(function importarCfgDoLink(){
+  try{
+    const m=(location.hash||'').match(/[#&]cfg=([A-Za-z0-9\-_]+)/);
+    if(!m) return;
+    const cfg=_cfgDecode(m[1]);
+    if(Array.isArray(cfg) && cfg.length && cfg.every(u=>u && u.id && typeof u.senha==='string')){
+      localStorage.setItem(LS_USUARIOS,JSON.stringify(cfg));
+      _cfgImportada=true;
+      history.replaceState(null,'',location.pathname+location.search);  // tira as senhas da barra de endereço
+    }
+  }catch(e){ /* link inválido: segue com a configuração publicada */ }
+})();
+
 function usuarioAtual(){
   const id=sessionStorage.getItem('painel_usuario');
   if(!id) return null;
@@ -2129,6 +2167,18 @@ function excluirUsuario(){
   setUsuarios(_usersEdit);
   renderGestaoUsuarios();
 }
+function gerarLinkAcesso(){
+  const semAcesso=_usersEdit.filter(u=>!u.master && !(u.abas||[]).length).map(u=>u.nome);
+  const link=location.origin+location.pathname+'#cfg='+_cfgEncode(_usersEdit);
+  const aviso=semAcesso.length
+    ? '\n\nATENÇÃO: sem nenhuma aba liberada (não conseguirão entrar): '+semAcesso.join(', ')
+    : '';
+  navigator.clipboard.writeText(link).then(
+    ()=>alert('Link de acesso copiado!\n\nEnvie para cada pessoa da equipe. Ela abre o link UMA vez e depois entra normalmente só com a senha dela.\n\nO link contém as senhas — envie apenas para a sua equipe.'+aviso),
+    ()=>{ prompt('Copie o link e envie para a equipe (contém as senhas):',link); }
+  );
+}
+
 function copiarConfigUsuarios(){
   const txt='const USUARIOS_PADRAO='+JSON.stringify(_usersEdit,null,2)+';';
   navigator.clipboard.writeText(txt).then(
