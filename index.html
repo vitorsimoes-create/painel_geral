@@ -1947,9 +1947,16 @@ function calcularAnalise(fonte){
   const busca=((document.getElementById(cfg.px+'-busca')||{}).value||'').trim().toUpperCase();
 
   const porForn={};
-  let totalValor=0, totalItens=0, ignoradosRecentes=0, valorIgnorado=0;
+  const estoqueForn={};   // valor TOTAL em estoque por fornecedor (todos os itens, não só o excesso)
+  let totalValor=0, totalItens=0, ignoradosRecentes=0, valorIgnorado=0, totalEstoque=0;
   cfg.dados().forEach(it=>{
     const pico=it.k||0, estoque=it.e||0, custo=it.p||0;
+    const forn=it.f||'(sem fornecedor)';
+    // estoque total do fornecedor = soma de (estoque × custo) de todos os seus itens
+    // (estoque negativo = pendência, não conta como valor em prateleira)
+    const estVal=Math.max(0,estoque)*custo;
+    estoqueForn[forn]=(estoqueForn[forn]||0)+estVal;
+    totalEstoque+=estVal;
     const ideal=pico*fator;
     const pedido=ideal-estoque;
     if(pedido>=0) return;                 // não há excesso
@@ -1957,17 +1964,16 @@ function calcularAnalise(fonte){
     const excValor=excQtd*custo;
     // mercadoria que chegou há pouco não conta como dinheiro parado
     if(dias>0 && it.ue && it.ue>=corte){ ignoradosRecentes++; valorIgnorado+=excValor; return; }
-    const forn=it.f||'(sem fornecedor)';
     const g=porForn[forn]||(porForn[forn]={fornecedor:forn,itens:[],qtd:0,valor:0});
     g.itens.push({c:it.c,u:it.u,d:it.d,pico,estoque,ideal,excQtd,custo,excValor});
     g.qtd+=excQtd; g.valor+=excValor;
     totalValor+=excValor; totalItens++;
   });
   let lista=Object.values(porForn).sort((a,b)=>b.valor-a.valor);
-  lista.forEach(g=>g.itens.sort((a,b)=>b.excValor-a.excValor));
+  lista.forEach(g=>{ g.itens.sort((a,b)=>b.excValor-a.excValor); g.estoqueValor=estoqueForn[g.fornecedor]||0; });
   const totalGeral=totalValor, fornecedoresTotal=lista.length;
   if(busca) lista=lista.filter(g=>g.fornecedor.toUpperCase().includes(busca));
-  return {lista,totalValor,totalItens,fator,totalGeral,fornecedoresTotal,dias,ignoradosRecentes,valorIgnorado};
+  return {lista,totalValor,totalItens,fator,totalGeral,fornecedoresTotal,dias,ignoradosRecentes,valorIgnorado,totalEstoque};
 }
 
 function renderAnalise(fonte){
@@ -2005,7 +2011,7 @@ function renderAnalise(fonte){
     let detalhe='';
     if(aberto){
       const cabUn=cfg.temUnidade?'<th class="num">Un.</th>':'';
-      detalhe='<tr><td colspan="5" style="padding:0;background:#f8fafc">'+
+      detalhe='<tr><td colspan="6" style="padding:0;background:#f8fafc">'+
         '<div style="padding:10px 14px"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'+
         '<thead><tr style="background:#e2e8f0">'+
           '<th style="padding:6px 8px;text-align:left">Cód.</th>'+cabUn+
@@ -2032,7 +2038,9 @@ function renderAnalise(fonte){
       '<td class="num" style="padding:9px 12px">'+g.itens.length+'</td>'+
       '<td class="num" style="padding:9px 12px">'+Math.round(g.qtd).toLocaleString('pt-BR')+'</td>'+
       '<td class="num" style="padding:9px 12px;color:#dc2626;font-weight:700">'+fmt(g.valor)+'</td>'+
-      '<td style="padding:9px 12px;width:180px"><div style="background:#f1f5f9;border-radius:4px;height:14px"><div style="height:100%;border-radius:4px;background:#ef4444;width:'+Math.max(2,Math.round(g.valor/maior*100))+'%"></div></div>'+
+      '<td class="num" style="padding:9px 12px">'+fmt(g.estoqueValor)+
+        '<div style="font-size:10px;color:#94a3b8">'+(g.estoqueValor>0?(g.valor/g.estoqueValor*100).toFixed(0)+'% parado':'—')+'</div></td>'+
+      '<td style="padding:9px 12px;width:160px"><div style="background:#f1f5f9;border-radius:4px;height:14px"><div style="height:100%;border-radius:4px;background:#ef4444;width:'+Math.max(2,Math.round(g.valor/maior*100))+'%"></div></div>'+
         '<span style="font-size:10px;color:#94a3b8">'+pct.toFixed(1)+'% do total</span></td>'+
     '</tr>'+detalhe;
   }).join('');
@@ -2044,6 +2052,7 @@ function renderAnalise(fonte){
       '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">Itens</th>'+
       '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">Qtd excedente</th>'+
       '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">Valor parado</th>'+
+      '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">Estoque total</th>'+
       '<th style="padding:9px 12px;font-size:11px;text-transform:uppercase">Participação</th>'+
     '</tr></thead><tbody>'+linhas+'</tbody></table></div>'+
     '<div style="font-size:11px;color:#94a3b8;margin-top:8px">Clique em um fornecedor para ver os itens em excesso.</div>';
@@ -2075,11 +2084,12 @@ function exportarAnaliseResumo(fonte){
   csv+='Regra:;(pico x '+r.fator+') - estoque; negativo = excesso\n';
   csv+='Ignorados:;itens que entraram no estoque nos ultimos '+r.dias+' dias ('+r.ignoradosRecentes+' itens, R$ '+r.valorIgnorado.toFixed(2).replace('.',',')+')\n';
   csv+='Data:;'+new Date().toLocaleDateString('pt-BR')+'\n\n';
-  csv+='Fornecedor;Itens em excesso;Qtd excedente;Valor parado (R$)\n';
+  csv+='Fornecedor;Itens em excesso;Qtd excedente;Valor parado (R$);Estoque total (R$);% parado\n';
   r.lista.forEach(g=>{
-    csv+='"'+String(g.fornecedor).replace(/"/g,'""')+'";'+g.itens.length+';'+Math.round(g.qtd)+';'+g.valor.toFixed(2).replace('.',',')+'\n';
+    const pctPar=g.estoqueValor>0?(g.valor/g.estoqueValor*100).toFixed(1).replace('.',','):'';
+    csv+='"'+String(g.fornecedor).replace(/"/g,'""')+'";'+g.itens.length+';'+Math.round(g.qtd)+';'+g.valor.toFixed(2).replace('.',',')+';'+g.estoqueValor.toFixed(2).replace('.',',')+';'+pctPar+'\n';
   });
-  csv+='\nTOTAL;;;'+r.totalValor.toFixed(2).replace('.',',')+'\n';
+  csv+='\nTOTAL;;;'+r.totalValor.toFixed(2).replace('.',',')+';'+r.totalEstoque.toFixed(2).replace('.',',')+'\n';
   baixarArquivo(csv,'text/csv;charset=utf-8','analise_fornecedor_'+cfg.px+'_'+new Date().toLocaleDateString('pt-BR').split('/').join('-')+'.csv');
 }
 
