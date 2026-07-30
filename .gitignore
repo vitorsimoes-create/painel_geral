@@ -1,0 +1,19 @@
+# Scripts geradores — contêm credenciais dos bancos, NUNCA publicar
+gerar_*.py
+atualizar_mapa.py
+servidor_mapa.py
+_*.py
+
+# Arquivos com credenciais / sensíveis
+conexaomc.md
+*.log
+
+# Fontes locais que não devem ir ao GitHub
+Mapa de Vendas.html
+painel_caixa feito.html
+
+# Diversos locais
+__pycache__/
+_estimativas.json
+*.xlsx
+backup_comissao_avista_*.csv
