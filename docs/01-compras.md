@@ -111,6 +111,11 @@ excesso (valor) = excesso (qtd) × custo unitário
 ```
 Itens com `pedido ≥ 0` são ignorados (não há excesso). O fator é editável na tela ("Cobertura (× pico)"), então dá para simular outras coberturas sem mudar código; o padrão continua 3.
 
+**Mercadoria recém-chegada não conta** (decisão do usuário, 30/07/2026): itens cuja **última entrada no estoque** ocorreu dentro do prazo configurado ("Ignorar chegadas até (dias)", padrão **45**) são excluídos do excesso — acabaram de chegar, ainda não são dinheiro parado. A tela mostra um aviso com quantos itens e quanto valor ficaram de fora, e os CSVs registram isso no cabeçalho. Colocar **0** dias desliga o corte.
+- A data vem do campo `ue` (YYYYMMDD) gravado no `RAW_DATA`/`RAW_DATA_SEVEN` pelos geradores: `produtos.ULT_DATA_ENTRADA` na MC MOTO e `TMER_ESTOQUE.TMER_DATA_ULT_ENTRADA` na SEVEN.
+- **Comportamento conservador:** item **sem** data de entrada no ERP continua entrando na análise (não dá para provar que é recente, então não se esconde um possível excesso). Hoje têm data 5.510 dos 18.945 itens da MC MOTO e 12.241 dos 21.887 da SEVEN.
+- Impacto medido em 30/07/2026: MC MOTO R$ 1.067.005 → **R$ 1.002.872** (282 itens, R$ 64.133 excluídos); SEVEN R$ 652.236 → **R$ 616.240** (167 itens, R$ 35.997).
+
 **Interface:**
 - **KPIs:** valor total em excesso, nº de fornecedores com excesso e nº de itens.
 - **Tabela por fornecedor**, ordenada pelo valor parado (maior primeiro): itens, quantidade excedente, valor parado e uma barra de participação % no total.
