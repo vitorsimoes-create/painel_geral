@@ -58,7 +58,8 @@ Criada em 30/07/2026 seguindo **as mesmas regras da aba Recebimentos da MC MOTO*
 - a data usada é a **emissão do título**, não a entrada física da mercadoria;
 - se `VALOR_FATURA` vier zerado, o script cai para a soma das parcelas.
 
-**Meta automática (CMV):** o espelho não guarda o custo da venda, então `CMV_MENSAL_SEVEN` é **aproximado** por `Σ(qtd vendida × TMER_CUSTO_MEDIO_REAL)` — a mesma aproximação que o painel já usa para a margem da SEVEN. Por isso a meta automática da SEVEN é uma estimativa, não um CMV contábil.
+**Meta por unidade + CMV (decisão do usuário 30/07/2026):** a meta é **por unidade de negócio** — antes o "Recebido" mudava com o filtro de unidade mas a meta seguia sendo o total das três, o que invalidava a comparação. Agora `CMV_MENSAL_SEVEN` é **por unidade**: `{"3":{"YYYY-MM":v,…},"4":{…},"5":{…}}`. A **meta automática** de um mês = **CMV do mês anterior** da(s) unidade(s) em foco (a selecionada, ou a soma das permitidas em "Todas"). O CMV continua sendo uma **aproximação** — `Σ(qtd vendida × TMER_CUSTO_MEDIO_REAL)`, a mesma que o painel usa para a margem da SEVEN, porque o espelho não guarda o custo da venda.
+- **Meta manual** também é por unidade: gravada em `seven_metas_mensais` na chave `"mes|unidade"` (ex. `"2026-07|4"`). Só pode ser editada com **uma unidade selecionada** (em "Todas" o ✏️ avisa e não deixa). Em "Todas", se alguma unidade tem meta manual, ela substitui só a parcela daquela unidade e o restante segue no automático (a etiqueta "(CMV)" some por ser meta mista).
 
 **Diferenças de interface em relação à MC MOTO:** tem um **filtro de unidade** (Todas / 3 / 4 / 5) que respeita a permissão de unidade do usuário e vale também para o quadro anual, e o lançamento manual pede a unidade. Armazenamento próprio em `localStorage`: `seven_recebimentos` e `seven_metas_mensais`.
 
