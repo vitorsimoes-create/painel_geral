@@ -209,7 +209,7 @@
   <button class="app-tab sub-mapavendas" data-target="contasrecebermc" onclick="abrirSubAbaFinanceiroMc(this)">💵 Contas a Receber</button>
 </div>
 <div id="subtabs-rhsseven" style="background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;display:flex;gap:4px" class="hidden">
-  <button class="app-tab sub-rhsseven active" data-target="unidades" onclick="abrirSubAbaRHSSeven('unidades',this)">🏢 Unidades de Negócio</button>
+  <button class="app-tab sub-rhsseven active" data-target="unidades" onclick="abrirSubAbaRHSSeven('unidades',this)">📈 VENDAS</button>
   <button class="app-tab sub-rhsseven" data-target="crm" onclick="abrirSubAbaRHSSeven('crm',this)">👥 CRM</button>
   <button class="app-tab sub-rhsseven" data-target="comprasseven" onclick="abrirSubAbaRHSSeven('comprasseven',this)">🛍️ Compras</button>
   <button class="app-tab sub-rhsseven" data-target="financeiroseven" onclick="abrirSubAbaRHSSeven('financeiroseven',this)">💰 Financeiro</button>
@@ -1584,7 +1584,7 @@ const ABAS_CATALOGO={
   'mc.graficos':      {g:'mcmoto', cat:'vendas',     rot:'Gráficos',                 sel:'#subtabs-vendas [data-target="graficos"]'},
   'mc.contaspagar':   {g:'mcmoto', cat:'financeiro', rot:'Contas a Pagar',           sel:'#subtabs-financeiro [data-mapatab="contaspagar"]'},
   'mc.contasreceber': {g:'mcmoto', cat:'financeiro', rot:'Contas a Receber',         sel:'#subtabs-financeiro [data-target="contasrecebermc"]'},
-  'sv.unidades':      {g:'rhsseven', cat:'seven',    rot:'Unidades de Negócio',      sel:'#subtabs-rhsseven [data-target="unidades"]'},
+  'sv.unidades':      {g:'rhsseven', cat:'seven',    rot:'Vendas',                   sel:'#subtabs-rhsseven [data-target="unidades"]'},
   'sv.crm':           {g:'rhsseven', cat:'seven',    rot:'CRM',                      sel:'#subtabs-rhsseven [data-target="crm"]'},
   'sv.compras':       {g:'rhsseven', cat:'seven',    rot:'Compras',                  sel:'#subtabs-rhsseven [data-target="comprasseven"]'},
   'sv.analise':       {g:'rhsseven', cat:'seven',    rot:'Compras › Análise de Fornecedor', sel:'#tabbtn-analise-seven'},
@@ -1688,7 +1688,7 @@ function aplicarPermissoes(){
 
 /* Limita a unidade de negócio da SEVEN em todos os lugares onde ela aparece:
    filtro do Compras (nativo), iframes do Financeiro (contas a pagar/receber e
-   risco) e o seletor de unidade da aba Unidades de Negócio (Mapa de Vendas). */
+   risco) e o seletor de unidade da aba Vendas (Mapa de Vendas; chave sv.unidades). */
 function aplicarUnidadesPermitidas(){
   const permitidas=unidadesPermitidas();
 
@@ -1733,7 +1733,7 @@ function aplicarUnidadesPermitidas(){
     }
   });
 
-  // 3) seletor de unidade da aba Unidades de Negócio (dentro do Mapa de Vendas)
+  // 3) seletor de unidade da aba Vendas da SEVEN (dentro do Mapa de Vendas)
   const ifrMapa=document.getElementById('iframe-mapavendas');
   if(ifrMapa){
     const aplicarMapa=()=>{
@@ -2082,7 +2082,7 @@ function renderFormUsuario(){
           UNIDADES_SEVEN.map(x=>'<label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">'+
             '<input type="checkbox" class="uf-unidade" value="'+x+'"'+(un.has(x)?' checked':'')+'> Unidade '+x+'</label>').join('')+
         '</div>'+
-        '<div style="padding:0 12px 8px;font-size:11px;color:#94a3b8">Vale para Compras, Financeiro (contas a pagar/receber e risco) e Unidades de Negócio. Se nenhuma for marcada, o usuário vê todas.</div>'+
+        '<div style="padding:0 12px 8px;font-size:11px;color:#94a3b8">Vale para Compras, Financeiro (contas a pagar/receber e risco) e Vendas. Se nenhuma for marcada, o usuário vê todas.</div>'+
       '</div>';
     })()+
     '<div style="display:flex;gap:8px">'+
