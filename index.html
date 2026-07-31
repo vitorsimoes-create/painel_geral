@@ -3069,7 +3069,7 @@ function gerarLinkFornecedorCotacao(cotId,fornecedor){
 
   const fnSlug=fornecedor.replace(/[^\wÀ-ú]/g,'_').toLowerCase();
   const arquivo=`${cot.id}_${fnSlug}.html`;
-  const urlPrevista=`https://vitorsimoes-create.github.io/pedido-compras-m/cotacoes/${arquivo}`;
+  const urlPrevista=`https://vitorsimoes-create.github.io/painel_geral/cotacoes/${arquivo}`;
 
   const linhasItens=cot.itens.map(i=>`<tr data-cod="${i.c}">
     <td style="padding:8px 10px;color:#94a3b8;font-size:12px">${i.c}</td>
@@ -4164,7 +4164,7 @@ function gerarLinkFornecedorCotacaoSeven(cotId,fornecedor){
 
   const fnSlug=fornecedor.replace(/[^\wÀ-ú]/g,'_').toLowerCase();
   const arquivo=`${cot.id}_${fnSlug}.html`;
-  const urlPrevista=`https://vitorsimoes-create.github.io/pedido-compras-m/cotacoes/${arquivo}`;
+  const urlPrevista=`https://vitorsimoes-create.github.io/painel_geral/cotacoes/${arquivo}`;
 
   const linhasItens=cot.itens.map(i=>`<tr data-cod="${i.c}">
     <td style="padding:8px 10px;color:#94a3b8;font-size:12px">${i.c}</td>

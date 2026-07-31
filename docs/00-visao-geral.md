@@ -2,7 +2,7 @@
 
 ## O que é
 
-Painel interno de gestão para a **MC MOTO** (varejo de peças/acessórios para motos) e para o grupo **RHS/SEVEN** (unidades de negócio relacionadas). É uma aplicação **estática** (HTML + CSS + JS puro, sem backend/servidor próprio), publicada via **GitHub Pages** a partir do repositório [`vitorsimoes-create/pedido-compras-m`](https://github.com/vitorsimoes-create/pedido-compras-m), branch `main`.
+Painel interno de gestão para a **MC MOTO** (varejo de peças/acessórios para motos) e para o grupo **RHS/SEVEN** (unidades de negócio relacionadas). É uma aplicação **estática** (HTML + CSS + JS puro, sem backend/servidor próprio), publicada via **GitHub Pages** a partir do repositório [`vitorsimoes-create/painel_geral`](https://github.com/vitorsimoes-create/painel_geral), branch `main`.
 
 Não há API nem banco de dados acessado em tempo real pelo navegador. Todos os dados que o painel exibe são **snapshots gerados periodicamente** por scripts Python locais (rodando na máquina do usuário via tarefas agendadas) e depois "gravados" diretamente dentro dos arquivos HTML publicados. Ver [`06-pipeline-dados.md`](06-pipeline-dados.md) para o fluxo completo de atualização.
 
