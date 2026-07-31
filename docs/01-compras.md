@@ -50,6 +50,21 @@ Cálculo (SQL + agregação Python, rodado pela tarefa agendada `atualizacao-dia
 2. Para cada produto, `k` = o **maior** valor entre as linhas mensais desse produto (substituição, nunca soma cumulativa).
 3. Produto sem nenhuma venda no período → `k = 0`.
 
+## Horizonte de compra — seletor "Comprar para" (MC MOTO, 31/07/2026)
+
+Na barra de filtros do **Montar Pedido** da MC MOTO há um seletor **"Comprar para"** de **1 a 6 meses** (`#sel-meses`), que define para quantos meses a sugestão deve cobrir:
+
+```
+s = round((k × meses) − e)          // meses = 1 → s = round(k − e), a regra original
+```
+
+- **Implementação:** `setMesesCompraMc(n)` → `aplicarMesesCompraMc()` **reescreve o próprio `it.s`** de cada item do `RAW_DATA`, em vez de espalhar o multiplicador por filtro/ordenação/badges/quantidade padrão/exportações. Assim todo o resto do fluxo continua lendo `it.s` como antes — inclusive a quantidade padrão ao adicionar (`s>0 ? s : 1`), o filtro "Com sugestão de compra" e o badge "MANUAL" (`s<=0`).
+- **Compatibilidade verificada:** com `meses = 1` o recálculo reproduz **exatamente** o `s` vindo do banco nos 18.945 itens (0 divergências), então o padrão não altera nenhum número já existente.
+- **Persistência:** a escolha fica em `localStorage`, chave `mc_meses_compra`, e é reaplicada no `init()` **antes do primeiro render**. **`↺ Limpar` não reseta o horizonte** — é uma regra de cálculo, não um filtro.
+- Uma legenda abaixo do seletor mostra a fórmula ativa (`pico − estoque` ou `(pico × N) − estoque`).
+- Itens já adicionados ao pedido **mantêm a quantidade** ao trocar o horizonte (a quantidade é editável pelo usuário); o novo horizonte vale para os próximos itens adicionados.
+- ⚠️ Existe **só na MC MOTO**. A SEVEN tem mecânica diferente (override manual por item, `seven_sugestao_override`) e não recebeu o seletor.
+
 ## Regra "Comprar?" (campo `nc`)
 
 Badge de recomendação de compra exibido em toda a interface (tabela de itens, exportações), com base no valor de `nc`:
