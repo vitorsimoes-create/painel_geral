@@ -280,6 +280,18 @@
       <div id="busca-hint" style="font-size:11px;color:#94a3b8;margin-top:2px">Modo <strong>E</strong>: todas as palavras no mesmo item</div>
     </div>
     <div class="filter-group">
+      <label>Comprar para</label>
+      <select id="sel-meses" title="A sugestão passa a ser (pico × meses) − estoque">
+        <option value="1">1 mês</option>
+        <option value="2">2 meses</option>
+        <option value="3">3 meses</option>
+        <option value="4">4 meses</option>
+        <option value="5">5 meses</option>
+        <option value="6">6 meses</option>
+      </select>
+      <div id="meses-hint" style="font-size:11px;color:#94a3b8;margin-top:2px">pico − estoque</div>
+    </div>
+    <div class="filter-group">
       <label>Mostrar apenas</label>
       <select id="sel-filtro">
         <option value="sugestao">Com sugestão de compra</option>
@@ -1024,7 +1036,13 @@ function init(){
   });
   document.getElementById('sel-filtro').addEventListener('change',()=>{page=0;render()});
   document.getElementById('sel-order').addEventListener('change',()=>{page=0;render()});
-  render();
+  // horizonte de compra: reaplica a escolha salva antes do primeiro render
+  const selMeses=document.getElementById('sel-meses');
+  if(selMeses){
+    selMeses.value=String(mesesCompraMc);
+    selMeses.addEventListener('change',()=>setMesesCompraMc(selMeses.value));
+  }
+  setMesesCompraMc(mesesCompraMc);
 }
 
 function getFilters(){
@@ -1036,6 +1054,29 @@ function getFilters(){
     filtro: document.getElementById('sel-filtro').value,
     order: document.getElementById('sel-order').value
   };
+}
+
+/* ---------- Horizonte de compra (MC MOTO) ----------
+   A sugestão padrão cobre 1 mês: s = pico − estoque. Aqui o usuário escolhe para quantos
+   meses quer comprar, e a regra vira s = (pico × meses) − estoque.
+   Em vez de espalhar o multiplicador por filtro/ordenação/badges/exportações, recalculamos
+   o próprio `s` de cada item — assim todo o resto do fluxo continua lendo `it.s` como antes.
+   Com meses = 1 o cálculo reproduz exatamente o valor que vem do banco. */
+const LS_MESES_MC='mc_meses_compra';
+let mesesCompraMc=1;
+try{ const v=parseInt(localStorage.getItem(LS_MESES_MC),10); if(v>=1&&v<=6) mesesCompraMc=v; }catch(e){}
+
+function aplicarMesesCompraMc(){
+  RAW_DATA.forEach(it=>{ it.s=Math.round((it.k||0)*mesesCompraMc-(it.e||0)); });
+}
+function setMesesCompraMc(v){
+  const n=parseInt(v,10);
+  mesesCompraMc=(n>=1&&n<=6)?n:1;
+  try{ localStorage.setItem(LS_MESES_MC,String(mesesCompraMc)); }catch(e){}
+  aplicarMesesCompraMc();
+  const hint=document.getElementById('meses-hint');
+  if(hint) hint.textContent=mesesCompraMc===1?'pico − estoque':'(pico × '+mesesCompraMc+') − estoque';
+  page=0; render();
 }
 
 function limparFiltros(){
