@@ -6,7 +6,9 @@ A categoria **Financeiro** da MC MOTO tem duas sub-abas: **Contas a Pagar** (dee
 
 Na aba **Compras > Recebimentos** da MC MOTO, cada nota vinda do sistema (origem 🗄️ NF) é **clicável** e expande a lista de **itens que chegaram naquela nota** (código, produto, quantidade, valor). Lançamentos manuais não têm itens (não são clicáveis). Os dados ficam em `const RECEB_ITENS_DB = { "<id da nota>": [{c,d,q,v}], … }`, gerado por `gerar_receb_itens_mcmoto.py` a partir de `mc_moto.itens_entrada` (JOIN `notas_entrada`, últimos 12 meses) — o id da nota é o mesmo do `RECEBIMENTOS_DB`. Estado do expandido em `_recebItensAberto`; render por `linhaItensNota()` (compartilhado, colspan 6). Roda na rotina diária (passo A7b).
 
-> **SEVEN:** o mesmo recurso **não** existe na RHS/SEVEN porque o espelho `projeto_f7` não tem itens de compra — as "notas" de lá são reconstruídas de títulos a pagar (ver [`04-rhs-seven.md`](04-rhs-seven.md)).
+> **SEVEN:** o recurso ainda **não** existe na RHS/SEVEN — as "notas" de lá são reconstruídas de títulos a pagar, que não têm item (ver [`04-rhs-seven.md`](04-rhs-seven.md)).
+>
+> ⚠️ **Isso mudou de status em 31/07/2026:** a tabela **`TENT_ENTRADA_ITEM`** (itens de entrada, 33 mil linhas, desde mar/2023) **passou a existir no espelho** — antes não estava lá. Ela é a fonte que faltava, então o drill-down de itens por nota **passou a ser viável na SEVEN**. Falta só o cabeçalho da entrada (fornecedor/nº/data da nota) para amarrar item→nota: `TENT_ENTRADA_ITEM` traz `TENT_CHAVE_FK_PK` (nº da entrada) mas a tabela de cabeçalho `TENT_ENTRADA` **ainda não está no espelho**. Recurso não implementado — pendente de decisão.
 
 ## Contas a Pagar (dentro do Mapa de Vendas)
 

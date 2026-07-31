@@ -120,6 +120,12 @@ Itens com `pedido ≥ 0` são ignorados (não há excesso). O fator é editável
 - **KPIs:** valor total em excesso, nº de fornecedores com excesso e nº de itens.
 - **Tabela por fornecedor**, ordenada pelo valor parado (maior primeiro): itens, quantidade excedente, valor parado, **estoque total** e uma barra de participação % no total.
 - **Coluna "Estoque total"** (29/07/2026): valor total em estoque daquele fornecedor = `Σ(max(0, estoque) × custo)` sobre **todos** os itens dele (não só os em excesso; estoque negativo não conta como valor). Traz um subtítulo **"N% parado"** = valor parado ÷ estoque total, para enxergar o quanto do estoque do fornecedor está imobilizado. Também vai para o Excel de resumo (colunas "Estoque total (R$)" e "% parado", com o total geral no rodapé).
+- **Custo usado nesta aba — difere entre as duas empresas (31/07/2026):** `custo = it.pc || it.p`.
+  - **RHS/SEVEN:** `pc` = **preço REAL da última compra** (`TENT_ENTRADA_ITEM.TENT_PRECO_REAL_COMPRA`, da entrada mais recente com `TENT_STATUS_ENTRADA='L'` e `TENT_TIPO_MOVIMENTACAO_PK='CO'` — transferências entre lojas, tipo `TE`, ficam de fora). Vale para o **estoque total e também para o valor parado**, para que o "% parado" compare duas grandezas na mesma moeda.
+  - **Fallback obrigatório:** o espelho só tem entradas desde **mar/2023**, então nem todo produto tem `pc` (cobertura sobre itens **com estoque**: un 3 ≈ 62%, un 4 ≈ 32%, un 5 ≈ 72%). Sem `pc`, cai para `p` (custo médio) — assim o total do estoque continua completo. Sem o fallback, a unidade 4 perderia ~66% do valor.
+  - **MC MOTO:** não tem `pc`; segue no custo médio (`p`), sem alteração.
+  - **O Montar Pedido (das duas) continua sempre em `p` = `TMER_CUSTO_MEDIO_REAL`** — decisão do usuário de 24/07/2026, não trocar por `pc`.
+  - Efeito na valorização do estoque: un 3 **+4,2%**, un 4 **−8,1%**, un 5 **−12,7%** (o custo médio estava acima do preço realmente pago nas duas maiores).
 - **Drill-down:** clicar no fornecedor expande os itens (código, [unidade na SEVEN], descrição, pico, estoque, ideal, excesso, custo e valor parado), ordenados por valor.
 - **Busca** por nome de fornecedor. Importante: a busca filtra a lista mas **o % de participação continua sobre o total geral**, não sobre o subconjunto.
 - **Exportação Excel (CSV):** dois botões — "resumo" (uma linha por fornecedor) e "itens" (uma linha por item, com o fornecedor em cada linha). Ambos com BOM UTF-8, `;` como separador e decimal com vírgula (padrão pt-BR).

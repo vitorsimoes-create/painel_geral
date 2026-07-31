@@ -1,6 +1,8 @@
 # RHS/SEVEN
 
-Grupo de navegação separado da MC MOTO, cobrindo as unidades de negócio do grupo SEVEN. Fonte de dados principal: banco **`projeto_f7`** (espelho read-only do ERP da SEVEN, tabelas com prefixos `TCLI_`, `TVND_`, `TPED_`/`VPED_`, `TREC_`, `TPAG_`, `TMER_`, etc.). Credenciais não reproduzidas aqui — ver `conexaomc.md` (arquivo local, não versionado).
+Grupo de navegação separado da MC MOTO, cobrindo as unidades de negócio do grupo SEVEN. Fonte de dados principal: banco **`projeto_f7`** (espelho read-only do ERP da SEVEN, tabelas com prefixos `TCLI_`, `TVND_`, `TPED_`/`VPED_`, `TREC_`, `TPAG_`, `TMER_`, `TENT_`, etc.).
+
+> **O espelho não é estável — confira antes de assumir que algo não existe.** Em 31/07/2026 apareceu a tabela **`TENT_ENTRADA_ITEM`** (itens de entrada/compra, 33 mil linhas desde mar/2023), que **não existia** na varredura feita poucas horas antes (o espelho foi de 33 para 34 tabelas). Ela é a fonte de custo real de compra da Análise de Fornecedor. O **cabeçalho** correspondente (`TENT_ENTRADA`, com fornecedor/nº/data da nota) **ainda não está** no espelho. Credenciais não reproduzidas aqui — ver `conexaomc.md` (arquivo local, não versionado).
 
 ## Unidades de Negócio
 
