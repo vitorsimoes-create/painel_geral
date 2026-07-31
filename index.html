@@ -642,6 +642,18 @@
         <div id="busca-hint-seven" style="font-size:11px;color:#94a3b8;margin-top:2px">Modo <strong>E</strong>: todas as palavras no mesmo item</div>
       </div>
       <div class="filter-group">
+        <label>Comprar para</label>
+        <select id="sel-meses-seven" title="A sugestão passa a ser (pico × meses) − estoque">
+          <option value="1">1 mês</option>
+          <option value="2">2 meses</option>
+          <option value="3">3 meses</option>
+          <option value="4">4 meses</option>
+          <option value="5">5 meses</option>
+          <option value="6">6 meses</option>
+        </select>
+        <div id="meses-hint-seven" style="font-size:11px;color:#94a3b8;margin-top:2px">pico − estoque</div>
+      </div>
+      <div class="filter-group">
         <label>Mostrar apenas</label>
         <select id="sel-filtro-seven">
           <option value="todos">Todos os itens</option>
@@ -3376,6 +3388,30 @@ function setSugestaoSeven(key,val){
   renderSeven();
 }
 
+/* ---------- Horizonte de compra (SEVEN) ----------
+   Mesma regra da MC MOTO: s = (pico × meses) − estoque; com meses = 1 reproduz o valor
+   que vem do banco. Recalculamos o próprio `s` do item para não espalhar o multiplicador
+   pelo resto do fluxo.
+   Diferença importante em relação à MC MOTO: aqui existe a edição manual da sugestão
+   (sugestaoOverrideSeven). O override continua tendo prioridade — quem digitou um número
+   à mão não perde esse valor ao trocar o horizonte. */
+const LS_MESES_SEVEN='seven_meses_compra';
+let mesesCompraSeven=1;
+try{ const v=parseInt(localStorage.getItem(LS_MESES_SEVEN),10); if(v>=1&&v<=6) mesesCompraSeven=v; }catch(e){}
+
+function aplicarMesesCompraSeven(){
+  RAW_DATA_SEVEN.forEach(it=>{ it.s=Math.round((it.k||0)*mesesCompraSeven-(it.e||0)); });
+}
+function setMesesCompraSeven(v){
+  const n=parseInt(v,10);
+  mesesCompraSeven=(n>=1&&n<=6)?n:1;
+  try{ localStorage.setItem(LS_MESES_SEVEN,String(mesesCompraSeven)); }catch(e){}
+  aplicarMesesCompraSeven();
+  const hint=document.getElementById('meses-hint-seven');
+  if(hint) hint.textContent=mesesCompraSeven===1?'pico − estoque':'(pico × '+mesesCompraSeven+') − estoque';
+  pageSeven=0; renderSeven();
+}
+
 let pageSeven=0;
 let filteredSeven=[];
 let pedidoSeven={};
@@ -4458,6 +4494,15 @@ document.getElementById('sel-grupo-seven').addEventListener('change',()=>{
 });
 document.getElementById('sel-filtro-seven').addEventListener('change',()=>{pageSeven=0;renderSeven()});
 document.getElementById('sel-order-seven').addEventListener('change',()=>{pageSeven=0;renderSeven()});
+// horizonte de compra: reaplica a escolha salva antes do primeiro render da SEVEN
+(function(){
+  const sel=document.getElementById('sel-meses-seven');
+  if(sel){
+    sel.value=String(mesesCompraSeven);
+    sel.addEventListener('change',()=>setMesesCompraSeven(sel.value));
+  }
+  setMesesCompraSeven(mesesCompraSeven);
+})();
 document.addEventListener('click',(e)=>{
   const panel=document.getElementById('fornecedor-dropdown-panel-seven');
   const btn=document.getElementById('btn-fornecedor-multi-seven');
