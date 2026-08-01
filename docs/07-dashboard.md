@@ -1,0 +1,52 @@
+# DASHBOARD (página inicial)
+
+Aba nativa de `index.html` (`app-tab-dashboard`), criada em **01/08/2026**. É a **página inicial**: `irParaPrimeiraAbaPermitida()` chama `switchGrupo('dashboard')` logo após o login.
+
+## Permissão — regra própria
+
+O **DASHBOARD não é permissionável**: não está no `ABAS_CATALOGO`, não aparece na tela de gestão de usuários e todo usuário logado o vê. O que respeita permissão é o **conteúdo**:
+
+- o seletor de empresa (`dashEmpresasPermitidas()`) só oferece MC MOTO se `podeGrupo('mcmoto')` e RHS/SEVEN se `podeGrupo('rhsseven')`;
+- na SEVEN, `dashDados()` soma **apenas as unidades liberadas** para o usuário (`unidadesPermitidas()`).
+
+`switchGrupo('dashboard')` também **não pede senha de grupo** — é o único grupo assim.
+
+## Fonte de dados
+
+`const DASHBOARD_DB` em `index.html`, gerado por `gerar_dashboard.py` (rotina diária, passo **B2d**, depois de A3 e B2 para bater com as demais abas). Consulta os **dois** bancos. Estrutura:
+
+```js
+{ geradoEm, hoje,
+  mc:    { pagar:{"YYYY-MM-DD":saldo}, diario:{"YYYY-MM-DD":[venda,custo,QC,itens]},
+           mensal:{"YYYY-MM":[...]}, estoque, centros:{cod:nome}, fixo:{"YYYY-MM":{cod:valor}} },
+  seven: { unidades:{ "3":{…mesmo formato…}, "4":{…}, "5":{…} }, centros:{cod:nome} } }
+```
+
+Série **diária de 120 dias** (cobre a semana corrente) e **mensal de 24 meses** (histórico). Todo o cálculo é feito no navegador — trocar de empresa, de mês ou de centros de custo não precisa de novo acesso ao banco.
+
+**As regras de venda/custo são as mesmas das outras telas** (senão o dashboard divergiria): MC MOTO líquida de devolução pela tabela `devolucoes` (regra do Painel Mensal); SEVEN por `VPED_PEDIDO_HISTORICO` líquida de `'DC'`, **já com a regra dos 60%** nas unidades 3 e 4. Conferido: o CMV da SEVEN bate com o da aba Recebimentos **até o centavo**.
+
+## Cards
+
+| Bloco | Cards |
+|---|---|
+| **Contas a pagar** | Vence hoje · Vence nesta semana (seg–dom) · Vence neste mês · Já vencido |
+| **Vendas** | Vendas do mês vs meta (com barra) · Vendas da semana · Venda média por dia útil · Projeção do mês |
+| **Atendimento** | QC (atendimentos) · Itens vendidos · Ticket médio · Itens por atendimento |
+| **Rentabilidade** | Margem de contribuição · Margem % · CMV do mês (e % da venda) · CMV 12 meses |
+| **Estoque e custo fixo** | Estoque a custo · Giro de estoque vs ideal (e cobertura em meses) · Custo fixo do mês (e do anterior) · Custo fixo médio (e % da venda) |
+
+Quase todo card traz o **histórico de 12 meses fechados** ao lado do valor do mês — era o pedido de "ticket médio histórico", "margem histórica", "CMV histórico" e "custo fixo histórico".
+
+## Parâmetros e regras
+
+- **Contas a pagar sempre olham HOJE**, independentemente do seletor de mês. Só títulos **em aberto**, pelo saldo devedor.
+- **Meta do mês:** soma das metas por vendedor do Painel Mensal (`localStorage`, chaves `mapa_meta_<vendedor>_vendas`) — mesma origem, então o `index.html` lê direto. A **SEVEN não tem meta por vendedor**, então ali a meta é digitada (`dash_meta_seven`).
+- **Dias úteis:** mesma regra do Painel Mensal — exclui domingos e os feriados de `localStorage['mapa_feriados']` (uma data ISO por linha); "decorridos" vai **até ontem**, porque o dia corrente pode estar incompleto.
+- **Giro de estoque** = CMV dos últimos 12 meses ÷ estoque atual (vezes/ano). O **ideal é editável** (`dash_giro_ideal`, padrão 4×). Mostra também a cobertura em meses (12 ÷ giro).
+- **Custo fixo:** vem do **centro de custo**, e o usuário escolhe quais entram (⚙️, `dash_centros_fixo` por empresa). O padrão desmarca o que casa com `DASH_CENTRO_FORA` — fornecedor/mercadoria, empréstimo, financiamento, transferência, cartão, caixa, imobilizado etc. Fontes: `contas_pagar.CENTRO` → `centro_custos` (MC MOTO, 2.741 de 2.742 títulos têm centro) e `TPAG_ABERTO_CCUSTO` → `TTES_CENTRO_CUSTO` (SEVEN; apesar do nome, o rateio cobre também títulos baixados — 5.839 dos 7.776).
+- **Seletor de mês:** o padrão é o mês corrente, mas **se ele ainda não tiver venda cai no último mês com movimento** (`dashMesRef()`) — senão, no dia 1º, a tela abriria toda zerada. O histórico comparado é sempre dos meses anteriores ao mês selecionado.
+
+## Chaves de `localStorage`
+
+`dash_empresa` · `dash_centros_fixo` · `dash_giro_ideal` · `dash_meta_seven`. Lê (sem escrever) `mapa_meta_*_vendas` e `mapa_feriados`, do Mapa de Vendas.
