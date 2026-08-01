@@ -4,6 +4,25 @@ Grupo de navegação separado da MC MOTO, cobrindo as unidades de negócio do gr
 
 > **O espelho não é estável — confira antes de assumir que algo não existe.** Em 31/07/2026 apareceram **`TENT_ENTRADA_ITEM`** e, poucas horas depois, **`TENT_ENTRADA`** (entradas de compra, desde mar/2023) — o espelho foi de **33 → 34 → 35 tabelas** no mesmo dia. Numa varredura feita de manhã a conclusão registrada foi "não existe fonte de itens de compra"; à tarde já existia. **Sempre rodar `SHOW TABLES` antes de afirmar que algo não está lá.** Essas tabelas alimentam o custo real de compra da Análise de Fornecedor e o detalhe de itens por nota em Recebimentos.
 
+### Custo estimado nas unidades 3 e 4 (31/07/2026)
+
+Nas unidades **3 (Ultra Motos)** e **4 (Seven Contagem)** a maior parte do cadastro **não tem custo no ERP** — 65% e 44% dos itens. Isso inflava a margem e subestimava o valor de estoque. Regra do usuário:
+
+```
+custo = custo do ERP,           quando > 0
+      = 0,                      quando o item é SERVIÇO
+      = 0,60 × preço de venda,  nos demais casos (só unidades 3 e 4)
+```
+
+- **SERVIÇO = grupo de mercadoria `'09'`** (SERVICOS: retífica, sangria, reboque, "trocar …"). ⚠️ **Não usar a coluna `TMER_MERCADORIA_SERVICO`** — ela vale `'A'` em 14.573 dos 14.574 itens do cadastro (e `'C'` em 1); não marca nada.
+- **Unidade 5 não entra na regra** — lá só 15% dos itens estão sem custo.
+- "Preço de venda" é o do contexto: no **catálogo** é `TMER_PRECO_VENDA`; nas **vendas/CMV** é o valor efetivamente vendido do item (`TPED_VALOR_TOTAL_ITEM`), e nas devoluções o `TMOV_VALOR_TOTAL_ITEM`.
+- **Aplicada em todos os lugares que calculam custo da SEVEN**, para as telas não divergirem:
+  - `gerar_raw_data_seven.py` → `p` (Montar Pedido e Análise de Fornecedor);
+  - `gerar_recebimentos_seven.py` → `CMV_MENSAL_SEVEN` (meta de recebimento), venda e devolução;
+  - `atualizar_mapa.py` → aba **Vendas / Unidades de Negócio** (7 pontos: 6 de venda + 1 de devolução). Ali a regra é uma **subconsulta correlacionada**, de propósito: entra nas 6 consultas sem mexer nos joins/aliases de cada uma nem arriscar multiplicar linhas.
+- **Efeito medido:** itens com custo zero no catálogo caem de 65% → **1,3%** (un 3) e 44% → **1,7%** (un 4); o que sobra são os serviços e itens que também não têm preço de venda (60% de zero é zero). CMV de jun/2026: un 3 **+7,8%**, un 4 **+0,9%**, un 5 inalterado. Margem de jun/2026 da un 3: **47,6% → 43,5%**.
+
 ### Ver itens da nota (31/07/2026)
 
 Na aba **Compras > Recebimentos** da SEVEN, cada nota de **mercadoria** é clicável e expande os itens que chegaram (código, produto, quantidade, valor), igual à MC MOTO. Dados em `const RECEB_ITENS_SEVEN_DB = { "<id da nota>": [{c,d,q,v}], … }`, gerado por `gerar_receb_itens_seven.py` (rotina diária, passo **B2c**, sempre **depois** do B2b porque reusa os ids `sv_<unidade>_<tipo>_<numero>_<fornecedor>`).
