@@ -2,7 +2,16 @@
 
 Grupo de navegação separado da MC MOTO, cobrindo as unidades de negócio do grupo SEVEN. Fonte de dados principal: banco **`projeto_f7`** (espelho read-only do ERP da SEVEN, tabelas com prefixos `TCLI_`, `TVND_`, `TPED_`/`VPED_`, `TREC_`, `TPAG_`, `TMER_`, `TENT_`, etc.).
 
-> **O espelho não é estável — confira antes de assumir que algo não existe.** Em 31/07/2026 apareceu a tabela **`TENT_ENTRADA_ITEM`** (itens de entrada/compra, 33 mil linhas desde mar/2023), que **não existia** na varredura feita poucas horas antes (o espelho foi de 33 para 34 tabelas). Ela é a fonte de custo real de compra da Análise de Fornecedor. O **cabeçalho** correspondente (`TENT_ENTRADA`, com fornecedor/nº/data da nota) **ainda não está** no espelho. Credenciais não reproduzidas aqui — ver `conexaomc.md` (arquivo local, não versionado).
+> **O espelho não é estável — confira antes de assumir que algo não existe.** Em 31/07/2026 apareceram **`TENT_ENTRADA_ITEM`** e, poucas horas depois, **`TENT_ENTRADA`** (entradas de compra, desde mar/2023) — o espelho foi de **33 → 34 → 35 tabelas** no mesmo dia. Numa varredura feita de manhã a conclusão registrada foi "não existe fonte de itens de compra"; à tarde já existia. **Sempre rodar `SHOW TABLES` antes de afirmar que algo não está lá.** Essas tabelas alimentam o custo real de compra da Análise de Fornecedor e o detalhe de itens por nota em Recebimentos.
+
+### Ver itens da nota (31/07/2026)
+
+Na aba **Compras > Recebimentos** da SEVEN, cada nota de **mercadoria** é clicável e expande os itens que chegaram (código, produto, quantidade, valor), igual à MC MOTO. Dados em `const RECEB_ITENS_SEVEN_DB = { "<id da nota>": [{c,d,q,v}], … }`, gerado por `gerar_receb_itens_seven.py` (rotina diária, passo **B2c**, sempre **depois** do B2b porque reusa os ids `sv_<unidade>_<tipo>_<numero>_<fornecedor>`).
+
+- **Como amarra item → nota:** o título a pagar carrega **`TPAG_ENTRADA_FKN`**, que liga direto em `TENT_ENTRADA_ITEM.TENT_CHAVE_FK_PK` (+ unidade). Validado: número da nota e fornecedor do título batem com o cabeçalho `TENT_ENTRADA` em **850/850** casos, e 100% das chaves referenciadas têm itens.
+- **Cobertura ~58% (757 de 1.309 notas) — é o esperado, não é falha.** As 42% sem itens são exatamente os títulos que **não são mercadoria**: banco, aluguel, salários, INSS/FGTS/CSLL, transportadora. Nota de mercadoria tem entrada; despesa não tem. Por isso essas linhas ficam não-clicáveis por design.
+- **Colunas escolhidas por medição:** quantidade = `COALESCE(NULLIF(TENT_QTDE_ENTRADA1,0), TENT_QTDE_ENTRADA2)` — as duas são **estritamente complementares** (dos 14.882 itens, nenhum tem as duas preenchidas nem as duas zeradas); valor = **`TENT_CUSTO_ENTRADA_TOT`**, que somado por entrada dá **99,2%** do `TENT_VALOR_NOTA` do cabeçalho, contra 90,5% (`TENT_PRECO_REAL_TOTAL`) e 63,1% (`TENT_PRECO_COMPRA_TOTAL`). Filtra `TENT_STATUS_ENTRADA='L'`.
+- ⚠️ **A reconstrução das notas continua vindo dos títulos a pagar**, não de `TENT_ENTRADA`. Os valores e a meta da aba estão calibrados nessa fonte — não trocar sem o usuário pedir. Credenciais não reproduzidas aqui — ver `conexaomc.md` (arquivo local, não versionado).
 
 ## Unidades de Negócio
 
