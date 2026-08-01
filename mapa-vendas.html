@@ -98,7 +98,7 @@
   <button id="btn-atualizar" onclick="atualizarDados()" title="Reconsulta os 2 bancos (mc_moto + Seven/F7) e recarrega"
     style="background:#0ca30c; color:#fff; border:none; padding:9px 16px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">🔄 Atualizar dados</button>
 </h1>
-<div class="sub">Dados atualizados automaticamente em: <b>01/08/2026 08:18:17</b> — atualização diária agendada às 19:00, ou clique em "Atualizar dados". Faturamento considerado até: <b>31/07/2026</b> (dia anterior, dia corrente sempre excluído por poder estar incompleto).</div>
+<div class="sub">Dados atualizados automaticamente em: <b>01/08/2026 08:28:00</b> — atualização diária agendada às 19:00, ou clique em "Atualizar dados". Faturamento considerado até: <b>31/07/2026</b> (dia anterior, dia corrente sempre excluído por poder estar incompleto).</div>
 <div id="atualizar-msg" style="display:none; margin-bottom:12px; padding:8px 12px; border-radius:6px; font-size:13px;"></div>
 
 <div class="tabs">
@@ -156,13 +156,14 @@
   <div class="section-title">Histórico mensal</div>
   <button onclick="fecharMes()">Fechar mês e salvar no histórico</button>
   <div class="footer-note" style="margin-top:6px;">
-    Fecha o mês da <b>Referência</b> acima (MC MOTO + RHS/SEVEN, com os totais), congelando as
+    Fecha o mês da <b>Referência</b> acima (vendedores da MC MOTO, com o total), congelando as
     <b>metas em uso no momento do fechamento</b>. Meses ainda não fechados aparecem abaixo com os
-    valores calculados do banco e as metas atuais.
+    valores calculados do banco e as metas atuais. O acompanhamento das unidades RHS/SEVEN fica
+    na aba <b>Unidades de Negócio</b>.
   </div>
   <table id="historico-list" style="margin-top:10px;">
     <thead>
-      <tr><th>Mês/Ano</th><th>Origem</th><th>Vendedor / Unidade</th><th>Vendas</th><th>Meta Vendas</th><th>MC</th><th>Meta MC</th><th>Pedidos</th><th>Meta Pedidos</th><th>Itens</th><th>Meta Itens</th></tr>
+      <tr><th>Mês/Ano</th><th>Vendedor</th><th>Vendas</th><th>Meta Vendas</th><th>MC</th><th>Meta MC</th><th>Pedidos</th><th>Meta Pedidos</th><th>Itens</th><th>Meta Itens</th></tr>
     </thead>
     <tbody id="historico-body"></tbody>
   </table>
@@ -179,7 +180,7 @@
     </div>
     <div class="card">
       <label>% Desconto (MC das unidades)</label>
-      <input type="number" class="desconto" id="uni-desconto" step="0.01" value="0" onchange="salvarUniCtrl(); renderUnidades(); renderHistorico();">%
+      <input type="number" class="desconto" id="uni-desconto" step="0.01" value="0" onchange="salvarUniCtrl(); renderUnidades(); renderHistoricoSeven();">%
       <div class="footer-note">Afeta <b>apenas a MC</b> (não as Vendas). MC = Vendas × (1 − %) − Custo.</div>
     </div>
     <div class="card">
@@ -225,6 +226,23 @@
     <thead><tr><th>Unidade</th><th>Vendedor</th><th>Vendas</th><th>MC</th><th>Pedidos</th><th>Itens</th><th>Ticket Médio</th></tr></thead>
     <tbody id="uvend-body"></tbody>
   </table>
+
+  <div class="section-title">Acompanhamento mensal — histórico das unidades</div>
+  <button onclick="fecharMesSeven()">Fechar mês e salvar no histórico</button>
+  <div class="footer-note" style="margin-top:6px;">
+    Fecha o mês da <b>Referência</b> (aba Painel Mensal) para as unidades RHS/SEVEN, com o
+    <b>TOTAL RHS/SEVEN</b>, congelando as <b>metas em uso no momento do fechamento</b>.
+    Meses ainda não fechados aparecem abaixo com os valores calculados do banco e as metas atuais.
+    Mostra sempre todas as unidades (independente do filtro acima), para o total fechar.
+  </div>
+  <div style="overflow-x:auto;">
+  <table id="uhist-tbl" style="margin-top:10px;">
+    <thead>
+      <tr><th>Mês/Ano</th><th>Unidade</th><th>Vendas</th><th>Meta Vendas</th><th>MC</th><th>Meta MC</th><th>Pedidos</th><th>Meta Pedidos</th><th>Itens</th><th>Meta Itens</th></tr>
+    </thead>
+    <tbody id="uhist-body"></tbody>
+  </table>
+  </div>
 
   <div class="section-title">Evolução das unidades</div>
   <div class="footer-note" style="margin-bottom:6px;">Evolução mensal por unidade (por data de emissão), conforme o filtro acima. O % desconto afeta apenas a MC; Vendas e Ticket Médio são valores reais.</div>
@@ -800,94 +818,104 @@ function linhasSevenMes(mesAno){
   }).filter(r => r.vendas || r.pedidos || r.itens);
 }
 
-// Bloco completo de um mes: MC MOTO + SEVEN + totais de cada um + consolidado.
-function blocoMes(mesAno, linhasMc, linhasSeven){
-  const out = [];
-  if (linhasMc.length){
-    out.push(...linhasMc);
-    out.push(totalHist(mesAno, 'MC MOTO', 'TOTAL MC MOTO', linhasMc));
-  }
-  if (linhasSeven.length){
-    out.push(...linhasSeven);
-    out.push(totalHist(mesAno, 'RHS/SEVEN', 'TOTAL RHS/SEVEN', linhasSeven));
-  }
-  if (linhasMc.length && linhasSeven.length){
-    out.push(totalHist(mesAno, 'CONSOLIDADO', 'TOTAL GERAL', linhasMc.concat(linhasSeven)));
-  }
-  return out;
-}
-
-// Meses fechados calculados direto do banco (usados enquanto o mes nao for fechado a mao).
-function historicoAutomatico(){
-  const porMes = {};
-  (P.historicoVendedores || []).forEach(h => {
-    (porMes[h.mesAno] = porMes[h.mesAno] || []).push(
-      linhaHist(h.mesAno, 'MC MOTO', h.vendedor, h.vendedor, h.vendas, h.custo, h.pedidos, h.itens));
-  });
-  const out = [];
-  Object.keys(porMes).forEach(mes => {
-    out.push(...blocoMes(mes, porMes[mes], linhasSevenMes(mes)));
-  });
-  return out;
-}
-
-function fecharMes(){
+function mesReferencia(){
   const ref = document.getElementById('dataRef').value || new Date().toISOString().slice(0,10);
-  const mesAno = ref.slice(0,7);
-  const hist = JSON.parse(localStorage.getItem('mapa_historico') || '[]');
+  return ref.slice(0,7);
+}
+
+// Fechamento generico: grava o bloco do mes substituindo o que ja existir daquele mes.
+function fecharMesGenerico(chave, rotuloTotal, origem, linhas, render){
+  const mesAno = mesReferencia();
+  const hist = JSON.parse(localStorage.getItem(chave) || '[]');
   if (hist.some(h => h.mesAno === mesAno) &&
       !confirm('O mês ' + mesAno + ' já foi fechado. Fechar de novo substitui o que está salvo (inclusive as metas). Continuar?')) return;
-
-  // Mes corrente usa o que esta na tela; meses ja passados vem do historico do banco.
-  let linhasMc;
-  if (mesAno === P.mesCorrente){
-    linhasMc = DADOS.map(r => linhaHist(mesAno, 'MC MOTO', r.vendedor, r.vendedor,
-                                        r.vendas, r.custo, r.pedidos, r.itens, r.mc));
-  } else {
-    linhasMc = (P.historicoVendedores || []).filter(h => h.mesAno === mesAno)
-      .map(h => linhaHist(mesAno, 'MC MOTO', h.vendedor, h.vendedor, h.vendas, h.custo, h.pedidos, h.itens));
-  }
-  let linhasSeven = linhasSevenMes(mesAno);
-  if (!linhasSeven.length && mesAno === P.mesCorrente){
-    const f = 1 - getUniDesconto()/100;
-    linhasSeven = (P.unidadesSeven || []).map(u =>
-      linhaHist(mesAno, 'RHS/SEVEN', u.nome, 'U'+u.unidade,
-                u.vendas, u.custo, u.pedidos, u.itens, u.vendas*f - u.custo));
-  }
-
-  const bloco = blocoMes(mesAno, linhasMc, linhasSeven);
-  if (!bloco.length){ alert('Não há dados de ' + mesAno + ' para fechar.'); return; }
-
-  const novo = hist.filter(h => h.mesAno !== mesAno).concat(bloco);
-  localStorage.setItem('mapa_historico', JSON.stringify(novo));
-  renderHistorico();
+  if (!linhas.length){ alert('Não há dados de ' + mesAno + ' para fechar.'); return; }
+  const bloco = linhas.concat([totalHist(mesAno, origem, rotuloTotal, linhas)]);
+  localStorage.setItem(chave, JSON.stringify(hist.filter(h => h.mesAno !== mesAno).concat(bloco)));
+  render();
   alert('Mês ' + mesAno + ' fechado e salvo no histórico (' + bloco.length + ' linhas, metas congeladas).');
 }
 
-function renderHistorico(){
-  // Meses fechados a mao (metas congeladas) tem precedencia; o resto vem calculado do banco.
-  const manual = JSON.parse(localStorage.getItem('mapa_historico') || '[]');
+// Render generico de um historico (manual tem precedencia sobre o calculado do banco).
+function renderHistoricoGenerico(chave, tbodyId, auto){
+  const manual = JSON.parse(localStorage.getItem(chave) || '[]');
   const fechados = new Set(manual.map(h => h.mesAno));
-  const ordemOrigem = {'MC MOTO':0, 'RHS/SEVEN':1, 'CONSOLIDADO':2};
-  const rank = h => ordemOrigem[h.origem] !== undefined ? ordemOrigem[h.origem] : 0;
-  const hist = manual.concat(historicoAutomatico().filter(h => !fechados.has(h.mesAno)))
+  const hist = manual.concat(auto.filter(h => !fechados.has(h.mesAno)))
     .sort((a,b) => b.mesAno.localeCompare(a.mesAno) ||
-                   rank(a) - rank(b) ||
                    (a.total?1:0) - (b.total?1:0) ||
                    a.vendedor.localeCompare(b.vendedor));
-  const tbody = document.getElementById('historico-body');
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
   tbody.innerHTML = '';
   hist.forEach(h => {
     const tr = document.createElement('tr');
     if (h.total) tr.className = 'total';
     const sel = fechados.has(h.mesAno) ? '' : ' <span class="footer-note">(em aberto)</span>';
-    tr.innerHTML = '<td>'+h.mesAno+sel+'</td><td>'+esc(h.origem||'MC MOTO')+'</td><td>'+esc(h.vendedor)+'</td>'+
+    tr.innerHTML = '<td>'+h.mesAno+sel+'</td><td>'+esc(h.vendedor)+'</td>'+
       '<td>'+CUR(h.vendas)+'</td><td>'+(h.metaVendas?CUR(h.metaVendas):'-')+'</td>'+
       '<td>'+CUR(h.mc)+'</td><td>'+(h.metaMc?CUR(h.metaMc):'-')+'</td>'+
       '<td>'+NUM(h.pedidos)+'</td><td>'+(h.metaPedidos?NUM(h.metaPedidos):'-')+'</td>'+
       '<td>'+NUM(h.itens)+'</td><td>'+(h.metaItens?NUM(h.metaItens):'-')+'</td>';
     tbody.appendChild(tr);
   });
+}
+
+/* ---- MC MOTO (aba Painel Mensal) ---- */
+
+function linhasMcMes(mesAno){
+  if (mesAno === P.mesCorrente){
+    return DADOS.map(r => linhaHist(mesAno, 'MC MOTO', r.vendedor, r.vendedor,
+                                    r.vendas, r.custo, r.pedidos, r.itens, r.mc));
+  }
+  return (P.historicoVendedores || []).filter(h => h.mesAno === mesAno)
+    .map(h => linhaHist(mesAno, 'MC MOTO', h.vendedor, h.vendedor, h.vendas, h.custo, h.pedidos, h.itens));
+}
+
+function fecharMes(){
+  fecharMesGenerico('mapa_historico', 'TOTAL MC MOTO', 'MC MOTO',
+                    linhasMcMes(mesReferencia()), renderHistorico);
+}
+
+/* ---- RHS/SEVEN (aba Unidades de Negócio) ---- */
+
+function fecharMesSeven(){
+  const mesAno = mesReferencia();
+  let linhas;
+  if (mesAno === P.mesCorrente){
+    // mes corrente: usa o mesmo recorte do painel acima (exclui o dia de hoje)
+    const f = 1 - getUniDesconto()/100;
+    linhas = (P.unidadesSeven || []).map(u =>
+      linhaHist(mesAno, 'RHS/SEVEN', u.nome, 'U'+u.unidade,
+                u.vendas, u.custo, u.pedidos, u.itens, u.vendas*f - u.custo))
+      .filter(r => r.vendas || r.pedidos || r.itens);
+  } else {
+    linhas = linhasSevenMes(mesAno);
+  }
+  fecharMesGenerico('mapa_historico_seven', 'TOTAL RHS/SEVEN', 'RHS/SEVEN', linhas, renderHistoricoSeven);
+}
+
+function renderHistoricoSeven(){
+  // so os meses ja fechados (nao inclui o mes corrente, que ainda esta rodando)
+  const auto = [];
+  ((P.unidadesHistorico || {}).meses || []).forEach(m => {
+    if (m.mes === P.mesCorrente) return;
+    const linhas = linhasSevenMes(m.mes);
+    if (linhas.length) auto.push(...linhas, totalHist(m.mes, 'RHS/SEVEN', 'TOTAL RHS/SEVEN', linhas));
+  });
+  renderHistoricoGenerico('mapa_historico_seven', 'uhist-body', auto);
+}
+
+function renderHistorico(){
+  const porMes = {};
+  (P.historicoVendedores || []).forEach(h => {
+    (porMes[h.mesAno] = porMes[h.mesAno] || []).push(
+      linhaHist(h.mesAno, 'MC MOTO', h.vendedor, h.vendedor, h.vendas, h.custo, h.pedidos, h.itens));
+  });
+  const auto = [];
+  Object.keys(porMes).forEach(mes => {
+    auto.push(...porMes[mes], totalHist(mes, 'MC MOTO', 'TOTAL MC MOTO', porMes[mes]));
+  });
+  renderHistoricoGenerico('mapa_historico', 'historico-body', auto);
 }
 
 /* ===================== GRAFICOS SVG ===================== */
@@ -1912,6 +1940,7 @@ renderVendaFornecedor();
 renderContasAberto();
 initUniControles(); renderUnidades();
 renderHistorico();
+renderHistoricoSeven();
 renderEvolucao();
 trocarAba(localStorage.getItem('mapa_aba') || 'painel');
 </script>
