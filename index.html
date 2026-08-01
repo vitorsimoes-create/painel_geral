@@ -133,6 +133,14 @@
   .kpi-lbl { color:#94a3b8; font-size:10px; text-transform:uppercase; letter-spacing:.4px; }
   .kpi-val { color:#fff; font-size:19px; font-weight:800; line-height:1.2; margin-top:1px; }
   .kpi-sub { color:#64748b; font-size:10px; margin-top:2px; }
+  .dash-ind { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; margin-bottom:16px; }
+  .ind-bloco { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 14px; }
+  .ind-tit { font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:9px; }
+  .ind-l { display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:4px 0; border-bottom:1px dashed #f1f5f9; }
+  .ind-l:last-child { border-bottom:0; }
+  .ind-n { font-size:11.5px; color:#64748b; }
+  .ind-v { font-size:13px; font-weight:700; color:#1e293b; white-space:nowrap; }
+  .ind-h { font-size:10px; color:#94a3b8; font-weight:400; margin-left:5px; }
   .dash-graficos { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:14px; }
   .dash-panel { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:14px 16px; }
   .dash-panel.largo { grid-column:1/-1; }
@@ -265,6 +273,8 @@
     </div>
     <div class="dash-kpis" id="dash-kpis"></div>
   </div>
+
+  <div class="dash-ind" id="dash-indicadores"></div>
 
   <div class="dash-graficos" id="dash-graficos"></div>
 
@@ -2485,6 +2495,7 @@ function renderDashboard(){
     .map(([c,v])=>({rot:(cat[c]||c).slice(0,28),v:v})).filter(d=>d.v>0).sort((a,b)=>b.v-a.v).slice(0,8);
   g.push(painel('Custo fixo por centro de custo',rotMes(ym)+' · total '+fmt(fixoMes),chartBarrasH(cf)));
 
+  renderIndicadores(D,ym,ymAnt,mes,ant,H,du,meta,fixoMes);
   document.getElementById('dash-graficos').innerHTML=g.join('');
 
   /* ---------- tabela mensal com semáforo ---------- */
@@ -2496,6 +2507,58 @@ function renderDashboard(){
     'Vendas líquidas de devolução. <b>MC = Vendas × (1 − deduções) − CMV</b>, mesma regra do Painel Mensal. <b>QC = clientes atendidos</b> (identificados + cada venda de balcão), diferente de <b>Pedidos</b>. '+
     'Giro = CMV dos últimos 12 meses ÷ estoque atual. '+
     (dashEmpresa==='seven'?'Na SEVEN os valores somam apenas as unidades liberadas para você.':'');
+}
+
+
+/* Faixa de indicadores: os numeros que a versao em cards mostrava, mantidos
+   depois que a tela virou grafico — cada um com o historico ao lado. */
+function renderIndicadores(D,ym,ymAnt,mes,ant,H,du,meta,fixoMes){
+  const [venda,custo,qc,itens,pedidos]=mes;
+  const vLiq=dashVendaLiq(venda), mc=vLiq-custo;
+  const [semIni,semFim]=dashSemana();
+  const hoje=dashHoje();
+  let pagarDia=D.pagar[hoje]||0, pagarSem=0, pagarMes=0, vencido=0;
+  Object.entries(D.pagar).forEach(([k,v])=>{
+    if(k>=semIni&&k<=semFim) pagarSem+=v;
+    if(k.slice(0,7)===ym) pagarMes+=v;
+    if(k<hoje) vencido+=v;
+  });
+  const vendaSem=dashSomaSerie(D.diario,semIni,semFim)[0];
+  const mediaDia=du.dec>0?venda/du.dec:0;
+  const cmv12=H?H.tot[1]:0;
+  const giro=D.estoque>0&&cmv12>0?cmv12/D.estoque:0;
+  const ideal=dashGiroIdeal();
+  const fixoAnt=dashFixoDoMes(D.fixo,ymAnt);
+  const mesesFixo=Object.keys(D.fixo).filter(m=>m<ym).sort().slice(-12);
+  const fixoMed=mesesFixo.length?mesesFixo.reduce((a,m)=>a+dashFixoDoMes(D.fixo,m),0)/mesesFixo.length:0;
+
+  const L=(n,v,h)=>'<div class="ind-l"><span class="ind-n">'+n+'</span><span class="ind-v">'+v+
+    (h?'<span class="ind-h">'+h+'</span>':'')+'</span></div>';
+  const B=(t,linhas)=>'<div class="ind-bloco"><div class="ind-tit">'+t+'</div>'+linhas+'</div>';
+
+  document.getElementById('dash-indicadores').innerHTML=
+    B('Contas a pagar',
+      L('Vence hoje',fmt(pagarDia))+L('Vence nesta semana',fmt(pagarSem))+
+      L('Vence neste mês',fmt(pagarMes))+L('Já vencido',fmt(vencido)))+
+    B('Vendas',
+      L('Vendas da semana',fmt(vendaSem))+
+      L('Média por dia útil',fmt(mediaDia),du.dec+'/'+du.total+' dias')+
+      L('Projeção do mês',fmt(mediaDia*du.total))+
+      L('Vs. mês anterior',(ant[0]>0?((venda/ant[0]-1)>=0?'+':'')+pct(venda/ant[0]-1):'—')))+
+    B('Atendimento',
+      L('Ticket médio',fmt(pedidos>0?venda/pedidos:0),H&&H.med[4]>0?'hist '+fmt(H.med[0]/H.med[4]):'')+
+      L('Ticket por cliente',fmt(qc>0?venda/qc:0),H&&H.med[2]>0?'hist '+fmt(H.med[0]/H.med[2]):'')+
+      L('Itens vendidos',num(itens),H?'hist '+num(H.med[3]):'')+
+      L('Itens por cliente',(qc>0?itens/qc:0).toFixed(2).replace('.',','),H&&H.med[2]>0?'hist '+(H.med[3]/H.med[2]).toFixed(2).replace('.',','):''))+
+    B('Rentabilidade e estoque',
+      L('Margem %',pct(venda>0?mc/venda:0),H&&H.med[0]>0?'hist '+pct(dashMC(H.med[0],H.med[1])/H.med[0]):'')+
+      L('CMV do mês',fmt(custo),venda>0?pct(custo/venda)+' da venda':'')+
+      L('CMV 12 meses',fmt(cmv12))+
+      L('Giro de estoque',giro.toFixed(2).replace('.',',')+'×',
+        'ideal '+ideal.toFixed(2).replace('.',',')+'× · <a href="#" onclick="dashEditarGiro();return false;" style="color:#3b82f6">alterar</a>'+
+        (giro>0?' · cobertura '+(12/giro).toFixed(1).replace('.',',')+'m':''))+
+      L('Custo fixo do mês',fmt(fixoMes),'anterior '+fmt(fixoAnt))+
+      L('Custo fixo médio 12m',fmt(fixoMed),venda>0?pct(fixoMes/venda)+' da venda':''));
 }
 
 function painel(titulo,sub,corpo,largo){
