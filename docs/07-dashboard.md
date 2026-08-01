@@ -26,7 +26,30 @@ Série **diária de 120 dias** (cobre a semana corrente) e **mensal de 24 meses*
 
 **As regras de venda/custo são as mesmas das outras telas** (senão o dashboard divergiria): MC MOTO líquida de devolução pela tabela `devolucoes` (regra do Painel Mensal); SEVEN por `VPED_PEDIDO_HISTORICO` líquida de `'DC'`, **já com a regra dos 60%** nas unidades 3 e 4. Conferido: o CMV da SEVEN bate com o da aba Recebimentos **até o centavo**.
 
-## Cards
+## Layout — tela de gráficos (01/08/2026)
+
+A tela foi refeita no estilo BI: **faixa escura de KPIs** no topo (vendas do mês, realização da meta, variação vs. mês anterior, margem de contribuição, QC/pedidos/ticket e estoque/giro) e, abaixo, uma **grade de gráficos**. Todos os gráficos são **SVG inline**, escritos à mão em `charts` dentro do próprio `index.html` — sem biblioteca externa, então não há nada para carregar nem conflito de CSP.
+
+| Gráfico | Tipo | Conteúdo |
+|---|---|---|
+| Vendas por mês × meta | barras + linha | 12 meses; barra verde quando bate a meta, mês selecionado em escuro; linha laranja = meta |
+| Venda dia a dia | linha com área | dias do mês selecionado (série diária cobre 120 dias) |
+| Para onde vai a venda | rosca | CMV + custo fixo + sobra |
+| Venda por grupo de produto | barras horizontais | top 8, com a margem % de cada grupo |
+| Venda por vendedor | barras horizontais | top 8, com margem % |
+| Top marcas / fornecedores | barras horizontais | top 8, com margem % |
+| Venda por unidade de negócio | barras horizontais | **só na SEVEN**; respeita as unidades permitidas |
+| Contas a pagar | barras horizontais | vencido + próximas 5 semanas |
+| Custo fixo por centro de custo | barras horizontais | top 8 dos centros marcados |
+| Mês a mês | tabela | 12 meses com vendas, QC, pedidos, ticket, MC, MC%, custo fixo, **sobra** e realização, com cor condicional |
+
+As quebras (grupo / marca / vendedor) vêm do gerador em `quebras: {grupo|marca|vendedor: {"YYYY-MM": {chave: [venda, custo]}}}`, cobrindo **13 meses** (`MESES_QUEBRA`) — não os 24, porque são consultas pesadas. Na SEVEN, `dashDados()` soma as quebras **chave a chave** entre as unidades permitidas.
+
+⚠️ **Marca da MC MOTO:** `produtos.MARCA` é **código**; o nome está em `marcas.DESCRICAO`. Sem esse join o gráfico sai com "000019", "000015".
+
+⚠️ O grupo de produto da MC MOTO usa `produtos.GRUPO` → `grupos.DESCRICAO` **sem** a reclassificação por palavra-chave que o Mapa de Vendas faz em `DIVERSOS` (ver [`02-vendas.md`](02-vendas.md)). Por isso "DIVERSOS" aparece grande aqui e menor lá.
+
+## Cards (versão anterior, substituída)
 
 | Bloco | Cards |
 |---|---|
