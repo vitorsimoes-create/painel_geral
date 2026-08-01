@@ -259,6 +259,7 @@
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div id="dash-empresas" style="display:flex;gap:6px"></div>
         <select id="dash-mes" onchange="setDashMes(this.value)" class="dash-sel"></select>
+        <button class="dash-sel" style="cursor:pointer" onclick="abrirDeducoes()">% Deduções</button>
         <button class="dash-sel" style="cursor:pointer" onclick="abrirCentrosCusto()">⚙️ Custo fixo</button>
       </div>
     </div>
@@ -2050,6 +2051,60 @@ const LS_DASH_META_SV='dash_meta_seven';     // a SEVEN não tem meta por vended
 
 let dashEmpresa=localStorage.getItem(LS_DASH_EMPRESA)||'mc';
 let dashCentros={}; try{ dashCentros=JSON.parse(localStorage.getItem(LS_DASH_CENTROS)||'{}'); }catch(e){ dashCentros={}; }
+/* ---- Deduções sobre a venda (mesma regra do Mapa de Vendas) ----
+   O Mapa calcula MC = Vendas × (1 − %) − Custo, com UM percentual global
+   (localStorage 'mapa_descontoPct'). Aqui o percentual e aberto nos quatro
+   componentes que o usuario pediu — impostos, comissao, premio e frete de venda —
+   e o total deles faz o mesmo papel. Enquanto o usuario nao preencher, HERDA o
+   percentual do Mapa, para as duas telas nao divergirem no primeiro acesso. */
+const LS_DASH_DEDUCOES='dash_deducoes';
+const DED_CAMPOS=[['imp','Impostos'],['com','Comissão'],['pre','Prêmio'],['fre','Frete de venda']];
+function dashDeducoes(){
+  let d=null;
+  try{ d=JSON.parse(localStorage.getItem(LS_DASH_DEDUCOES)||'null'); }catch(e){ d=null; }
+  if(d && typeof d==='object'){
+    const o={herdado:false};
+    let t=0;
+    DED_CAMPOS.forEach(([k])=>{ const v=parseFloat(d[k])||0; o[k]=v; t+=v; });
+    o.total=t;
+    return o;
+  }
+  const mapa=parseFloat(localStorage.getItem('mapa_descontoPct'))||0;
+  const o={herdado:true,total:mapa};
+  DED_CAMPOS.forEach(([k])=>o[k]=0);
+  return o;
+}
+/* venda liquida das deducoes — e sobre ela que a MC e calculada */
+function dashVendaLiq(v){ return v*(1-dashDeducoes().total/100); }
+function dashMC(v,custo){ return dashVendaLiq(v)-custo; }
+
+function abrirDeducoes(){
+  const d=dashDeducoes();
+  document.getElementById('modal-ded-body').innerHTML=
+    DED_CAMPOS.map(([k,rot])=>'<label style="display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:13px">'+
+      '<span style="flex:1;color:#475569">'+rot+'</span>'+
+      '<input type="number" step="0.01" id="ded-'+k+'" value="'+(d.herdado?'':d[k])+'" '+
+      'style="width:90px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:6px;text-align:right;font-weight:700">'+
+      '<span style="color:#94a3b8">%</span></label>').join('')+
+    '<div style="font-size:11px;color:#94a3b8;margin-top:10px;line-height:1.5">'+
+      (d.herdado?'Hoje está <b>herdando '+d.total.toFixed(2).replace('.',',')+'%</b> do campo "% Desconto" do Painel Mensal. Ao salvar, o dashboard passa a usar os valores acima.':
+       'Total atual: <b>'+d.total.toFixed(2).replace('.',',')+'%</b>')+
+      '<br>MC = Vendas × (1 − total%) − CMV, igual ao Mapa de Vendas.</div>';
+  document.getElementById('modal-deducoes').classList.remove('hidden');
+}
+function salvarDeducoes(){
+  const o={};
+  DED_CAMPOS.forEach(([k])=>{ o[k]=parseFloat(document.getElementById('ded-'+k).value)||0; });
+  localStorage.setItem(LS_DASH_DEDUCOES,JSON.stringify(o));
+  document.getElementById('modal-deducoes').classList.add('hidden');
+  renderDashboard();
+}
+function limparDeducoes(){
+  localStorage.removeItem(LS_DASH_DEDUCOES);
+  document.getElementById('modal-deducoes').classList.add('hidden');
+  renderDashboard();
+}
+
 let dashMesSel=null;   // null = automatico
 function setDashMes(v){ dashMesSel=v||null; renderDashboard(); }
 /* Mes de analise. No dia 1 o mes corrente ainda esta zerado, entao caimos no ultimo
@@ -2327,7 +2382,7 @@ function barraMeta(v,meta){
 function dashQuebra(D,nome,ym){
   const q=(D.quebras||{})[nome]||{};
   const m=q[ym]||{};
-  return Object.entries(m).map(([k,v])=>({rot:k,v:v[0],mc:v[0]-v[1]}))
+  return Object.entries(m).map(([k,v])=>({rot:k,v:v[0],mc:dashMC(v[0],v[1])}))
     .filter(d=>d.v>0).sort((a,b)=>b.v-a.v);
 }
 
@@ -2353,7 +2408,9 @@ function renderDashboard(){
   const du=dashDiasUteis(ym);
   const H=dashHistorico(D.mensal,12,ym);
   const meta=dashMeta();
-  const mc=venda-custo, mcPct=venda>0?mc/venda:0;
+  const ded=dashDeducoes();
+  const vendaLiq=dashVendaLiq(venda);
+  const mc=vendaLiq-custo, mcPct=venda>0?mc/venda:0;
   const cresc=ant[0]>0?(venda/ant[0]-1):0;
   const mediaDia=du.dec>0?venda/du.dec:0;
   const projecao=mediaDia*du.total;
@@ -2368,7 +2425,7 @@ function renderDashboard(){
     kpi('💰','Vendas do mês',fmt(venda),rotMes(ym)+' · '+du.dec+'/'+du.total+' dias úteis','#2563eb')+
     kpi('🎯','Realização da meta',meta>0?pct(venda/meta):'—',meta>0?('meta '+fmt(meta)):'<a href="#" onclick="dashEditarMeta();return false;" style="color:#93c5fd">definir meta</a>',meta>0&&venda>=meta?'#10b981':'#f59e0b')+
     kpi('📈','Vs. mês anterior',(cresc>=0?'+':'')+pct(cresc),rotMes(ymAnt)+': '+fmt(ant[0]),cresc>=0?'#10b981':'#ef4444')+
-    kpi('🧾','Margem de contribuição',fmt(mc),pct(mcPct)+(H&&H.med[0]>0?' · histórico '+pct((H.med[0]-H.med[1])/H.med[0]):''),'#8b5cf6')+
+    kpi('🧾','Margem de contribuição',fmt(mc),pct(mcPct)+(H&&H.med[0]>0?' · histórico '+pct(dashMC(H.med[0],H.med[1])/H.med[0]):'')+(ded.total>0?' · deduções '+pct(ded.total/100):''),'#8b5cf6')+
     kpi('👥','Clientes atendidos (QC)',num(qc),num(pedidos)+' pedidos · ticket '+fmt(pedidos>0?venda/pedidos:0),'#0ea5e9')+
     kpi('📦','Estoque a custo',fmt(D.estoque),'giro '+(D.estoque>0&&H?(H.tot[1]/D.estoque).toFixed(2).replace('.',','):'—')+'× ao ano','#f59e0b');
 
@@ -2389,10 +2446,11 @@ function renderDashboard(){
 
   // 3. composição do resultado
   const fixoMes=dashFixoDoMes(D.fixo,ym);
-  g.push(painel('Para onde vai a venda','CMV + custo fixo + o que sobra',
+  g.push(painel('Para onde vai a venda','deduções + CMV + custo fixo + o que sobra',
     chartRosca([{rot:'CMV (mercadoria)',v:custo,cor:'#2563eb'},
+                {rot:'Impostos, comissão, prêmio e frete',v:venda-vendaLiq,cor:'#8b5cf6'},
                 {rot:'Custo fixo',v:fixoMes,cor:'#f59e0b'},
-                {rot:'Sobra',v:Math.max(0,venda-custo-fixoMes),cor:'#10b981'}])));
+                {rot:'Sobra',v:Math.max(0,vendaLiq-custo-fixoMes),cor:'#10b981'}])));
 
   // 4. grupo de produto
   const grp=dashQuebra(D,'grupo',ym).slice(0,8);
@@ -2435,7 +2493,7 @@ function renderDashboard(){
   const nC=dashCentrosAtivos().length, tC=Object.keys(cat).length;
   document.getElementById('dash-aviso').innerHTML=
     'Custo fixo somando <b>'+nC+'</b> de '+tC+' centros de custo — ajuste na engrenagem acima. '+
-    'Vendas líquidas de devolução. <b>QC = clientes atendidos</b> (identificados + cada venda de balcão), diferente de <b>Pedidos</b>. '+
+    'Vendas líquidas de devolução. <b>MC = Vendas × (1 − deduções) − CMV</b>, mesma regra do Painel Mensal. <b>QC = clientes atendidos</b> (identificados + cada venda de balcão), diferente de <b>Pedidos</b>. '+
     'Giro = CMV dos últimos 12 meses ÷ estoque atual. '+
     (dashEmpresa==='seven'?'Na SEVEN os valores somam apenas as unidades liberadas para você.':'');
 }
@@ -2468,9 +2526,9 @@ function tabelaMeses(D,meses,rotMes,meta){
   const cel=(v,cor)=>'<td style="padding:7px 10px;text-align:right;'+(cor?'color:'+cor+';font-weight:700':'')+'">'+v+'</td>';
   let linhas='';
   meses.slice().reverse().forEach(m=>{
-    const a=D.mensal[m], v=a[0], c=a[1], mcv=v-c, mp=v>0?mcv/v:0;
+    const a=D.mensal[m], v=a[0], c=a[1], mcv=dashMC(v,c), mp=v>0?mcv/v:0;
     const fx=dashFixoDoMes(D.fixo,m);
-    const sobra=v-c-fx;
+    const sobra=dashVendaLiq(v)-c-fx;
     const rz=meta>0?v/meta:0;
     linhas+='<tr style="border-bottom:1px solid #f1f5f9">'+
       '<td style="padding:7px 10px;font-weight:600">'+rotMes(m)+'</td>'+
@@ -5382,6 +5440,20 @@ init();
       <span style="flex:1"></span>
       <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('modal-centros').classList.add('hidden')">Cancelar</button>
       <button class="btn" style="padding:6px 14px;font-size:12px;background:#1a1a2e;color:#fff;border:none" onclick="salvarCentrosCusto()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-deducoes" class="hidden" style="position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:12px;max-width:420px;width:100%;padding:20px">
+    <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">% Deduções sobre a venda</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:14px">O que sai da venda antes de apurar a margem de contribuição.</div>
+    <div id="modal-ded-body"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-outline" style="padding:6px 12px;font-size:12px" onclick="limparDeducoes()">Herdar do Mapa</button>
+      <span style="flex:1"></span>
+      <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('modal-deducoes').classList.add('hidden')">Cancelar</button>
+      <button class="btn" style="padding:6px 14px;font-size:12px;background:#1a1a2e;color:#fff;border:none" onclick="salvarDeducoes()">Salvar</button>
     </div>
   </div>
 </div>
