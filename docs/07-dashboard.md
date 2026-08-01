@@ -17,7 +17,7 @@ O **DASHBOARD não é permissionável**: não está no `ABAS_CATALOGO`, não apa
 
 ```js
 { geradoEm, hoje,
-  mc:    { pagar:{"YYYY-MM-DD":saldo}, diario:{"YYYY-MM-DD":[venda,custo,QC,itens]},
+  mc:    { pagar:{"YYYY-MM-DD":saldo}, diario:{"YYYY-MM-DD":[venda,custo,QC,itens,pedidos]},
            mensal:{"YYYY-MM":[...]}, estoque, centros:{cod:nome}, fixo:{"YYYY-MM":{cod:valor}} },
   seven: { unidades:{ "3":{…mesmo formato…}, "4":{…}, "5":{…} }, centros:{cod:nome} } }
 ```
@@ -32,11 +32,27 @@ Série **diária de 120 dias** (cobre a semana corrente) e **mensal de 24 meses*
 |---|---|
 | **Contas a pagar** | Vence hoje · Vence nesta semana (seg–dom) · Vence neste mês · Já vencido |
 | **Vendas** | Vendas do mês vs meta (com barra) · Vendas da semana · Venda média por dia útil · Projeção do mês |
-| **Atendimento** | QC (atendimentos) · Itens vendidos · Ticket médio · Itens por atendimento |
+| **Atendimento** | QC (clientes atendidos) · Pedidos · Ticket médio · Ticket por cliente · Itens vendidos · Itens por cliente |
 | **Rentabilidade** | Margem de contribuição · Margem % · CMV do mês (e % da venda) · CMV 12 meses |
 | **Estoque e custo fixo** | Estoque a custo · Giro de estoque vs ideal (e cobertura em meses) · Custo fixo do mês (e do anterior) · Custo fixo médio (e % da venda) |
 
 Quase todo card traz o **histórico de 12 meses fechados** ao lado do valor do mês — era o pedido de "ticket médio histórico", "margem histórica", "CMV histórico" e "custo fixo histórico".
+
+## QC (clientes atendidos) × Pedidos — não são a mesma coisa
+
+Decisão do usuário em **01/08/2026**: `QC` = **clientes atendidos**; a quantidade de vendas é um card separado (**Pedidos**).
+
+⚠️ **`COUNT(DISTINCT cliente)` puro daria um número errado.** O balcão inteiro é lançado num **cliente genérico** — `000001 CLIENTE CONSUMIDOR` na MC MOTO e `31161 CONSUMIDOR FINAL` na SEVEN. Em jul/2026 a MC MOTO teve **2.734 vendas mas só 126 códigos de cliente distintos**, porque 2.510 delas caíram nesse código único. A regra usada:
+
+```
+QC = clientes identificados distintos  +  1 por venda no cliente genérico
+```
+
+...porque cada venda de balcão é uma pessoa diferente, mesmo o ERP usando um código só. Resultado jul/2026: **QC 2.635 × 2.734 pedidos** (MC MOTO) e **QC 534 × 1.232 pedidos** (SEVEN). Os genéricos são descobertos por nome (`LIKE '%CONSUMIDOR%'`), não por código fixo.
+
+**QC é consultado por período, nunca somado.** Um cliente que compra 3× no mês conta 1 no mês e 1 em cada dia — por isso o gerador roda a consulta separadamente para a série diária e a mensal. *(Ressalva: na SEVEN o QC das unidades é somado, então um cliente que compra em duas unidades conta duas vezes no consolidado.)*
+
+Daí saem **dois tickets diferentes**: `Ticket médio` = venda ÷ **pedidos** (valor de cada venda) e `Ticket por cliente` = venda ÷ **QC** (quanto cada cliente gastou). Na SEVEN a diferença é grande — R$ 265,40 contra R$ 612,32 —, porque lá o mesmo cliente de atacado faz vários pedidos no mês.
 
 ## Parâmetros e regras
 
