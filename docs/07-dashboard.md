@@ -43,13 +43,15 @@ A tela foi refeita no estilo BI: **faixa escura de KPIs** no topo (vendas do mê
 | Custo fixo por centro de custo | barras horizontais | top 8 dos centros marcados |
 | Mês a mês | tabela | 12 meses com vendas, QC, pedidos, ticket, MC, MC%, custo fixo, **sobra** e realização, com cor condicional |
 
+Entre a faixa de KPIs e os gráficos há a **faixa de indicadores** (`renderIndicadores()`, `#dash-indicadores`), em 4 blocos — Contas a pagar · Vendas · Atendimento · Rentabilidade e estoque. Ela existe porque a migração para gráficos **derrubou o número explícito de 17 dos 22 indicadores** da versão em cards (e deixou o giro ideal sem onde ser editado); a faixa devolve todos, cada um com o histórico de 12 meses ao lado. **Ao mexer no layout, conferir que esses 22 continuam na tela.**
+
 As quebras (grupo / marca / vendedor) vêm do gerador em `quebras: {grupo|marca|vendedor: {"YYYY-MM": {chave: [venda, custo]}}}`, cobrindo **13 meses** (`MESES_QUEBRA`) — não os 24, porque são consultas pesadas. Na SEVEN, `dashDados()` soma as quebras **chave a chave** entre as unidades permitidas.
 
 ⚠️ **Marca da MC MOTO:** `produtos.MARCA` é **código**; o nome está em `marcas.DESCRICAO`. Sem esse join o gráfico sai com "000019", "000015".
 
 ⚠️ O grupo de produto da MC MOTO usa `produtos.GRUPO` → `grupos.DESCRICAO` **sem** a reclassificação por palavra-chave que o Mapa de Vendas faz em `DIVERSOS` (ver [`02-vendas.md`](02-vendas.md)). Por isso "DIVERSOS" aparece grande aqui e menor lá.
 
-## Cards (versão anterior, substituída)
+## Indicadores da faixa (os mesmos da versão em cards)
 
 | Bloco | Cards |
 |---|---|
