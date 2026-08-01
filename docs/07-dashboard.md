@@ -77,6 +77,22 @@ QC = clientes identificados distintos  +  1 por venda no cliente genérico
 
 Daí saem **dois tickets diferentes**: `Ticket médio` = venda ÷ **pedidos** (valor de cada venda) e `Ticket por cliente` = venda ÷ **QC** (quanto cada cliente gastou). Na SEVEN a diferença é grande — R$ 265,40 contra R$ 612,32 —, porque lá o mesmo cliente de atacado faz vários pedidos no mês.
 
+## Margem de contribuição — deduções sobre a venda (01/08/2026)
+
+Segue a **mesma regra do Painel Mensal**:
+
+```
+MC = Vendas × (1 − deduções%) − CMV
+```
+
+O Mapa usa **um** percentual global (`localStorage['mapa_descontoPct']`, campo "% Desconto (para cálculo da MC)"). No dashboard esse percentual é **aberto em quatro componentes** — **impostos, comissão, prêmio e frete de venda** — editáveis no botão **"% Deduções"**; o que entra na conta é a **soma** deles (`dash_deducoes`).
+
+- **Enquanto os quatro não forem preenchidos, o dashboard herda o percentual do Mapa** (`dashDeducoes().herdado`), para as duas telas não divergirem no primeiro acesso. O botão "Herdar do Mapa" volta a esse estado.
+- A regra vale em **todos** os lugares onde aparece margem: faixa de KPIs, gráficos de grupo/vendedor/marca, tabela mensal (MC, MC% e a coluna **Sobra** = `venda × (1 − ded) − CMV − custo fixo`) e a rosca "Para onde vai a venda", onde as deduções viraram **fatia própria**.
+- Helpers: `dashDeducoes()`, `dashVendaLiq(v)` e `dashMC(v,custo)` — usar sempre esses, nunca `venda − custo` cru.
+
+Exemplo (MC MOTO, jul/2026): sem deduções a MC é R$ 92.888,97 (38,0%); com 10% de imposto + 2% de comissão + 1% de prêmio + 1% de frete (14%), cai para **R$ 58.632,25 (24,0%)** e a sobra do mês vira **negativa em R$ 31.070,19**.
+
 ## Parâmetros e regras
 
 - **Contas a pagar sempre olham HOJE**, independentemente do seletor de mês. Só títulos **em aberto**, pelo saldo devedor.
@@ -88,4 +104,4 @@ Daí saem **dois tickets diferentes**: `Ticket médio` = venda ÷ **pedidos** (v
 
 ## Chaves de `localStorage`
 
-`dash_empresa` · `dash_centros_fixo` · `dash_giro_ideal` · `dash_meta_seven`. Lê (sem escrever) `mapa_meta_*_vendas` e `mapa_feriados`, do Mapa de Vendas.
+`dash_empresa` · `dash_centros_fixo` · `dash_giro_ideal` · `dash_meta_seven` · `dash_deducoes`. Lê (sem escrever) `mapa_meta_*_vendas`, `mapa_feriados` e `mapa_descontoPct`, do Mapa de Vendas.
