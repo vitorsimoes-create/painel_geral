@@ -38,6 +38,25 @@ Sub-aba padrão do grupo RHS/SEVEN. **Não é conteúdo próprio de `index.html`
 
 Mecânica compartilhada com o restante do Mapa de Vendas: mesmo cálculo de MC (`vendas*f - custo`), e uma marcação de **atraso de sincronização** — se a última nota fiscal de uma unidade estiver mais de **2 dias** (`LIMITE_ATRASO`) atrasada em relação à data de referência, a unidade recebe um badge âmbar de "atraso" na interface.
 
+### Sub-abas de VENDAS (02/08/2026)
+
+A aba **VENDAS** deixou de ser uma tela só e ganhou uma segunda linha de sub-abas (`#subtabs-sevenvendas`), todas **deep-link** para abas do Mapa de Vendas (mesmo padrão da MC MOTO), cada uma **permissionável em separado**:
+
+| Sub-aba | Aba do Mapa | Conteúdo |
+|---|---|---|
+| **Painel Mensal** | `unidades` | Painel do mês por unidade · Detalhe por vendedor · Acompanhamento mensal (histórico) · Ranking de clientes |
+| **Gráficos** | `unigraf` | Evolução das unidades (6 gráficos) · Vendas por grupo de produto |
+| **Vendas por Fornecedor** | `unifor` | **Novo.** 12 meses: vendas, CMV, MC, MC%, estoque a custo, cobertura em meses e giro. Cobertura > 6 meses marca **estoque parado** (66 fornecedores hoje). Busca + filtro "só estoque parado". |
+| **Vendas Históricas** | `unihist` | **Novo.** Todo o histórico (41 meses): gráfico de faturamento, tabela mês a mês com MC/MC%/pedidos/ticket e comparação com o mesmo mês do ano anterior. Filtro 12/24/tudo. |
+
+O bloco de controles (unidades, % desconto, dias úteis) foi movido para **fora** dos painéis (`#uni-controles`), acima deles, e `trocarAba()` o exibe apenas nas 4 abas da SEVEN — assim as quatro compartilham o mesmo filtro.
+
+### Filtro de unidades — múltipla escolha (02/08/2026)
+
+O `<select>` de unidade virou **checkboxes** (`#uni-checks`), então dá para combinar **duas ou mais** unidades. Helpers no Mapa: `uniSel()` (marcadas; vazio = todas as visíveis), **`uniOk(cod)`** (o teste que todas as seções usam) e `rotuloUnidades()` (ex.: "Seven Contagem + Seven Ipatinga"). Persistido em `mapa_uni_sel`; migra do formato antigo `mapa_uni_filtro`.
+
+⚠️ **`aplicarUnidadesPermitidas()` no `index.html` teve de ser adaptado** — ele manipulava as `<option>` do select e agora marca/desmarca checkboxes. Usuário restrito continua vendo só as unidades liberadas; se a restrição desmarcar tudo, as permitidas são remarcadas automaticamente.
+
 ## CRM
 
 Iframe separado, `crm-seven.html`, escopo declarado "Unidades 3 e 4". Painel próprio, independente do sistema de navegação por senha/categoria do restante do painel. Não detalhado nesta documentação (arquivo autocontido, fora do escopo revisado).
