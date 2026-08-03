@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório Gerencial — RHS/SEVEN</title>
+<style>
+ *{box-sizing:border-box}
+ body{font-family:Arial,Helvetica,sans-serif;background:#f2f4f7;margin:0;padding:18px;color:#222}
+ h1{background:#1e293b;color:#fff;padding:13px 18px;border-radius:6px;font-size:17px;margin:0 0 6px}
+ .sub{font-size:12px;color:#666;margin-bottom:14px}
+ .barra{display:flex;align-items:center;gap:10px;background:#fff;border-radius:8px;padding:10px 16px;
+        box-shadow:0 1px 3px rgba(0,0,0,.12);margin-bottom:14px;font-size:13px;flex-wrap:wrap}
+ .barra b{color:#1e293b}
+ .btn{padding:6px 13px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;
+      font-size:12px;font-weight:bold;color:#475569}
+ .btn:hover{background:#f8fafc}
+ .wrap{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.12);overflow:auto;max-height:78vh}
+ table{border-collapse:collapse;font-size:12px;width:100%}
+ th,td{padding:5px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid #f1f5f9}
+ thead th{position:sticky;top:0;background:#1e293b;color:#fff;font-size:10px;text-transform:uppercase;z-index:2}
+ tbody th{position:sticky;left:0;background:#fff;text-align:left;font-weight:600;color:#334155;z-index:1;
+          border-right:1px solid #e2e8f0}
+ tr.grupo th,tr.grupo td{background:#f1f5f9;font-weight:700;color:#1e293b}
+ tr.tot th,tr.tot td{background:#eef2ff;font-weight:700;border-top:2px solid #c7d2fe}
+ tr.res th,tr.res td{background:#1e293b;color:#fff;font-weight:700}
+ .neg{color:#dc2626}.pos{color:#059669}
+ .man{background:#fffbeb}
+ .man input{width:100%;border:1px solid #fde68a;background:#fffbeb;border-radius:4px;padding:2px 5px;
+            text-align:right;font-size:11px;font-family:inherit}
+ .nota{font-size:11px;color:#888;margin-top:10px;line-height:1.7}
+ .tagp{background:#fef3c7;color:#92400e;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:5px}
+ dialog{border:none;border-radius:10px;padding:20px;max-width:420px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+ dialog label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;font-size:13px}
+ dialog input{width:90px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:5px;text-align:right}
+</style></head><body>
+<h1>📋 Relatório Gerencial — RHS/SEVEN</h1>
+<div class="sub" id="ger"></div>
+
+<div class="barra">
+  <b>Meses:</b>
+  <button class="btn" onclick="setN(6)">6</button>
+  <button class="btn" onclick="setN(12)">12</button>
+  <button class="btn" onclick="setN(24)">24</button>
+  <span style="width:1px;height:20px;background:#e2e8f0"></span>
+  <button class="btn" onclick="document.getElementById('dlg').showModal()">% Impostos</button>
+  <button class="btn" onclick="repetirMesAnterior()">Repetir mês anterior</button>
+  <button class="btn" onclick="exportar()">Exportar lançamentos</button>
+  <span style="flex:1"></span>
+  <span style="font-size:11px;color:#94a3b8">Campos em amarelo são digitados por você</span>
+</div>
+
+<div class="wrap"><table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+<div class="nota" id="nota"></div>
+
+<dialog id="dlg">
+  <div style="font-weight:700;margin-bottom:4px">Alíquotas sobre a venda</div>
+  <div style="font-size:12px;color:#64748b;margin-bottom:12px">Aplicadas sobre as vendas totais de cada mês.</div>
+  <div id="dlg-body"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+    <button class="btn" onclick="document.getElementById('dlg').close()">Cancelar</button>
+    <button class="btn" style="background:#1e293b;color:#fff;border-color:#1e293b" onclick="salvarAliq()">Salvar</button>
+  </div>
+</dialog>
+
+<script>
+const D={"geradoEm":"03/08/2026 16:17","hoje":"2026-08-03","fluxo":{"2024-09":{"vAvista":55051.0,"vAprazo":3208.0,"cmv":33232.1,"comissao":0.0,"frete":0.0,"compras":19412.68,"itensGirados":781.0},"2026-06":{"vAvista":177057.94,"vAprazo":182116.0,"cmv":228618.02,"comissao":0.0,"frete":70.0,"compras":205441.46,"itensGirados":12441.2},"2025-06":{"vAvista":63976.94,"vAprazo":0.0,"cmv":35406.57,"comissao":0.0,"frete":0.0,"compras":79823.11,"itensGirados":978.0},"2024-08":{"vAvista":33301.07,"vAprazo":0.0,"cmv":17867.61,"comissao":0.0,"frete":0.0,"compras":24531.66,"itensGirados":455.0},"2025-03":{"vAvista":71261.78,"vAprazo":0.0,"cmv":38565.71,"comissao":0.0,"frete":0.0,"compras":31434.81,"itensGirados":1093.0},"2024-10":{"vAvista":51146.72,"vAprazo":0.0,"cmv":27372.08,"comissao":0.0,"frete":0.0,"compras":21715.26,"itensGirados":780.0},"2024-11":{"vAvista":63904.99,"vAprazo":0.0,"cmv":32736.37,"comissao":0.0,"frete":0.0,"compras":18114.06,"itensGirados":843.0},"2025-01":{"vAvista":65660.8,"vAprazo":0.0,"cmv":34304.89,"comissao":0.0,"frete":0.0,"compras":39210.77,"itensGirados":995.0},"2024-12":{"vAvista":55358.06,"vAprazo":0.0,"cmv":30209.96,"comissao":0.0,"frete":0.0,"compras":9019.05,"itensGirados":868.0},"2025-02":{"vAvista":67444.85,"vAprazo":0.0,"cmv":36956.58,"comissao":0.0,"frete":0.0,"compras":24487.03,"itensGirados":1054.2},"2025-04":{"vAvista":72389.94,"vAprazo":0.0,"cmv":40063.07,"comissao":0.0,"frete":0.0,"compras":37928.26,"itensGirados":1123.32},"2025-07":{"vAvista":150809.05,"vAprazo":71981.4,"cmv":133444.06,"comissao":0.0,"frete":45.0,"compras":218030.07,"itensGirados":6636.0},"2025-05":{"vAvista":64025.08,"vAprazo":0.0,"cmv":36292.61,"comissao":0.0,"frete":0.0,"compras":35522.17,"itensGirados":1062.0},"2025-10":{"vAvista":187104.98,"vAprazo":283243.89,"cmv":308624.11,"comissao":0.0,"frete":65.0,"compras":367545.21,"itensGirados":15823.0},"2025-08":{"vAvista":151799.32,"vAprazo":133970.32,"cmv":178571.36,"comissao":0.0,"frete":45.0,"compras":278271.87,"itensGirados":10052.0},"2025-09":{"vAvista":168301.9,"vAprazo":190866.3,"cmv":225264.24,"comissao":0.0,"frete":90.0,"compras":234504.71,"itensGirados":12605.0},"2025-11":{"vAvista":177551.65000000002,"vAprazo":209927.53999999998,"cmv":254429.49,"comissao":0.0,"frete":115.0,"compras":357872.71,"itensGirados":13722.0},"2026-01":{"vAvista":187553.5,"vAprazo":199082.03999999998,"cmv":252120.29,"comissao":0.0,"frete":10.0,"compras":552826.94,"itensGirados":13286.0},"2025-12":{"vAvista":174675.94,"vAprazo":211735.78,"cmv":256626.41,"comissao":0.0,"frete":70.0,"compras":259452.9,"itensGirados":13330.0},"2026-03":{"vAvista":205399.00000000003,"vAprazo":225080.63999999998,"cmv":283894.61,"comissao":0.0,"frete":0.0,"compras":360079.5,"itensGirados":16180.0},"2026-02":{"vAvista":171677.68000000002,"vAprazo":172859.06,"cmv":224769.83,"comissao":0.0,"frete":0.0,"compras":367959.38,"itensGirados":12269.0},"2026-04":{"vAvista":206374.43000000002,"vAprazo":188585.29,"cmv":256466.17,"comissao":0.0,"frete":0.0,"compras":192738.22,"itensGirados":12650.0},"2026-05":{"vAvista":135034.87,"vAprazo":147706.94999999998,"cmv":175776.03,"comissao":0.0,"frete":0.0,"compras":284840.01,"itensGirados":9654.0},"2026-07":{"vAvista":140059.66,"vAprazo":186916.96,"cmv":208032.49,"comissao":0.0,"frete":10.0,"compras":172427.95,"itensGirados":10775.0}},"custoFixo":{"2026-11":13214.33,"2026-12":12584.33,"2024-11":373.42,"2026-01":51316.34,"2025-11":54689.04,"2026-02":65714.39,"2026-03":65357.3,"2026-04":60335.91,"2026-05":58942.34,"2026-06":63028.78,"2025-03":313.97,"2027-01":584.33,"2027-02":584.33,"2025-10":33351.03,"2025-02":2893.43,"2026-08":13383.68,"2026-09":12584.33,"2026-10":12584.33,"2026-07":62793.82,"2025-12":34991.55,"2025-04":11220.32,"2025-05":2719.8,"2025-01":13689.31,"2024-09":7923.19,"2024-10":3177.56,"2024-12":586.79,"2025-06":6194.21,"2025-07":20212.12,"2502-07":0.0,"2025-08":26510.8,"2024-08":0.0,"2025-09":39081.52,"2027-03":584.33,"2202-03":291.09},"posicaoHoje":{"estoque":2230377.32,"itensEstoque":9391,"aPagar":1367282.41,"aReceber":2279695.93,"inadimplencia":85.78,"caixa":null},"historico":{"2026-07":{"aPagar":1367282.41,"aReceber":2279695.93,"atrasado":true,"caixa":null,"estoque":2230377.32,"fechadoEm":"2026-08-03","inadimplencia":85.78,"itensEstoque":9391}},"diasUteis":{"2024-08":27,"2024-09":25,"2024-10":27,"2024-11":26,"2024-12":26,"2025-01":27,"2025-02":24,"2025-03":26,"2025-04":26,"2025-05":27,"2025-06":25,"2025-07":27,"2025-08":26,"2025-09":26,"2025-10":27,"2025-11":25,"2025-12":27,"2026-01":27,"2026-02":24,"2026-03":26,"2026-04":26,"2026-05":26,"2026-06":26,"2026-07":27,"2026-08":26},"pedeCaixa":true};
+const EMP='seven';
+const LS_MAN='rel_manual_'+EMP, LS_ALIQ='rel_aliq_'+EMP, LS_N='rel_n_'+EMP;
+const fmt=n=>(n<0?'-':'')+'R$ '+Math.abs(Number(n||0)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=n=>Number(n||0).toLocaleString('pt-BR');
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const rot=m=>{const p=m.split('-');return MES[+p[1]-1]+'/'+p[0].slice(2)};
+
+const ALIQ_PADRAO={csll:1.08,irpj:1.20,pis:0.65,cofins:3.00};
+
+let N=parseInt(localStorage.getItem(LS_N),10)||12;
+function man(){ try{return JSON.parse(localStorage.getItem(LS_MAN)||'{}')}catch(e){return{}} }
+function setMan(o){ localStorage.setItem(LS_MAN,JSON.stringify(o)); }
+function aliq(){ try{return Object.assign({},ALIQ_PADRAO,JSON.parse(localStorage.getItem(LS_ALIQ)||'{}'))}catch(e){return ALIQ_PADRAO} }
+function v(ym,campo){ const m=man(); return (m[ym]&&m[ym][campo]!=null)?+m[ym][campo]:0; }
+function setV(ym,campo,val){ const m=man(); (m[ym]=m[ym]||{})[campo]=(val===''?null:+val); setMan(m); render(); }
+function setN(n){ N=n; localStorage.setItem(LS_N,n); render(); }
+
+/* Calcula todas as linhas de um mes. Fluxo vem do banco; posicao vem do fechamento
+   do dia 1 (mes fechado) ou da foto de hoje (mes corrente). */
+function calc(ym, corrente){
+  const f=D.fluxo[ym]||{}, a=aliq();
+  const pos = corrente ? D.posicaoHoje : (D.historico[ym]||{});
+  const vAv=f.vAvista||0, vAp=f.vAprazo||0, tot=vAv+vAp;
+  const csll=tot*a.csll/100, irpj=tot*a.irpj/100, pis=tot*a.pis/100, cofins=tot*a.cofins/100;
+  const impTot=csll+irpj+pis+cofins;
+  const premio=v(ym,'premio'), despFin=v(ym,'despFin'), recFin=v(ym,'recFin');
+  const mc=tot-(f.cmv||0)-(f.comissao||0)-premio-(f.frete||0)-impTot;
+  const fixo=D.custoFixo[ym]||0;
+  const resultado=mc-fixo-despFin+recFin;
+  const capital=v(ym,'capital'), imob=v(ym,'imobilizado');
+  const caixa = D.pedeCaixa ? v(ym,'caixa') : (pos.caixa||0);
+  const ativos=(pos.estoque||0)+(pos.aReceber||0)+caixa+imob;
+  const passivo=(pos.aPagar||0);
+  return {vAv:vAv, vAp:vAp, tot:tot, cmv:f.cmv||0, comissao:f.comissao||0, premio:premio,
+          frete:f.frete||0, csll:csll, irpj:irpj, pis:pis, cofins:cofins,
+          mc:mc, fixo:fixo, despFin:despFin, recFin:recFin, resultado:resultado,
+          resCap: capital>0?resultado/capital*100:null,
+          estoque:pos.estoque||0, compras:f.compras||0, aPagar:passivo, aReceber:pos.aReceber||0,
+          caixa:caixa, imob:imob, func:v(ym,'funcionarios'),
+          diasUteis:D.diasUteis[ym]||0,
+          vendaDia:(D.diasUteis[ym]||0)>0 ? tot/D.diasUteis[ym] : 0,
+          inad:(pos.inadimplencia==null?null:pos.inadimplencia),
+          itensEstoque:pos.itensEstoque||0, itensGirados:f.itensGirados||0,
+          capital:capital, ativos:ativos, passivo:passivo, dif:ativos-passivo,
+          temPos:Object.keys(pos).length>0};
+}
+
+function render(){
+  const meses=Object.keys(D.fluxo).sort().slice(-N).reverse();
+  const hoje=D.hoje.slice(0,7);
+  const dados=meses.map(m=>({ym:m, corrente:(m===hoje), c:calc(m,(m===hoje))}));
+
+  document.getElementById('thead').innerHTML='<tr><th style="text-align:left;min-width:190px">Linha</th>'+
+    dados.map(d=>'<th>'+rot(d.ym)+(d.corrente?'<span class="tagp">parcial</span>':'')+'</th>').join('')+'</tr>';
+
+  function L(rotulo,get,op){
+    op=op||{};
+    return '<tr'+(op.cls?' class="'+op.cls+'"':'')+'><th>'+rotulo+'</th>'+
+      dados.map(function(d){
+        if(op.manual){
+          const mm=man()[d.ym]||{};
+          const val=(mm[op.manual]==null?'':mm[op.manual]);
+          return '<td class="man"><input type="number" step="0.01" value="'+val+
+                 '" data-ym="'+d.ym+'" data-k="'+op.manual+'" onchange="setV(this.dataset.ym,this.dataset.k,this.value)"></td>';
+        }
+        const x=get(d.c);
+        if(x===null||x===undefined) return '<td style="color:#cbd5e1">—</td>';
+        const txt=(op.tipo==='num')?num(Math.round(x)):((op.tipo==='pct')?x.toFixed(1).replace('.',',')+'%':fmt(x));
+        const cor=(op.cor&&x<0)?' class="neg"':((op.cor&&x>0)?' class="pos"':'');
+        return '<td'+cor+(d.corrente?' style="opacity:.7"':'')+'>'+txt+'</td>';
+      }).join('')+'</tr>';
+  }
+
+  document.getElementById('tbody').innerHTML=
+    L('VENDAS À VISTA',function(c){return c.vAv})+
+    L('VENDAS A PRAZO',function(c){return c.vAp})+
+    L('VENDAS TOTAIS',function(c){return c.tot},{cls:'tot'})+
+    L('CMV',function(c){return -c.cmv})+
+    L('COMISSÃO',function(c){return -c.comissao})+
+    L('PRÊMIO',null,{manual:'premio'})+
+    L('FRETE VENDAS',function(c){return -c.frete})+
+    L('CSLL',function(c){return -c.csll})+
+    L('IRPJ',function(c){return -c.irpj})+
+    L('PIS',function(c){return -c.pis})+
+    L('COFINS',function(c){return -c.cofins})+
+    L('MARGEM DE CONTRIBUIÇÃO',function(c){return c.mc},{cls:'tot',cor:1})+
+    L('CUSTO FIXO',function(c){return -c.fixo})+
+    L('DESPESA FINAN',null,{manual:'despFin'})+
+    L('RECEITA FINANCEIRA',null,{manual:'recFin'})+
+    L('RESULTADO',function(c){return c.resultado},{cls:'res'})+
+    L('RESULTADO/CAPITAL',function(c){return c.resCap},{tipo:'pct'})+
+    '<tr class="grupo"><th>POSIÇÃO</th>'+dados.map(function(d){
+        if(d.corrente) return '<td>hoje</td>';
+        const h=D.historico[d.ym];
+        if(!h) return '<td style="color:#cbd5e1">sem fechamento</td>';
+        // fechamento fora do dia 1: o numero e a posicao do dia em que a rotina rodou
+        return '<td'+(h.atrasado?' title="fechado em '+h.fechadoEm.split('-').reverse().join('/')+', fora do dia 1º" style="color:#b45309"':'')+'>'+
+               (h.atrasado?'fech. '+h.fechadoEm.slice(8)+'/'+h.fechadoEm.slice(5,7):'fechado')+'</td>';
+      }).join('')+'</tr>'+
+    L('ESTOQUE',function(c){return c.estoque})+
+    L('COMPRAS',function(c){return c.compras})+
+    L('CONTAS A PAGAR',function(c){return c.aPagar})+
+    L('CONTAS A RECEB',function(c){return c.aReceber})+
+    (D.pedeCaixa?L('CAIXA/BANCOS',null,{manual:'caixa'}):L('CAIXA/BANCOS',function(c){return c.caixa}))+
+    L('IMOBILIZADO',null,{manual:'imobilizado'})+
+    L('FUNCIONÁRIOS LOJA',null,{manual:'funcionarios'})+
+    L('DIAS ÚTEIS',function(c){return c.diasUteis},{tipo:'num'})+
+    L('VENDA P/ DIA ÚTIL',function(c){return c.vendaDia})+
+    L('INAD. GERAL',function(c){return c.inad},{tipo:'pct'})+
+    L('ITENS NO ESTOQUE',function(c){return c.itensEstoque},{tipo:'num'})+
+    L('ITENS GIRADOS',function(c){return c.itensGirados},{tipo:'num'})+
+    L('CAPITAL SOCIAL',null,{manual:'capital'})+
+    L('ATIVOS',function(c){return c.ativos},{cls:'tot'})+
+    L('PASSIVO',function(c){return c.passivo},{cls:'tot'})+
+    L('DIFERENÇA',function(c){return c.dif},{cls:'res'});
+
+  const a=aliq();
+  document.getElementById('ger').textContent='Gerado em '+D.geradoEm+' · posição de hoje '+
+    D.hoje.split('-').reverse().join('/')+' · fechamento automático todo dia 1º';
+  document.getElementById('nota').innerHTML=
+    '<b>Fluxo</b> (vendas, CMV, compras, itens girados) vem do banco e não muda depois que o mês fecha. '+
+    '<b>Posição</b> (estoque, contas, caixa, itens em estoque) é uma foto: o mês fechado usa o valor gravado no <b>dia 1º</b>, '+
+    'antes de qualquer movimentação; o mês corrente mostra a posição de hoje e por isso aparece esmaecido. '+
+    '<b>À vista</b> = PIX, dinheiro, débito e crédito à vista; <b>a prazo</b> = cartão parcelado, faturamento e crediário. '+
+    'Impostos sobre a venda total: CSLL '+a.csll+'%, IRPJ '+a.irpj+'%, PIS '+a.pis+'%, COFINS '+a.cofins+'% — ajuste no botão "% Impostos". '+
+    '<b>Margem de contribuição</b> = vendas − CMV − comissão − prêmio − frete − impostos. '+
+    '<b>Resultado</b> = MC − custo fixo − despesa financeira + receita financeira. '+
+    '<b>Ativos</b> = estoque + a receber + caixa + imobilizado; <b>Passivo</b> = contas a pagar. '+
+    'Os campos amarelos ficam salvos <b>neste navegador</b> — use "Exportar lançamentos" para guardar uma cópia.';
+}
+
+function repetirMesAnterior(){
+  const meses=Object.keys(D.fluxo).sort();
+  const hoje=D.hoje.slice(0,7);
+  const ant=meses[meses.indexOf(hoje)-1];
+  if(!ant){ alert('Não há mês anterior.'); return; }
+  const m=man(); const base=m[ant]||{};
+  const estaveis=['imobilizado','funcionarios','capital'];
+  m[hoje]=Object.assign({},m[hoje]||{});
+  estaveis.forEach(function(k){ if(base[k]!=null) m[hoje][k]=base[k]; });
+  setMan(m); render();
+  alert('Imobilizado, funcionários e capital social de '+rot(ant)+' copiados para '+rot(hoje)+'.');
+}
+function exportar(){
+  const txt=JSON.stringify({empresa:EMP,aliquotas:aliq(),lancamentos:man()},null,1);
+  navigator.clipboard.writeText(txt).then(
+    function(){ alert('Lançamentos copiados. Guarde este texto — é a cópia de segurança do que você digitou.'); },
+    function(){ prompt('Copie o texto:',txt); });
+}
+function salvarAliq(){
+  const o={};
+  ['csll','irpj','pis','cofins'].forEach(function(k){ o[k]=parseFloat(document.getElementById('al-'+k).value)||0; });
+  localStorage.setItem(LS_ALIQ,JSON.stringify(o));
+  document.getElementById('dlg').close(); render();
+}
+(function(){
+  const a=aliq();
+  document.getElementById('dlg-body').innerHTML=
+    [['csll','CSLL'],['irpj','IRPJ'],['pis','PIS'],['cofins','COFINS']].map(function(p){
+      return '<label>'+p[1]+'<span><input type="number" step="0.01" id="al-'+p[0]+'" value="'+a[p[0]]+'"> %</span></label>';
+    }).join('');
+})();
+render();
+</script></body></html>

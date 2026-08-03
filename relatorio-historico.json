@@ -1,0 +1,26 @@
+{
+ "mc": {
+  "2026-07": {
+   "aPagar": 1040270.13,
+   "aReceber": 4435.0,
+   "atrasado": true,
+   "caixa": null,
+   "estoque": 1679223.78,
+   "fechadoEm": "2026-08-03",
+   "inadimplencia": 19.03,
+   "itensEstoque": 8469
+  }
+ },
+ "seven": {
+  "2026-07": {
+   "aPagar": 1367282.41,
+   "aReceber": 2279695.93,
+   "atrasado": true,
+   "caixa": null,
+   "estoque": 2230377.32,
+   "fechadoEm": "2026-08-03",
+   "inadimplencia": 85.78,
+   "itensEstoque": 9391
+  }
+ }
+}
