@@ -36,6 +36,10 @@
 <div class="sub" id="ger"></div>
 
 <div class="barra">
+  <span id="uni-box" style="display:none;align-items:center;gap:6px">
+    <b>Unidade:</b><span id="uni-btns" style="display:flex;gap:5px"></span>
+    <span style="width:1px;height:20px;background:#e2e8f0"></span>
+  </span>
   <b>Meses:</b>
   <button class="btn" onclick="setN(6)">6</button>
   <button class="btn" onclick="setN(12)">12</button>
@@ -62,7 +66,7 @@
 </dialog>
 
 <script>
-const D={"geradoEm":"03/08/2026 16:17","hoje":"2026-08-03","fluxo":{"2024-08":{"vAvista":217600.58,"vAprazo":77224.87999999999,"cmv":185850.59,"comissao":0.0,"frete":0.0,"compras":250627.32,"itensGirados":6456.0},"2024-09":{"vAvista":199566.33000000002,"vAprazo":67462.03,"cmv":167123.14,"comissao":0.0,"frete":0.0,"compras":152897.43,"itensGirados":6091.0},"2024-10":{"vAvista":219171.96000000002,"vAprazo":93019.24,"cmv":193973.09,"comissao":0.0,"frete":0.0,"compras":234057.14,"itensGirados":6151.0},"2024-11":{"vAvista":217402.49,"vAprazo":76000.0,"cmv":182707.4,"comissao":15.65,"frete":0.0,"compras":94799.09,"itensGirados":5835.0},"2024-12":{"vAvista":228134.86999999997,"vAprazo":71096.06,"cmv":187338.4,"comissao":0.0,"frete":0.0,"compras":146456.13,"itensGirados":5906.0},"2025-01":{"vAvista":205793.34000000003,"vAprazo":81079.51,"cmv":173455.72,"comissao":0.0,"frete":0.0,"compras":216265.6,"itensGirados":5781.0},"2025-02":{"vAvista":196060.63,"vAprazo":79755.4,"cmv":169189.24,"comissao":8.45,"frete":0.0,"compras":242214.13,"itensGirados":5569.0},"2025-04":{"vAvista":198908.59000000003,"vAprazo":70889.9,"cmv":168847.82,"comissao":1656.49,"frete":0.0,"compras":124317.36,"itensGirados":5286.0},"2025-03":{"vAvista":202918.36,"vAprazo":85243.0,"cmv":181155.26,"comissao":35.089999999999996,"frete":0.0,"compras":174752.07,"itensGirados":5639.0},"2025-05":{"vAvista":189921.86000000002,"vAprazo":70941.5,"cmv":160629.75,"comissao":2663.36,"frete":0.0,"compras":196412.54,"itensGirados":5395.0},"2025-06":{"vAvista":181728.74,"vAprazo":59108.8,"cmv":147737.42,"comissao":2410.76,"frete":0.0,"compras":338366.6,"itensGirados":4740.0},"2025-07":{"vAvista":200818.69,"vAprazo":63717.19,"cmv":161590.88,"comissao":2676.87,"frete":0.0,"compras":326092.73,"itensGirados":5301.0},"2025-09":{"vAvista":176882.91,"vAprazo":61509.26,"cmv":148407.0,"comissao":2368.69,"frete":0.0,"compras":44439.9,"itensGirados":5151.0},"2025-11":{"vAvista":166888.09,"vAprazo":64006.0,"cmv":146835.7,"comissao":2335.33,"frete":0.0,"compras":125069.93,"itensGirados":4819.0},"2025-08":{"vAvista":208432.73,"vAprazo":66329.0,"cmv":173926.64,"comissao":2790.45,"frete":0.0,"compras":110303.1,"itensGirados":5512.0},"2025-10":{"vAvista":182567.38,"vAprazo":73515.0,"cmv":160406.4,"comissao":2590.3300000000004,"frete":0.0,"compras":69550.83,"itensGirados":5592.0},"2025-12":{"vAvista":211219.00000000003,"vAprazo":53963.81,"cmv":166775.02,"comissao":2660.94,"frete":0.0,"compras":151010.22,"itensGirados":5230.0},"2026-01":{"vAvista":187314.84000000003,"vAprazo":64259.31,"cmv":159822.25,"comissao":2463.9300000000003,"frete":0.0,"compras":176302.77,"itensGirados":5245.0},"2026-02":{"vAvista":188581.67,"vAprazo":52531.0,"cmv":153492.17,"comissao":2443.61,"frete":0.0,"compras":117948.34,"itensGirados":4821.0},"2026-03":{"vAvista":201619.90000000002,"vAprazo":60428.5,"cmv":164119.02,"comissao":2656.32,"frete":0.0,"compras":194415.42,"itensGirados":5757.0},"2026-04":{"vAvista":212947.16999999998,"vAprazo":67180.0,"cmv":177126.27,"comissao":2851.64,"frete":0.0,"compras":167095.41,"itensGirados":5978.0},"2026-05":{"vAvista":201514.3,"vAprazo":64105.5,"cmv":165436.71,"comissao":2748.91,"frete":0.0,"compras":109683.11,"itensGirados":5849.0},"2026-06":{"vAvista":172735.63000000003,"vAprazo":49012.0,"cmv":136606.75,"comissao":5865.08,"frete":0.0,"compras":76642.86,"itensGirados":4874.0},"2026-07":{"vAvista":192252.63999999996,"vAprazo":52224.21,"cmv":152655.37,"comissao":6739.419999999999,"frete":0.0,"compras":226374.34,"itensGirados":5282.0},"2026-08":{"vAvista":10547.0,"vAprazo":5293.0,"cmv":9757.85,"comissao":311.09000000000003,"frete":0.0,"compras":0.0,"itensGirados":327.0}},"custoFixo":{"2025-05":86615.06,"2025-04":45048.57,"2025-06":81378.05,"2025-07":79713.74,"2025-08":78374.28,"2025-09":75231.43,"2025-10":66443.64,"2025-12":86944.05,"2026-01":68638.64,"2026-02":76290.83,"2026-03":93937.42,"2026-04":75060.94,"2026-06":74061.3,"2026-05":81275.92,"2026-07":90152.44,"2026-08":31159.46,"2026-09":16503.57,"2025-11":85134.17,"2026-10":29503.57,"2026-11":29503.57,"2026-12":29503.57,"2027-01":13965.07,"2027-02":411.36,"2027-03":0.0,"2027-04":0.0,"2027-05":0.0,"2027-06":0.0,"2027-07":0.0,"2027-08":0.0,"2027-09":0.0,"2027-10":0.0,"2027-11":0.0,"2027-12":0.0,"2028-01":0.0,"2028-03":0.0,"2028-04":0.0,"2028-05":0.0,"2028-06":0.0,"2028-07":0.0,"2028-08":0.0,"2028-09":0.0,"2028-10":0.0,"2028-11":0.0,"2028-12":0.0,"2029-01":0.0,"2029-02":0.0,"2029-03":0.0,"2029-04":0.0,"2029-05":0.0,"2029-06":0.0,"2029-07":0.0,"2029-08":0.0,"2029-09":0.0,"2029-10":0.0,"2029-11":0.0,"2029-12":0.0,"2030-01":0.0,"2030-02":0.0,"2030-03":0.0,"2030-04":0.0,"2030-05":0.0,"2030-06":0.0,"2030-07":0.0,"2030-08":0.0,"2030-09":0.0,"2030-10":0.0,"2030-11":0.0,"2030-12":0.0,"2031-01":0.0,"2031-02":0.0,"2031-03":0.0,"2031-04":0.0,"2031-05":0.0,"2031-06":0.0,"2031-07":0.0,"2031-08":0.0,"2031-09":0.0,"2031-10":0.0,"2031-11":0.0,"2031-12":0.0,"2032-01":0.0,"2032-02":0.0,"2032-03":0.0,"2032-04":0.0,"2032-05":0.0,"2032-06":0.0,"2032-07":0.0,"2028-02":0.0},"posicaoHoje":{"estoque":1679223.78,"itensEstoque":8469,"aPagar":1040270.13,"aReceber":4435.0,"inadimplencia":19.03,"caixa":null},"historico":{"2026-07":{"aPagar":1040270.13,"aReceber":4435.0,"atrasado":true,"caixa":null,"estoque":1679223.78,"fechadoEm":"2026-08-03","inadimplencia":19.03,"itensEstoque":8469}},"diasUteis":{"2024-08":27,"2024-09":25,"2024-10":27,"2024-11":26,"2024-12":26,"2025-01":27,"2025-02":24,"2025-03":26,"2025-04":26,"2025-05":27,"2025-06":25,"2025-07":27,"2025-08":26,"2025-09":26,"2025-10":27,"2025-11":25,"2025-12":27,"2026-01":27,"2026-02":24,"2026-03":26,"2026-04":26,"2026-05":26,"2026-06":26,"2026-07":27,"2026-08":26},"pedeCaixa":true};
+const D={"geradoEm":"03/08/2026 16:31","hoje":"2026-08-03","unidades":[["0","MC MOTO"]],"fluxo":{"0":{"2024-08":{"vAvista":217600.58,"vAprazo":77224.87999999999,"cmv":185801.82,"comissao":0.0,"frete":0.0,"compras":250627.32,"itensGirados":6455.0},"2024-09":{"vAvista":199566.33000000002,"vAprazo":67462.03,"cmv":167123.14,"comissao":0.0,"frete":0.0,"compras":152897.43,"itensGirados":6091.0},"2024-10":{"vAvista":219171.96000000002,"vAprazo":93019.24,"cmv":193796.19,"comissao":0.0,"frete":0.0,"compras":234057.14,"itensGirados":6150.0},"2024-11":{"vAvista":217402.49,"vAprazo":76000.0,"cmv":182617.69999999998,"comissao":15.65,"frete":0.0,"compras":94799.09,"itensGirados":5834.0},"2024-12":{"vAvista":228134.86999999997,"vAprazo":71096.06,"cmv":186349.07,"comissao":0.0,"frete":0.0,"compras":146456.13,"itensGirados":5896.0},"2025-01":{"vAvista":205793.34000000003,"vAprazo":81079.51,"cmv":172929.39,"comissao":0.0,"frete":0.0,"compras":216265.6,"itensGirados":5777.0},"2025-02":{"vAvista":196060.63,"vAprazo":79755.4,"cmv":168706.03999999998,"comissao":8.45,"frete":0.0,"compras":242214.13,"itensGirados":5564.0},"2025-04":{"vAvista":198908.59000000003,"vAprazo":70889.9,"cmv":164371.81,"comissao":1656.49,"frete":0.0,"compras":124317.36,"itensGirados":5228.0},"2025-03":{"vAvista":202918.36,"vAprazo":85243.0,"cmv":179280.23,"comissao":35.089999999999996,"frete":0.0,"compras":174752.07,"itensGirados":5628.0},"2025-05":{"vAvista":189921.86000000002,"vAprazo":70941.5,"cmv":155845.21,"comissao":2663.36,"frete":0.0,"compras":196412.54,"itensGirados":5287.0},"2025-06":{"vAvista":181728.74,"vAprazo":59108.8,"cmv":145545.6,"comissao":2410.76,"frete":0.0,"compras":338366.6,"itensGirados":4683.0},"2025-07":{"vAvista":200818.69,"vAprazo":63717.19,"cmv":159104.69,"comissao":2676.87,"frete":0.0,"compras":326092.73,"itensGirados":5261.0},"2025-09":{"vAvista":176882.91,"vAprazo":61509.26,"cmv":146273.44,"comissao":2368.69,"frete":0.0,"compras":44439.9,"itensGirados":5114.0},"2025-11":{"vAvista":166888.09,"vAprazo":64006.0,"cmv":143992.41,"comissao":2335.33,"frete":0.0,"compras":125069.93,"itensGirados":4780.0},"2025-08":{"vAvista":208432.73,"vAprazo":66329.0,"cmv":169547.76,"comissao":2790.45,"frete":0.0,"compras":110303.1,"itensGirados":5448.0},"2025-10":{"vAvista":182567.38,"vAprazo":73515.0,"cmv":157357.04,"comissao":2590.3300000000004,"frete":0.0,"compras":69550.83,"itensGirados":5536.0},"2025-12":{"vAvista":211219.00000000003,"vAprazo":53963.81,"cmv":164041.21,"comissao":2660.94,"frete":0.0,"compras":151010.22,"itensGirados":5190.0},"2026-01":{"vAvista":187314.84000000003,"vAprazo":64259.31,"cmv":157901.06,"comissao":2463.9300000000003,"frete":0.0,"compras":176302.77,"itensGirados":5201.0},"2026-02":{"vAvista":188581.67,"vAprazo":52531.0,"cmv":150811.02000000002,"comissao":2443.61,"frete":0.0,"compras":117948.34,"itensGirados":4788.0},"2026-03":{"vAvista":201619.90000000002,"vAprazo":60428.5,"cmv":160627.84,"comissao":2656.32,"frete":0.0,"compras":194415.42,"itensGirados":5701.0},"2026-04":{"vAvista":212947.16999999998,"vAprazo":67180.0,"cmv":173622.97,"comissao":2851.64,"frete":0.0,"compras":167095.41,"itensGirados":5921.0},"2026-05":{"vAvista":201514.3,"vAprazo":64105.5,"cmv":162723.16,"comissao":2748.91,"frete":0.0,"compras":109683.11,"itensGirados":5803.0},"2026-06":{"vAvista":172735.63000000003,"vAprazo":49012.0,"cmv":134440.63,"comissao":5865.08,"frete":0.0,"compras":76642.86,"itensGirados":4840.0},"2026-07":{"vAvista":192252.63999999996,"vAprazo":52224.21,"cmv":151653.72,"comissao":6739.419999999999,"frete":0.0,"compras":226374.34,"itensGirados":5256.0},"2026-08":{"vAvista":10547.0,"vAprazo":5293.0,"cmv":9741.2,"comissao":311.09000000000003,"frete":0.0,"compras":0.0,"itensGirados":325.0}}},"custoFixo":{"0":{"2025-05":86615.06,"2025-04":45048.57,"2025-06":81378.05,"2025-07":79713.74,"2025-08":78374.28,"2025-09":75231.43,"2025-10":66443.64,"2025-12":86944.05,"2026-01":68638.64,"2026-02":76290.83,"2026-03":93937.42,"2026-04":75060.94,"2026-06":74061.3,"2026-05":81275.92,"2026-07":90152.44,"2026-08":31159.46,"2026-09":16503.57,"2025-11":85134.17,"2026-10":29503.57,"2026-11":29503.57,"2026-12":29503.57,"2027-01":13965.07,"2027-02":411.36,"2027-03":0.0,"2027-04":0.0,"2027-05":0.0,"2027-06":0.0,"2027-07":0.0,"2027-08":0.0,"2027-09":0.0,"2027-10":0.0,"2027-11":0.0,"2027-12":0.0,"2028-01":0.0,"2028-03":0.0,"2028-04":0.0,"2028-05":0.0,"2028-06":0.0,"2028-07":0.0,"2028-08":0.0,"2028-09":0.0,"2028-10":0.0,"2028-11":0.0,"2028-12":0.0,"2029-01":0.0,"2029-02":0.0,"2029-03":0.0,"2029-04":0.0,"2029-05":0.0,"2029-06":0.0,"2029-07":0.0,"2029-08":0.0,"2029-09":0.0,"2029-10":0.0,"2029-11":0.0,"2029-12":0.0,"2030-01":0.0,"2030-02":0.0,"2030-03":0.0,"2030-04":0.0,"2030-05":0.0,"2030-06":0.0,"2030-07":0.0,"2030-08":0.0,"2030-09":0.0,"2030-10":0.0,"2030-11":0.0,"2030-12":0.0,"2031-01":0.0,"2031-02":0.0,"2031-03":0.0,"2031-04":0.0,"2031-05":0.0,"2031-06":0.0,"2031-07":0.0,"2031-08":0.0,"2031-09":0.0,"2031-10":0.0,"2031-11":0.0,"2031-12":0.0,"2032-01":0.0,"2032-02":0.0,"2032-03":0.0,"2032-04":0.0,"2032-05":0.0,"2032-06":0.0,"2032-07":0.0,"2028-02":0.0}},"posicaoHoje":{"0":{"estoque":1679223.78,"itensEstoque":8469,"aPagar":1040270.13,"aReceber":4435.0,"inadimplencia":19.03,"caixa":null}},"historico":{"0":{"2026-07":{"estoque":1679223.78,"itensEstoque":8469,"aPagar":1040270.13,"aReceber":4435.0,"inadimplencia":19.03,"caixa":null,"fechadoEm":"2026-08-03","atrasado":true}}},"diasUteis":{"2024-08":27,"2024-09":25,"2024-10":27,"2024-11":26,"2024-12":26,"2025-01":27,"2025-02":24,"2025-03":26,"2025-04":26,"2025-05":27,"2025-06":25,"2025-07":27,"2025-08":26,"2025-09":26,"2025-10":27,"2025-11":25,"2025-12":27,"2026-01":27,"2026-02":24,"2026-03":26,"2026-04":26,"2026-05":26,"2026-06":26,"2026-07":27,"2026-08":26}};
 const EMP='mc';
 const LS_MAN='rel_manual_'+EMP, LS_ALIQ='rel_aliq_'+EMP, LS_N='rel_n_'+EMP;
 const fmt=n=>(n<0?'-':'')+'R$ '+Math.abs(Number(n||0)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -73,27 +77,95 @@ const rot=m=>{const p=m.split('-');return MES[+p[1]-1]+'/'+p[0].slice(2)};
 const ALIQ_PADRAO={csll:1.08,irpj:1.20,pis:0.65,cofins:3.00};
 
 let N=parseInt(localStorage.getItem(LS_N),10)||12;
+const LS_UNI='rel_uni_'+EMP;
+/* Unidades em foco. A SEVEN tem 3; a MC MOTO tem uma so e o seletor nem aparece. */
+function unidades(){
+  const todas=D.unidades.map(function(u){return u[0]});
+  let sel=null;
+  try{ sel=JSON.parse(localStorage.getItem(LS_UNI)||'null'); }catch(e){ sel=null; }
+  if(!Array.isArray(sel)) return todas;
+  const m=sel.filter(function(u){return todas.indexOf(u)>=0});
+  return m.length?m:todas;
+}
+function toggleUni(u){
+  const todas=D.unidades.map(function(x){return x[0]});
+  let sel=unidades().slice();
+  const i=sel.indexOf(u);
+  if(i>=0){ if(sel.length>1) sel.splice(i,1); } else sel.push(u);
+  localStorage.setItem(LS_UNI,JSON.stringify(todas.filter(function(x){return sel.indexOf(x)>=0})));
+  render();
+}
+function umaUnidade(){ return unidades().length===1 ? unidades()[0] : null; }
+function rotUnidades(){
+  const sel=unidades();
+  if(sel.length===D.unidades.length) return 'todas as unidades';
+  return D.unidades.filter(function(u){return sel.indexOf(u[0])>=0})
+                   .map(function(u){return u[1]}).join(' + ');
+}
+/* Soma o fluxo das unidades marcadas. */
+function fluxoMes(ym){
+  const t={vAvista:0,vAprazo:0,cmv:0,comissao:0,frete:0,compras:0,itensGirados:0};
+  unidades().forEach(function(u){
+    const f=(D.fluxo[u]||{})[ym]; if(!f) return;
+    Object.keys(t).forEach(function(k){ t[k]+=f[k]||0; });
+  });
+  return t;
+}
+function fixoMes(ym){
+  let t=0; unidades().forEach(function(u){ t+=((D.custoFixo[u]||{})[ym]||0); });
+  return t;
+}
+/* Posicao: soma as unidades. Inadimplencia e recalculada sobre o total, nunca somada. */
+function posMes(ym, corrente){
+  const t={estoque:0,itensEstoque:0,aPagar:0,aReceber:0,vencido:0,temPos:false,atrasado:null};
+  unidades().forEach(function(u){
+    const p = corrente ? (D.posicaoHoje[u]||{}) : (((D.historico[u]||{})[ym])||{});
+    if(!Object.keys(p).length) return;
+    t.temPos=true;
+    t.estoque+=p.estoque||0; t.itensEstoque+=p.itensEstoque||0;
+    t.aPagar+=p.aPagar||0; t.aReceber+=p.aReceber||0;
+    t.vencido+=(p.aReceber||0)*((p.inadimplencia||0)/100);
+    if(p.atrasado) t.atrasado=p.fechadoEm;
+  });
+  t.inadimplencia = t.aReceber>0 ? t.vencido/t.aReceber*100 : null;
+  return t;
+}
+/* Lancamentos manuais sao POR UNIDADE. Com varias marcadas os campos viram
+   somatorio so-leitura — editar um numero que e a soma de tres nao faria sentido. */
+function manU(u){ try{return (JSON.parse(localStorage.getItem(LS_MAN)||'{}')[u])||{}}catch(e){return{}} }
+function vMan(ym,campo){
+  let t=0;
+  unidades().forEach(function(u){
+    const m=manU(u)[ym]; if(m&&m[campo]!=null) t+=+m[campo];
+  });
+  return t;
+}
 function man(){ try{return JSON.parse(localStorage.getItem(LS_MAN)||'{}')}catch(e){return{}} }
 function setMan(o){ localStorage.setItem(LS_MAN,JSON.stringify(o)); }
 function aliq(){ try{return Object.assign({},ALIQ_PADRAO,JSON.parse(localStorage.getItem(LS_ALIQ)||'{}'))}catch(e){return ALIQ_PADRAO} }
-function v(ym,campo){ const m=man(); return (m[ym]&&m[ym][campo]!=null)?+m[ym][campo]:0; }
-function setV(ym,campo,val){ const m=man(); (m[ym]=m[ym]||{})[campo]=(val===''?null:+val); setMan(m); render(); }
+function v(ym,campo){ return vMan(ym,campo); }
+function setV(ym,campo,val){
+  const u=umaUnidade(); if(!u) return;          // so edita com UMA unidade em foco
+  const m=man(); const mu=(m[u]=m[u]||{});
+  (mu[ym]=mu[ym]||{})[campo]=(val===''?null:+val);
+  setMan(m); render();
+}
 function setN(n){ N=n; localStorage.setItem(LS_N,n); render(); }
 
 /* Calcula todas as linhas de um mes. Fluxo vem do banco; posicao vem do fechamento
    do dia 1 (mes fechado) ou da foto de hoje (mes corrente). */
 function calc(ym, corrente){
-  const f=D.fluxo[ym]||{}, a=aliq();
-  const pos = corrente ? D.posicaoHoje : (D.historico[ym]||{});
+  const f=fluxoMes(ym), a=aliq();
+  const pos = posMes(ym, corrente);
   const vAv=f.vAvista||0, vAp=f.vAprazo||0, tot=vAv+vAp;
   const csll=tot*a.csll/100, irpj=tot*a.irpj/100, pis=tot*a.pis/100, cofins=tot*a.cofins/100;
   const impTot=csll+irpj+pis+cofins;
   const premio=v(ym,'premio'), despFin=v(ym,'despFin'), recFin=v(ym,'recFin');
   const mc=tot-(f.cmv||0)-(f.comissao||0)-premio-(f.frete||0)-impTot;
-  const fixo=D.custoFixo[ym]||0;
+  const fixo=fixoMes(ym);
   const resultado=mc-fixo-despFin+recFin;
   const capital=v(ym,'capital'), imob=v(ym,'imobilizado');
-  const caixa = D.pedeCaixa ? v(ym,'caixa') : (pos.caixa||0);
+  const caixa = v(ym,'caixa');
   const ativos=(pos.estoque||0)+(pos.aReceber||0)+caixa+imob;
   const passivo=(pos.aPagar||0);
   return {vAv:vAv, vAp:vAp, tot:tot, cmv:f.cmv||0, comissao:f.comissao||0, premio:premio,
@@ -107,11 +179,13 @@ function calc(ym, corrente){
           inad:(pos.inadimplencia==null?null:pos.inadimplencia),
           itensEstoque:pos.itensEstoque||0, itensGirados:f.itensGirados||0,
           capital:capital, ativos:ativos, passivo:passivo, dif:ativos-passivo,
-          temPos:Object.keys(pos).length>0};
+          temPos:pos.temPos, atrasado:pos.atrasado};
 }
 
 function render(){
-  const meses=Object.keys(D.fluxo).sort().slice(-N).reverse();
+  const todosMeses={};
+  Object.keys(D.fluxo).forEach(function(u){ Object.keys(D.fluxo[u]).forEach(function(m){ todosMeses[m]=1; }); });
+  const meses=Object.keys(todosMeses).sort().slice(-N).reverse();
   const hoje=D.hoje.slice(0,7);
   const dados=meses.map(m=>({ym:m, corrente:(m===hoje), c:calc(m,(m===hoje))}));
 
@@ -123,7 +197,11 @@ function render(){
     return '<tr'+(op.cls?' class="'+op.cls+'"':'')+'><th>'+rotulo+'</th>'+
       dados.map(function(d){
         if(op.manual){
-          const mm=man()[d.ym]||{};
+          const u=umaUnidade();
+          if(!u){    // varias unidades: mostra a soma, sem edicao
+            return '<td class="man" title="Selecione uma única unidade para editar">'+fmt(vMan(d.ym,op.manual))+'</td>';
+          }
+          const mm=manU(u)[d.ym]||{};
           const val=(mm[op.manual]==null?'':mm[op.manual]);
           return '<td class="man"><input type="number" step="0.01" value="'+val+
                  '" data-ym="'+d.ym+'" data-k="'+op.manual+'" onchange="setV(this.dataset.ym,this.dataset.k,this.value)"></td>';
@@ -156,17 +234,16 @@ function render(){
     L('RESULTADO/CAPITAL',function(c){return c.resCap},{tipo:'pct'})+
     '<tr class="grupo"><th>POSIÇÃO</th>'+dados.map(function(d){
         if(d.corrente) return '<td>hoje</td>';
-        const h=D.historico[d.ym];
-        if(!h) return '<td style="color:#cbd5e1">sem fechamento</td>';
-        // fechamento fora do dia 1: o numero e a posicao do dia em que a rotina rodou
-        return '<td'+(h.atrasado?' title="fechado em '+h.fechadoEm.split('-').reverse().join('/')+', fora do dia 1º" style="color:#b45309"':'')+'>'+
-               (h.atrasado?'fech. '+h.fechadoEm.slice(8)+'/'+h.fechadoEm.slice(5,7):'fechado')+'</td>';
+        if(!d.c.temPos) return '<td style="color:#cbd5e1">sem fechamento</td>';
+        const at=d.c.atrasado;
+        return '<td'+(at?' title="fechado em '+at.split('-').reverse().join('/')+', fora do dia 1º" style="color:#b45309"':'')+'>'+
+               (at?'fech. '+at.slice(8)+'/'+at.slice(5,7):'fechado')+'</td>';
       }).join('')+'</tr>'+
     L('ESTOQUE',function(c){return c.estoque})+
     L('COMPRAS',function(c){return c.compras})+
     L('CONTAS A PAGAR',function(c){return c.aPagar})+
     L('CONTAS A RECEB',function(c){return c.aReceber})+
-    (D.pedeCaixa?L('CAIXA/BANCOS',null,{manual:'caixa'}):L('CAIXA/BANCOS',function(c){return c.caixa}))+
+    L('CAIXA/BANCOS',null,{manual:'caixa'})+
     L('IMOBILIZADO',null,{manual:'imobilizado'})+
     L('FUNCIONÁRIOS LOJA',null,{manual:'funcionarios'})+
     L('DIAS ÚTEIS',function(c){return c.diasUteis},{tipo:'num'})+
@@ -179,9 +256,21 @@ function render(){
     L('PASSIVO',function(c){return c.passivo},{cls:'tot'})+
     L('DIFERENÇA',function(c){return c.dif},{cls:'res'});
 
+  // seletor de unidade (so aparece com mais de uma)
+  if(D.unidades.length>1){
+    const sel=unidades();
+    document.getElementById('uni-box').style.display='flex';
+    document.getElementById('uni-btns').innerHTML=D.unidades.map(function(u){
+      return '<button class="btn" data-u="'+u[0]+'" onclick="toggleUni(this.dataset.u)"'+
+        (sel.indexOf(u[0])>=0?' style="background:#1e293b;color:#fff;border-color:#1e293b"':'')+
+        '>'+u[1]+'</button>';
+    }).join('');
+  }
+
   const a=aliq();
   document.getElementById('ger').textContent='Gerado em '+D.geradoEm+' · posição de hoje '+
-    D.hoje.split('-').reverse().join('/')+' · fechamento automático todo dia 1º';
+    D.hoje.split('-').reverse().join('/')+' · fechamento automático todo dia 1º'+
+    (D.unidades.length>1?' · '+rotUnidades():'');
   document.getElementById('nota').innerHTML=
     '<b>Fluxo</b> (vendas, CMV, compras, itens girados) vem do banco e não muda depois que o mês fecha. '+
     '<b>Posição</b> (estoque, contas, caixa, itens em estoque) é uma foto: o mês fechado usa o valor gravado no <b>dia 1º</b>, '+
@@ -191,18 +280,24 @@ function render(){
     '<b>Margem de contribuição</b> = vendas − CMV − comissão − prêmio − frete − impostos. '+
     '<b>Resultado</b> = MC − custo fixo − despesa financeira + receita financeira. '+
     '<b>Ativos</b> = estoque + a receber + caixa + imobilizado; <b>Passivo</b> = contas a pagar. '+
-    'Os campos amarelos ficam salvos <b>neste navegador</b> — use "Exportar lançamentos" para guardar uma cópia.';
+    'Os campos amarelos ficam salvos <b>neste navegador</b>, <b>por unidade</b> — com mais de uma unidade marcada eles viram soma e não podem ser editados. '+
+    'Use "Exportar lançamentos" para guardar uma cópia.'+
+    (D.unidades.length>1?' Recorte atual: <b>'+rotUnidades()+'</b>.':'');
 }
 
 function repetirMesAnterior(){
-  const meses=Object.keys(D.fluxo).sort();
+  const tm={};
+  Object.keys(D.fluxo).forEach(function(u){ Object.keys(D.fluxo[u]).forEach(function(m){ tm[m]=1; }); });
+  const meses=Object.keys(tm).sort();
   const hoje=D.hoje.slice(0,7);
   const ant=meses[meses.indexOf(hoje)-1];
   if(!ant){ alert('Não há mês anterior.'); return; }
-  const m=man(); const base=m[ant]||{};
+  const u=umaUnidade();
+  if(!u){ alert('Selecione UMA unidade para copiar os lançamentos.'); return; }
+  const m=man(); const mu=(m[u]=m[u]||{}); const base=mu[ant]||{};
   const estaveis=['imobilizado','funcionarios','capital'];
-  m[hoje]=Object.assign({},m[hoje]||{});
-  estaveis.forEach(function(k){ if(base[k]!=null) m[hoje][k]=base[k]; });
+  mu[hoje]=Object.assign({},mu[hoje]||{});
+  estaveis.forEach(function(k){ if(base[k]!=null) mu[hoje][k]=base[k]; });
   setMan(m); render();
   alert('Imobilizado, funcionários e capital social de '+rot(ant)+' copiados para '+rot(hoje)+'.');
 }

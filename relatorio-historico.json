@@ -1,26 +1,54 @@
 {
  "mc": {
-  "2026-07": {
-   "aPagar": 1040270.13,
-   "aReceber": 4435.0,
-   "atrasado": true,
-   "caixa": null,
-   "estoque": 1679223.78,
-   "fechadoEm": "2026-08-03",
-   "inadimplencia": 19.03,
-   "itensEstoque": 8469
+  "0": {
+   "2026-07": {
+    "aPagar": 1040270.13,
+    "aReceber": 4435.0,
+    "atrasado": true,
+    "caixa": null,
+    "estoque": 1679223.78,
+    "fechadoEm": "2026-08-03",
+    "inadimplencia": 19.03,
+    "itensEstoque": 8469
+   }
   }
  },
  "seven": {
-  "2026-07": {
-   "aPagar": 1367282.41,
-   "aReceber": 2279695.93,
-   "atrasado": true,
-   "caixa": null,
-   "estoque": 2230377.32,
-   "fechadoEm": "2026-08-03",
-   "inadimplencia": 85.78,
-   "itensEstoque": 9391
+  "3": {
+   "2026-07": {
+    "aPagar": 507206.48,
+    "aReceber": 1800111.36,
+    "atrasado": true,
+    "caixa": null,
+    "estoque": 1088457.17,
+    "fechadoEm": "2026-08-03",
+    "inadimplencia": 100.0,
+    "itensEstoque": 1697
+   }
+  },
+  "4": {
+   "2026-07": {
+    "aPagar": 631573.99,
+    "aReceber": 238781.53,
+    "atrasado": true,
+    "caixa": null,
+    "estoque": 641252.62,
+    "fechadoEm": "2026-08-03",
+    "inadimplencia": 44.02,
+    "itensEstoque": 4071
+   }
+  },
+  "5": {
+   "2026-07": {
+    "aPagar": 228501.94,
+    "aReceber": 240803.04,
+    "atrasado": true,
+    "caixa": null,
+    "estoque": 500667.53,
+    "fechadoEm": "2026-08-03",
+    "inadimplencia": 20.93,
+    "itensEstoque": 3623
+   }
   }
  }
 }
