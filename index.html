@@ -1791,14 +1791,94 @@ const UNIDADES_SEVEN=['3','4','5'];
 
 // Configuração publicada (default). O master pode alterar pela tela de gestão.
 const USUARIOS_PADRAO=[
-  {id:'master', nome:'Master',   senha:'RHSMC', master:true,  abas:[], unidades:UNIDADES_SEVEN.slice()},
-  {id:'u_mc',   nome:'MC MOTO',  senha:'DIOGO', master:false, abas:ABAS_MC.slice(), unidades:UNIDADES_SEVEN.slice()},
-  {id:'u_sv',   nome:'RHS/SEVEN',senha:'VITOR', master:false, abas:ABAS_SV.slice(), unidades:UNIDADES_SEVEN.slice()},
-  {id:'u1', nome:'Usuário 1', senha:'USER1', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()},
-  {id:'u2', nome:'Usuário 2', senha:'USER2', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()},
-  {id:'u3', nome:'Usuário 3', senha:'USER3', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()},
-  {id:'u4', nome:'Usuário 4', senha:'USER4', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()},
-  {id:'u5', nome:'Usuário 5', senha:'USER5', master:false, abas:[], unidades:UNIDADES_SEVEN.slice()}
+  {
+    "id": "master",
+    "nome": "Master",
+    "hash": "2e2330b53a03e1a6156b014e8ccad8df60f0c49f11da78259d8c18ceb8e02111",
+    "master": true,
+    "abas": [],
+    "unidades": [
+      "3",
+      "4",
+      "5"
+    ]
+  },
+  {
+    "id": "u_mc",
+    "nome": "MC MOTO",
+    "hash": "17b59215ba29f554228a0e5e84b128e9d1efb1abd18edc6484bf8032496a398b",
+    "master": false,
+    "abas": [
+      "mc.montar",
+      "mc.cotacao",
+      "mc.salvos",
+      "mc.recebimentos",
+      "mc.analise",
+      "mc.painel",
+      "mc.diarias",
+      "mc.grupos",
+      "mc.consistencia",
+      "mc.fornecedor",
+      "mc.historicas",
+      "mc.comissao",
+      "mc.graficos",
+      "mc.contaspagar",
+      "mc.contasreceber"
+    ],
+    "unidades": [
+      "3",
+      "4",
+      "5"
+    ]
+  },
+  {
+    "id": "u_sv_ctg",
+    "nome": "RHS/SEVEN CONTAGEM",
+    "hash": "5d2df2591574598d02d2130f5abae2c1a89247dafa70f3eae5f56df71493f378",
+    "master": false,
+    "abas": [
+      "sv.unidades",
+      "sv.unigraf",
+      "sv.unifor",
+      "sv.unihist",
+      "sv.crm",
+      "sv.compras",
+      "sv.analise",
+      "sv.recebimentos",
+      "sv.fin.receber",
+      "sv.fin.risco"
+    ],
+    "unidades": [
+      "3",
+      "4"
+    ]
+  },
+  {
+    "id": "u_mc_loja",
+    "nome": "MC MOTO LOJA",
+    "hash": "9f3b3ced884ac9f077aa17da5b51610fbbec1ac97f919f75b9af2bc61d19a5d4",
+    "master": false,
+    "abas": [
+      "mc.montar",
+      "mc.cotacao",
+      "mc.salvos",
+      "mc.recebimentos",
+      "mc.analise",
+      "mc.painel",
+      "mc.diarias",
+      "mc.grupos",
+      "mc.consistencia",
+      "mc.fornecedor",
+      "mc.historicas",
+      "mc.comissao",
+      "mc.graficos"
+    ],
+    "unidades": [
+      "3",
+      "4",
+      "5"
+    ]
+  }
 ];
 /* ===================== SENHA EMBARALHADA (HASH) =====================
    O painel e estatico e mora num repositorio PUBLICO, entao a senha em texto
