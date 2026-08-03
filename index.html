@@ -272,6 +272,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div id="dash-empresas" style="display:flex;gap:6px"></div>
+        <div id="dash-unidades" style="display:flex;gap:5px" class="hidden"></div>
         <select id="dash-mes" onchange="setDashMes(this.value)" class="dash-sel"></select>
         <button class="dash-sel" style="cursor:pointer" onclick="abrirDeducoes()">% Deduções</button>
         <button class="dash-sel" style="cursor:pointer" onclick="abrirCentrosCusto()">⚙️ Custo fixo</button>
@@ -2295,6 +2296,37 @@ function limparDeducoes(){
   renderDashboard();
 }
 
+/* Unidades de negocio em foco no dashboard (so a SEVEN tem unidades).
+   Padrao: todas as que o usuario pode ver. A escolha e sempre INTERSECTADA com
+   unidadesPermitidas(), entao o filtro nunca abre acesso a mais do que a permissao. */
+const LS_DASH_UNIDADES='dash_unidades';
+const DASH_UNI_NOMES={'3':'Ultra Motos','4':'Seven Contagem','5':'Seven Ipatinga'};
+function dashUnidades(){
+  const permitidas=(typeof unidadesPermitidas==='function'?unidadesPermitidas():['3','4','5']).map(String);
+  let sel=null;
+  try{ sel=JSON.parse(localStorage.getItem(LS_DASH_UNIDADES)||'null'); }catch(e){ sel=null; }
+  if(!Array.isArray(sel)) return permitidas;
+  const m=sel.map(String).filter(u=>permitidas.indexOf(u)>=0);
+  return m.length?m:permitidas;
+}
+function toggleDashUnidade(u){
+  u=String(u);
+  const permitidas=(typeof unidadesPermitidas==='function'?unidadesPermitidas():['3','4','5']).map(String);
+  let sel=dashUnidades().slice();
+  const i=sel.indexOf(u);
+  if(i>=0){ if(sel.length>1) sel.splice(i,1); }   // nunca deixa ficar sem nenhuma
+  else sel.push(u);
+  sel=permitidas.filter(x=>sel.indexOf(x)>=0);    // mantem a ordem das unidades
+  localStorage.setItem(LS_DASH_UNIDADES,JSON.stringify(sel));
+  renderDashboard();
+}
+function rotuloDashUnidades(){
+  const sel=dashUnidades();
+  const permitidas=(typeof unidadesPermitidas==='function'?unidadesPermitidas():['3','4','5']).map(String);
+  if(sel.length===permitidas.length) return 'todas as unidades';
+  return sel.map(u=>DASH_UNI_NOMES[u]||('Unidade '+u)).join(' + ');
+}
+
 let dashMesSel=null;   // null = automatico
 function setDashMes(v){ dashMesSel=v||null; renderDashboard(); }
 /* Mes de analise. No dia 1 o mes corrente ainda esta zerado, entao caimos no ultimo
@@ -2318,7 +2350,7 @@ function dashEmpresasPermitidas(){
 /* Soma as séries das unidades SEVEN que o usuário pode ver (na MC MOTO é série única). */
 function dashDados(){
   if(dashEmpresa==='mc') return DASHBOARD_DB.mc;
-  const uns=(typeof unidadesPermitidas==='function'?unidadesPermitidas():['3','4','5']).map(String);
+  const uns=dashUnidades();
   const alvo={pagar:{},diario:{},mensal:{},estoque:0,fixo:{},quebras:{}};
   uns.forEach(u=>{
     const d=(DASHBOARD_DB.seven.unidades||{})[u]; if(!d) return;
@@ -2583,7 +2615,19 @@ function renderDashboard(){
   if(!emps.some(e=>e.k===dashEmpresa)) dashEmpresa=emps[0].k;
   document.getElementById('dash-empresas').innerHTML=emps.map(e=>
     '<button class="dash-emp'+(e.k===dashEmpresa?' ativo':'')+'" onclick="setDashEmpresa(\''+e.k+'\')">'+e.rot+'</button>').join('');
-  document.getElementById('dash-gerado').textContent='Dados de '+DASHBOARD_DB.geradoEm;
+  // seletor de unidade de negocio: so faz sentido na SEVEN
+  const boxUni=document.getElementById('dash-unidades');
+  const permUni=(typeof unidadesPermitidas==='function'?unidadesPermitidas():['3','4','5']).map(String);
+  boxUni.classList.toggle('hidden', dashEmpresa!=='seven' || permUni.length<2);
+  if(dashEmpresa==='seven' && permUni.length>1){
+    const sel=dashUnidades();
+    boxUni.innerHTML=permUni.map(u=>
+      '<button class="dash-emp'+(sel.indexOf(u)>=0?' ativo':'')+'" style="padding:6px 10px"'+
+      ' title="'+(DASH_UNI_NOMES[u]||u)+'" data-u="'+u+'" onclick="toggleDashUnidade(this.dataset.u)">'+
+      (DASH_UNI_NOMES[u]||('Un '+u))+'</button>').join('');
+  }
+  document.getElementById('dash-gerado').textContent='Dados de '+DASHBOARD_DB.geradoEm+
+    (dashEmpresa==='seven'?' · '+rotuloDashUnidades():'');
 
   const D=dashDados(), ym=dashMesRef(D), ymAnt=dashMesAnterior(ym);
   const selMes=document.getElementById('dash-mes');
@@ -2659,8 +2703,8 @@ function renderDashboard(){
 
   // 7. unidades (só SEVEN)
   if(dashEmpresa==='seven'){
-    const uns=(typeof unidadesPermitidas==='function'?unidadesPermitidas():['3','4','5']).map(String);
-    const NOMEUN={'3':'Ultra Motos','4':'Seven Contagem','5':'Seven Ipatinga'};
+    const uns=dashUnidades();
+    const NOMEUN=DASH_UNI_NOMES;
     const du2=uns.map(u=>{const m=((DASHBOARD_DB.seven.unidades[u]||{}).mensal||{})[ym]||[0,0];
       return {rot:NOMEUN[u]||('Unidade '+u),v:m[0],sub:'('+(m[0]>0?((m[0]-m[1])/m[0]*100).toFixed(0):0)+'% MC)'};}).filter(d=>d.v>0).sort((a,b)=>b.v-a.v);
     g.push(painel('Venda por unidade de negócio',rotMes(ym),chartBarrasH(du2)));
@@ -2686,7 +2730,7 @@ function renderDashboard(){
     'Custo fixo somando <b>'+nC+'</b> de '+tC+' centros de custo — ajuste na engrenagem acima. '+
     'Vendas líquidas de devolução. <b>MC = Vendas × (1 − deduções) − CMV</b>, mesma regra do Painel Mensal. <b>QC = clientes atendidos</b> (identificados + cada venda de balcão), diferente de <b>Pedidos</b>. '+
     'Giro = CMV dos últimos 12 meses ÷ estoque atual. '+
-    (dashEmpresa==='seven'?'Na SEVEN os valores somam apenas as unidades liberadas para você.':'');
+    (dashEmpresa==='seven'?'Somando <b>'+rotuloDashUnidades()+'</b> — clique nos botões de unidade acima para trocar o recorte.':'');
 }
 
 
