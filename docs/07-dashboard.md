@@ -95,6 +95,17 @@ O Mapa usa **um** percentual global (`localStorage['mapa_descontoPct']`, campo "
 
 Exemplo (MC MOTO, jul/2026): sem deduções a MC é R$ 92.888,97 (38,0%); com 10% de imposto + 2% de comissão + 1% de prêmio + 1% de frete (14%), cai para **R$ 58.632,25 (24,0%)** e a sobra do mês vira **negativa em R$ 31.070,19**.
 
+## Filtro de unidade de negócio (03/08/2026)
+
+Ao lado do seletor de empresa, na faixa escura, há botões de **unidade** (multi-seleção) que valem para **a tela inteira** — KPIs, faixa de indicadores, todos os gráficos e a tabela mensal. `dashUnidades()` devolve as unidades em foco e `dashDados()` agrega só elas.
+
+- **Só aparece na SEVEN** (a MC MOTO não tem unidades) e **só com 2+ unidades permitidas**.
+- **Sempre intersectado com `unidadesPermitidas()`** — o filtro nunca amplia acesso. O usuário "RHS/SEVEN CONTAGEM", restrito às unidades 3 e 4, só recebe esses dois botões.
+- **Nunca fica sem nenhuma** unidade marcada (desmarcar a última é ignorado).
+- Persistido em `dash_unidades`; o recorte ativo aparece no cabeçalho e no rodapé (`rotuloDashUnidades()`).
+
+Conferência (jul/2026): todas R$ 326.976,62 · só Ipatinga R$ 206.322,67 · Contagem+Ipatinga R$ 319.235,86 — a diferença de R$ 7.740,76 é exatamente Ultra Motos.
+
 ## Parâmetros e regras
 
 - **Contas a pagar sempre olham HOJE**, independentemente do seletor de mês. Só títulos **em aberto**, pelo saldo devedor.
@@ -106,4 +117,4 @@ Exemplo (MC MOTO, jul/2026): sem deduções a MC é R$ 92.888,97 (38,0%); com 10
 
 ## Chaves de `localStorage`
 
-`dash_empresa` · `dash_centros_fixo` · `dash_giro_ideal` · `dash_meta_seven` · `dash_deducoes`. Lê (sem escrever) `mapa_meta_*_vendas`, `mapa_feriados` e `mapa_descontoPct`, do Mapa de Vendas.
+`dash_empresa` · `dash_centros_fixo` · `dash_giro_ideal` · `dash_meta_seven` · `dash_deducoes` · `dash_unidades`. Lê (sem escrever) `mapa_meta_*_vendas`, `mapa_feriados` e `mapa_descontoPct`, do Mapa de Vendas.
