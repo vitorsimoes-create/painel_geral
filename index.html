@@ -1114,7 +1114,21 @@ function atualizarLabelFornecedor(){
   else label.textContent=`${n} fornecedores selecionados`;
 }
 
+/* As paginas geradas (relatorio, clientes, contas, mapa...) abrem em IFRAME, e o
+   navegador guarda o iframe em cache mesmo com Ctrl+F5 na pagina de fora — o usuario
+   ficava vendo numero velho depois de a rotina rodar. Carimbamos a data de hoje no
+   src: muda uma vez por dia, que e a frequencia com que esses arquivos sao regerados. */
+function carimbarIframes(){
+  const hoje=new Date().toISOString().slice(0,10);
+  document.querySelectorAll('iframe[src]').forEach(function(f){
+    const src=f.getAttribute('src');
+    if(!src || /^https?:/i.test(src) || src.indexOf('?d=')>=0) return;
+    f.setAttribute('src', src.split('?')[0]+'?d='+hoje);
+  });
+}
+
 function init(){
+  carimbarIframes();
   // acesso recebido por link: confirma para a pessoa que já pode entrar
   if(_cfgImportada){
     const okEl=document.getElementById('lock-cfg-ok');
