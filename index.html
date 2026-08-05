@@ -4804,6 +4804,16 @@ function limparPedidoSeven(){
   if(confirm('Limpar todo o pedido?')){pedidoSeven={};renderSeven();}
 }
 
+/* Lista corrida a partir do agrupamento por fornecedor: os itens do mesmo fornecedor
+   continuam vizinhos (a ordem em que foram somados), so nao ha mais bloco nem subtotal. */
+function flatSeven(bySupplier){
+  const out=[];
+  Object.entries(bySupplier).forEach(([sup,itens])=>{
+    itens.forEach(i=>out.push(Object.assign({},i,{f:i.f||sup})));
+  });
+  return out;
+}
+
 function buildPedidoDataSeven(){
   const items=Object.values(pedidoSeven);
   const bySupplier={};
@@ -4822,60 +4832,54 @@ function exportarPedidoSeven(){
   const nForn=Object.keys(bySupplier).length;
   const nItens=items.length;
 
-  let html='';
-  let textLines=['PEDIDO DE COMPRA SEVEN (Unidades 3, 4 e 5)','Data: '+data,''];
+  /* Lista CORRIDA, sem quebra por fornecedor (pedido do usuario 04/08/2026): um bloco e
+     um subtotal por fornecedor deixava o pedido comprido demais. O fornecedor continua
+     numa coluna, entao a informacao nao se perde. */
+  const linhas=flatSeven(bySupplier);
+  let textLines=['PEDIDO DE COMPRA SEVEN (Unidades 3, 4 e 5)','Data: '+data,'',
+    'Cód.\tUn.\tDescrição\tFornecedor\tGrupo\tCód. Fabricante\tEstoque\tPico\tSugestão\tQtd\tCusto Unit.\tTotal'];
 
-  Object.entries(bySupplier).forEach(([sup,itens])=>{
-    const supTotal=itens.reduce((s,i)=>s+i.p*i.qty,0);
-    textLines.push(`=== ${sup} ===`);
-    textLines.push('Cód.\tUn.\tDescrição\tGrupo\tCód. Fabricante\tEstoque\tPico\tSugestão\tQtd\tCusto Unit.\tTotal');
-
-    let rows='';
-    itens.forEach(i=>{
-      const key=skey(i);
-      const gl=GRUPO_LABELS[i.g||'DIVERSOS']||'?';
-      const sug=sugestaoSeven(i);
-      rows+=`<tr>
-        <td class="cod">${i.c}</td>
-        <td style="font-weight:700;color:#0369a1">${i.u}</td>
-        <td>${escHtml(i.d)}</td>
-        <td><span class="grupo-badge gb-${i.g||'DIVERSOS'}" style="font-size:11px">${gl}</span></td>
-        <td class="ref">${escHtml(i.cf||'—')}</td>
-        <td class="num" style="color:${i.e<0?'#ef4444':i.e===0?'#94a3b8':'#059669'};font-weight:600">${fmtEstoqueSeven(i.e)}</td>
-        <td class="num" style="color:#7c3aed;font-weight:600">${i.k||0}</td>
-        <td class="num" style="color:${sug<0?'#ef4444':sug>0?'#059669':'#94a3b8'};font-weight:700" title="pico − estoque">${sug}</td>
-        <td class="qty"><input type="number" min="1" value="${i.qty}" onchange="editarQtyModalSeven('${key}',this.value)" style="width:56px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px;font-size:13px;font-weight:700"></td>
-        <td class="num">${fmt(i.p)}</td>
-        <td class="total">${fmt(i.p*i.qty)}</td>
-      </tr>`;
-      textLines.push(`${i.c}\t${i.u}\t${i.d}\t${gl}\t${i.cf||'—'}\t${fmtEstoqueSeven(i.e)}\t${i.k||0}\t${sug}\t${i.qty}\t${fmt(i.p)}\t${fmt(i.p*i.qty)}`);
-    });
-
-    html+=`<div class="ped-bloco">
-      <div class="ped-forn">
-        <span>📦 ${escHtml(sup)}</span>
-        <span>${fmt(supTotal)}</span>
-      </div>
-      <table class="ped-table">
-        <thead><tr>
-          <th>Cód.</th>
-          <th>Un.</th>
-          <th>Descrição</th>
-          <th>Grupo</th>
-          <th>Cód. Fabricante</th>
-          <th class="num">Estoque</th>
-          <th class="num">Pico</th>
-          <th class="num">Sugestão</th>
-          <th class="num">Qtd</th>
-          <th class="num">Custo Unit.</th>
-          <th class="num">Total</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div class="ped-subtotal">Subtotal ${escHtml(sup)}: ${fmt(supTotal)}</div>
-    </div>`;
-    textLines.push(`Subtotal: ${fmt(supTotal)}\n`);
+  let rows='';
+  linhas.forEach(i=>{
+    const key=skey(i);
+    const gl=GRUPO_LABELS[i.g||'DIVERSOS']||'?';
+    const sug=sugestaoSeven(i);
+    rows+=`<tr>
+      <td class="cod">${i.c}</td>
+      <td style="font-weight:700;color:#0369a1">${i.u}</td>
+      <td>${escHtml(i.d)}</td>
+      <td style="font-size:11px;color:#475569">${escHtml(i.f||'—')}</td>
+      <td><span class="grupo-badge gb-${i.g||'DIVERSOS'}" style="font-size:11px">${gl}</span></td>
+      <td class="ref">${escHtml(i.cf||'—')}</td>
+      <td class="num" style="color:${i.e<0?'#ef4444':i.e===0?'#94a3b8':'#059669'};font-weight:600">${fmtEstoqueSeven(i.e)}</td>
+      <td class="num" style="color:#7c3aed;font-weight:600">${i.k||0}</td>
+      <td class="num" style="color:${sug<0?'#ef4444':sug>0?'#059669':'#94a3b8'};font-weight:700" title="pico − estoque">${sug}</td>
+      <td class="qty"><input type="number" min="1" value="${i.qty}" onchange="editarQtyModalSeven('${key}',this.value)" style="width:56px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px;font-size:13px;font-weight:700"></td>
+      <td class="num">${fmt(i.p)}</td>
+      <td class="total">${fmt(i.p*i.qty)}</td>
+    </tr>`;
+    textLines.push(`${i.c}\t${i.u}\t${i.d}\t${i.f||'—'}\t${gl}\t${i.cf||'—'}\t${fmtEstoqueSeven(i.e)}\t${i.k||0}\t${sug}\t${i.qty}\t${fmt(i.p)}\t${fmt(i.p*i.qty)}`);
   });
+
+  let html=`<div class="ped-bloco">
+    <table class="ped-table">
+      <thead><tr>
+        <th>Cód.</th>
+        <th>Un.</th>
+        <th>Descrição</th>
+        <th>Fornecedor</th>
+        <th>Grupo</th>
+        <th>Cód. Fabricante</th>
+        <th class="num">Estoque</th>
+        <th class="num">Pico</th>
+        <th class="num">Sugestão</th>
+        <th class="num">Qtd</th>
+        <th class="num">Custo Unit.</th>
+        <th class="num">Total</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
 
   html+=`<div class="ped-grand">Total geral: <span>${fmt(total)}</span></div>`;
   textLines.push('','TOTAL GERAL: '+fmt(total));
@@ -4925,21 +4929,18 @@ function buildCSVSeven(bySupplier,total,data){
   csv+='PEDIDO DE COMPRA SEVEN (UNIDADES 3, 4 E 5)\n';
   csv+=`Data:;${data}\n\n`;
 
-  Object.entries(bySupplier).forEach(([sup,itens])=>{
-    const supTotal=itens.reduce((s,i)=>s+i.p*i.qty,0);
-    csv+=`FORNECEDOR:;${sup};;;;;;;;;${fmt(supTotal).replace('.',',')}\n`;
-    csv+='Código;Unidade;Descrição;Grupo;Cód. Fabricante;Estoque;Pico Mensal;Sugestão;Qtd Pedido;Custo Unit. (R$);Total (R$)\n';
-    itens.forEach(i=>{
-      const gl=GRUPO_LABELS[i.g||'DIVERSOS']||'?';
-      const desc=i.d.replace(/;/g,' ');
-      const codFab=String(i.cf||'—').replace(/;/g,' ').replace(/"/g,'""');
-      const custo=i.p.toFixed(2).replace('.',',');
-      const tot=(i.p*i.qty).toFixed(2).replace('.',',');
-      csv+=`${i.c};${i.u};"${desc}";${gl};="${codFab}";${fmtEstoqueSeven(i.e)};${i.k||0};${sugestaoSeven(i)};${i.qty};${custo};${tot}\n`;
-    });
-    csv+=`Subtotal ${sup}:;;;;;;;;;;${fmt(supTotal).replace('.',',')}\n\n`;
+  // sem quebra por fornecedor: uma tabela so, com o fornecedor em coluna
+  csv+='Código;Unidade;Descrição;Fornecedor;Grupo;Cód. Fabricante;Estoque;Pico Mensal;Sugestão;Qtd Pedido;Custo Unit. (R$);Total (R$)\n';
+  flatSeven(bySupplier).forEach(i=>{
+    const gl=GRUPO_LABELS[i.g||'DIVERSOS']||'?';
+    const desc=i.d.replace(/;/g,' ');
+    const forn=String(i.f||'—').replace(/;/g,' ');
+    const codFab=String(i.cf||'—').replace(/;/g,' ').replace(/"/g,'""');
+    const custo=i.p.toFixed(2).replace('.',',');
+    const tot=(i.p*i.qty).toFixed(2).replace('.',',');
+    csv+=`${i.c};${i.u};"${desc}";"${forn}";${gl};="${codFab}";${fmtEstoqueSeven(i.e)};${i.k||0};${sugestaoSeven(i)};${i.qty};${custo};${tot}\n`;
   });
-  csv+=`\nTOTAL GERAL;;;;;;;;;;${fmt(total).replace('.',',')}\n`;
+  csv+=`\nTOTAL GERAL;;;;;;;;;;;${fmt(total).replace('.',',')}\n`;
   return csv;
 }
 
@@ -4947,44 +4948,35 @@ function buildPDFHtmlSeven(bySupplier,total,data){
   const nForn=Object.keys(bySupplier).length;
   const nItens=Object.values(bySupplier).reduce((s,v)=>s+v.length,0);
 
-  let body='';
-  Object.entries(bySupplier).forEach(([sup,itens])=>{
-    const supTotal=itens.reduce((s,i)=>s+i.p*i.qty,0);
-    let rows='';
-    itens.forEach((i,idx)=>{
-      const gl=GRUPO_LABELS[i.g||'DIVERSOS']||'?';
-      const estCls=i.e<0?'neg':i.e===0?'zero':'pos';
-      const sug=sugestaoSeven(i);
-      rows+=`<tr class="${idx%2===0?'even':'odd'}">
-        <td class="cod">${i.c}</td>
-        <td class="num bold" style="color:#0369a1">${i.u}</td>
-        <td class="desc">${escHtml(i.d)}</td>
-        <td><span class="gb">${gl}</span></td>
-        <td class="ref">${escHtml(i.cf||'—')}</td>
-        <td class="num ${estCls}">${fmtEstoqueSeven(i.e)}</td>
-        <td class="num pico">${i.k||0}</td>
-        <td class="num ${sug<0?'neg':sug>0?'pos':'zero'}">${sug}</td>
-        <td class="num bold">${i.qty}</td>
-        <td class="num">${fmt(i.p)}</td>
-        <td class="num bold green">${fmt(i.p*i.qty)}</td>
-      </tr>`;
-    });
-    body+=`<div class="bloco">
-      <div class="forn-header">
-        <span>📦 ${escHtml(sup)}</span>
-        <span>${fmt(supTotal)}</span>
-      </div>
-      <table>
-        <thead><tr>
-          <th>Cód.</th><th class="num">Un.</th><th>Descrição</th><th>Grupo</th><th>Cód. Fabricante</th>
-          <th class="num">Estoque</th><th class="num">Pico</th><th class="num">Sugestão</th>
-          <th class="num">Qtd</th><th class="num">Custo Unit.</th><th class="num">Total</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div class="subtotal">Subtotal ${escHtml(sup)}: ${fmt(supTotal)}</div>
-    </div>`;
+  // sem quebra por fornecedor: uma tabela corrida, com o fornecedor em coluna
+  let rows='';
+  flatSeven(bySupplier).forEach((i,idx)=>{
+    const gl=GRUPO_LABELS[i.g||'DIVERSOS']||'?';
+    const estCls=i.e<0?'neg':i.e===0?'zero':'pos';
+    const sug=sugestaoSeven(i);
+    rows+=`<tr class="${idx%2===0?'even':'odd'}">
+      <td class="cod">${i.c}</td>
+      <td class="num bold" style="color:#0369a1">${i.u}</td>
+      <td class="desc">${escHtml(i.d)}</td>
+      <td class="forn">${escHtml(i.f||'—')}</td>
+      <td><span class="gb">${gl}</span></td>
+      <td class="ref">${escHtml(i.cf||'—')}</td>
+      <td class="num ${estCls}">${fmtEstoqueSeven(i.e)}</td>
+      <td class="num pico">${i.k||0}</td>
+      <td class="num ${sug<0?'neg':sug>0?'pos':'zero'}">${sug}</td>
+      <td class="num bold">${i.qty}</td>
+      <td class="num">${fmt(i.p)}</td>
+      <td class="num bold green">${fmt(i.p*i.qty)}</td>
+    </tr>`;
   });
+  const body=`<table>
+      <thead><tr>
+        <th>Cód.</th><th class="num">Un.</th><th>Descrição</th><th>Fornecedor</th><th>Grupo</th><th>Cód. Fabricante</th>
+        <th class="num">Estoque</th><th class="num">Pico</th><th class="num">Sugestão</th>
+        <th class="num">Qtd</th><th class="num">Custo Unit.</th><th class="num">Total</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -4998,8 +4990,6 @@ function buildPDFHtmlSeven(bySupplier,total,data){
   .cabecalho{border-bottom:2px solid #1a1a2e;padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end}
   .cabecalho h1{font-size:15px;font-weight:700;color:#1a1a2e}
   .cabecalho .meta{font-size:9px;color:#64748b;text-align:right;line-height:1.6}
-  .bloco{margin-bottom:12px;page-break-inside:avoid}
-  .forn-header{background:#1e40af;color:#fff;padding:5px 10px;font-size:10px;font-weight:700;display:flex;justify-content:space-between;border-radius:3px 3px 0 0}
   table{width:100%;border-collapse:collapse;font-size:8.5px}
   thead th{background:#dbeafe;color:#1e3a8a;padding:4px 6px;text-align:left;font-size:8px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid #93c5fd}
   th.num,td.num{text-align:right}
@@ -5009,6 +4999,7 @@ function buildPDFHtmlSeven(bySupplier,total,data){
   td.cod{color:#94a3b8;font-size:7.5px;white-space:nowrap;width:45px}
   td.desc{max-width:180px}
   td.ref{color:#94a3b8;font-size:7.5px;width:80px}
+  td.forn{color:#475569;font-size:7.5px;max-width:110px}
   td.bold{font-weight:700}
   td.green{color:#065f46;font-weight:700}
   td.neg{color:#dc2626;font-weight:700}
@@ -5016,7 +5007,7 @@ function buildPDFHtmlSeven(bySupplier,total,data){
   td.pos{color:#059669;font-weight:600}
   td.pico{color:#7c3aed;font-weight:600}
   .gb{background:#e0e7ff;color:#3730a3;border-radius:2px;padding:1px 4px;font-size:7.5px;font-weight:700;white-space:nowrap}
-  .subtotal{text-align:right;font-size:9px;font-weight:700;color:#065f46;background:#f0fdf4;padding:3px 8px;border-top:1px solid #bbf7d0}
+  thead{display:table-header-group}
   .rodape{margin-top:12px;border-top:2px solid #1a1a2e;padding-top:8px;display:flex;justify-content:space-between;align-items:center}
   .rodape .total{font-size:13px;font-weight:700;color:#1a1a2e}
   .rodape .total span{color:#059669}
