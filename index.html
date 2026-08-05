@@ -1190,11 +1190,28 @@ try{ const v=parseInt(localStorage.getItem(LS_MESES_MC),10); if(v>=1&&v<=6) mese
 function aplicarMesesCompraMc(){
   RAW_DATA.forEach(it=>{ it.s=Math.round((it.k||0)*mesesCompraMc-(it.e||0)); });
 }
+/* Mesma correção da SEVEN: o pedido guarda uma cópia do item, então trocar o horizonte
+   de compra não chegava a quem já estava no pedido. A quantidade só muda quando ainda é
+   a que nós sugerimos — quem digitou a quantidade à mão fica. */
+function sincronizarPedidoMc(){
+  const chaves=Object.keys(pedido);
+  if(!chaves.length) return;
+  const porCod={};
+  RAW_DATA.forEach(it=>{ porCod[it.c]=it; });
+  chaves.forEach(cod=>{
+    const base=porCod[cod], it=pedido[cod];
+    if(!base) return;
+    it.s=base.s; it.k=base.k; it.e=base.e;
+    const q=base.s>0?base.s:1;
+    if(it.qtyAuto!=null && it.qty===it.qtyAuto){ it.qty=q; it.qtyAuto=q; }
+  });
+}
 function setMesesCompraMc(v){
   const n=parseInt(v,10);
   mesesCompraMc=(n>=1&&n<=6)?n:1;
   try{ localStorage.setItem(LS_MESES_MC,String(mesesCompraMc)); }catch(e){}
   aplicarMesesCompraMc();
+  sincronizarPedidoMc();
   const hint=document.getElementById('meses-hint');
   if(hint) hint.textContent=mesesCompraMc===1?'pico − estoque':'(pico × '+mesesCompraMc+') − estoque';
   page=0; render();
@@ -1373,7 +1390,8 @@ function toggleItem(codigo){
   const item=RAW_DATA.find(x=>x.c===codigo);
   if(!item) return;
   if(pedido[codigo]){delete pedido[codigo];}
-  else{pedido[codigo]={...item,qty:item.s>0?item.s:1};}
+  /* qtyAuto guarda a quantidade que NOS preenchemos — ver sincronizarPedidoMc(). */
+  else{const q=item.s>0?item.s:1; pedido[codigo]={...item,qty:q,qtyAuto:q};}
   render();
 }
 
@@ -1384,7 +1402,8 @@ function adicionarTodos(){
     if(!confirm(`Adicionar todos os ${total} itens filtrados ao pedido?`)) return;
   }
   filtered.forEach(item=>{
-    if(!pedido[item.c]) pedido[item.c]={...item, qty: item.s>0 ? item.s : 1};
+    const q=item.s>0?item.s:1;
+    if(!pedido[item.c]) pedido[item.c]={...item, qty:q, qtyAuto:q};
   });
   render();
 }
@@ -4482,11 +4501,25 @@ try{ const v=parseInt(localStorage.getItem(LS_MESES_SEVEN),10); if(v>=1&&v<=6) m
 function aplicarMesesCompraSeven(){
   RAW_DATA_SEVEN.forEach(it=>{ it.s=Math.round((it.k||0)*mesesCompraSeven-(it.e||0)); });
 }
+/* O pedido guarda uma COPIA do item (o pedido salvo precisa da foto do momento), entao
+   trocar o horizonte de compra nao chegava ate quem ja estava no pedido: a quantidade e
+   a sugestao ficavam congeladas no numero antigo. Aqui a copia e atualizada. A quantidade
+   so muda quando ainda e a que nos sugerimos — quem digitou a quantidade a mao fica. */
+function sincronizarPedidoSeven(){
+  Object.keys(pedidoSeven).forEach(key=>{
+    const base=SEVEN_BY_KEY[key], it=pedidoSeven[key];
+    if(!base) return;
+    it.s=base.s; it.k=base.k; it.e=base.e;
+    const sug=sugestaoSeven(base), q=sug>0?sug:1;
+    if(it.qtyAuto!=null && it.qty===it.qtyAuto){ it.qty=q; it.qtyAuto=q; }
+  });
+}
 function setMesesCompraSeven(v){
   const n=parseInt(v,10);
   mesesCompraSeven=(n>=1&&n<=6)?n:1;
   try{ localStorage.setItem(LS_MESES_SEVEN,String(mesesCompraSeven)); }catch(e){}
   aplicarMesesCompraSeven();
+  sincronizarPedidoSeven();
   const hint=document.getElementById('meses-hint-seven');
   if(hint) hint.textContent=mesesCompraSeven===1?'pico − estoque':'(pico × '+mesesCompraSeven+') − estoque';
   pageSeven=0; renderSeven();
@@ -4732,7 +4765,10 @@ function toggleItemSeven(key){
   const item=SEVEN_BY_KEY[key];
   if(!item) return;
   if(pedidoSeven[key]){delete pedidoSeven[key];}
-  else{const sug=sugestaoSeven(item); pedidoSeven[key]={...item,qty:sug>0?sug:1};}
+  /* qtyAuto guarda a quantidade que NOS preenchemos. E o que permite, ao trocar o
+     horizonte de compra, atualizar so quem ainda esta na sugestao e nao mexer em
+     quantidade que o usuario digitou. */
+  else{const sug=sugestaoSeven(item), q=sug>0?sug:1; pedidoSeven[key]={...item,qty:q,qtyAuto:q};}
   renderSeven();
 }
 
@@ -4744,7 +4780,7 @@ function adicionarTodosSeven(){
   }
   filteredSeven.forEach(item=>{
     const key=skey(item);
-    if(!pedidoSeven[key]){const sug=sugestaoSeven(item); pedidoSeven[key]={...item,qty:sug>0?sug:1};}
+    if(!pedidoSeven[key]){const sug=sugestaoSeven(item), q=sug>0?sug:1; pedidoSeven[key]={...item,qty:q,qtyAuto:q};}
   });
   renderSeven();
 }
