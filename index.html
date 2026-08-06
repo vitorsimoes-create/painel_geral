@@ -230,6 +230,7 @@
   <button id="tabbtn-salvos" class="app-tab" onclick="switchAppTab('salvos')">📁 Pedidos Salvos <span id="salvos-count-badge" class="tab-count hidden">0</span></button>
   <button id="tabbtn-recebimentos" class="app-tab" onclick="switchAppTab('recebimentos')">📦 Recebimentos</button>
   <button id="tabbtn-analise" class="app-tab" onclick="switchAppTab('analise')">🔎 Análise de Fornecedor</button>
+  <button id="tabbtn-agenda" class="app-tab" onclick="switchAppTab('agenda')">📅 Agenda de Compras</button>
 </div>
 <div id="subtabs-vendas" style="background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;display:flex;gap:4px" class="hidden">
   <button class="app-tab sub-mapavendas" data-mapatab="painel" onclick="abrirSubAbaMapa('painel',this)">📅 Painel Mensal</button>
@@ -668,6 +669,28 @@
   <div id="af-tabela"></div>
 </div>
 
+<div id="app-tab-agenda" class="main hidden">
+  <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
+    <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">📅 Agenda de Compras — quando pedir de cada fornecedor</h2>
+    <div style="font-size:12px;color:#64748b;margin-bottom:14px">
+      A data sai de duas contas, e vale <strong>a mais apertada</strong>: a <strong>ruptura</strong> do primeiro item de
+      curva A (estoque ÷ pico mensal, menos o prazo de entrega) e o seu <strong>ritmo de compra</strong> com aquele
+      fornecedor (última compra + intervalo habitual). Curva A = os itens que fazem 80% do valor <em>ou</em> da quantidade vendida.
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos meses de venda o pedido deve cobrir">Pedido cobre (meses)</label>
+        <input type="number" id="ag-cobertura" value="2" min="1" step="1" onchange="salvarAgendaParam('mc')" style="width:100px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div>
+      <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos dias o fornecedor leva para entregar depois do pedido">Prazo de entrega (dias)</label>
+        <input type="number" id="ag-prazo" value="15" min="0" step="1" onchange="salvarAgendaParam('mc')" style="width:110px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div>
+      <div style="flex:1;min-width:200px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar fornecedor</label>
+        <input type="text" id="ag-busca" oninput="renderAgenda('mc')" placeholder="nome do fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
+      <button class="btn btn-outline" onclick="exportarAgenda('mc')">⬇ Excel</button>
+    </div>
+  </div>
+  <div class="stats" id="ag-kpis" style="margin-bottom:16px"></div>
+  <div id="ag-tabela"></div>
+</div>
+
 <div id="app-tab-comprasseven" class="main hidden">
   <div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:0 8px;margin-bottom:16px;display:flex;gap:4px">
     <button id="tabbtn-montar-seven" class="app-tab active" onclick="switchAppTabSeven('montar')">🛒 Montar Pedido</button>
@@ -675,6 +698,7 @@
     <button id="tabbtn-salvos-seven" class="app-tab" onclick="switchAppTabSeven('salvos')">📁 Pedidos Salvos <span id="salvos-count-badge-seven" class="tab-count hidden">0</span></button>
     <button id="tabbtn-recebimentos-seven" class="app-tab" onclick="switchAppTabSeven('recebimentos')">📦 Recebimentos</button>
     <button id="tabbtn-analise-seven" class="app-tab" onclick="switchAppTabSeven('analise')">🔎 Análise de Fornecedor</button>
+    <button id="tabbtn-agenda-seven" class="app-tab" onclick="switchAppTabSeven('agenda')">📅 Agenda de Compras</button>
   </div>
 
   <div id="app-tab-montar-seven" class="main" style="padding:0">
@@ -932,6 +956,31 @@
     <div id="afs-tabela"></div>
   </div>
 
+  <div id="app-tab-agenda-seven" class="main hidden" style="padding:0">
+    <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
+      <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">📅 Agenda de Compras — quando pedir de cada fornecedor</h2>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px">
+        A data sai de duas contas, e vale <strong>a mais apertada</strong>: a <strong>ruptura</strong> do primeiro item de
+        curva A (estoque ÷ pico mensal, menos o prazo de entrega) e o seu <strong>ritmo de compra</strong> com aquele
+        fornecedor (última compra + intervalo habitual). Cada unidade compra por conta própria — com "Todas" selecionado,
+        vale a compra mais recente e o ritmo mais curto entre elas.
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos meses de venda o pedido deve cobrir">Pedido cobre (meses)</label>
+          <input type="number" id="ags-cobertura" value="2" min="1" step="1" onchange="salvarAgendaParam('seven')" style="width:100px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos dias o fornecedor leva para entregar depois do pedido">Prazo de entrega (dias)</label>
+          <input type="number" id="ags-prazo" value="15" min="0" step="1" onchange="salvarAgendaParam('seven')" style="width:110px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Unidade</label>
+          <select id="ags-unidade" onchange="renderAgenda('seven')" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></select></div>
+        <div style="flex:1;min-width:200px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar fornecedor</label>
+          <input type="text" id="ags-busca" oninput="renderAgenda('seven')" placeholder="nome do fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
+        <button class="btn btn-outline" onclick="exportarAgenda('seven')">⬇ Excel</button>
+      </div>
+    </div>
+    <div class="stats" id="ags-kpis" style="margin-bottom:16px"></div>
+    <div id="ags-tabela"></div>
+  </div>
+
   <div id="app-tab-cotacao-seven" class="main hidden" style="padding:0">
     <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
       <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:12px">📊 Itens selecionados para cotação (<span id="cotacao-sel-count-seven">0</span>)</h2>
@@ -1132,6 +1181,12 @@ function carimbarIframes(){
 
 function init(){
   carimbarIframes();
+  // parâmetros da Agenda de Compras: valem para as duas empresas
+  ['ag','ags'].forEach(px=>{
+    const a=document.getElementById(px+'-cobertura'), b=document.getElementById(px+'-prazo');
+    if(a) a.value=localStorage.getItem(LS_AG_COBERTURA)||2;
+    if(b) b.value=localStorage.getItem(LS_AG_PRAZO)||15;
+  });
   // acesso recebido por link: confirma para a pessoa que já pode entrar
   if(_cfgImportada){
     const okEl=document.getElementById('lock-cfg-ok');
@@ -1780,6 +1835,7 @@ function switchAppTab(tab){
   document.getElementById('app-tab-cotacao').classList.toggle('hidden',tab!=='cotacao');
   document.getElementById('app-tab-recebimentos').classList.toggle('hidden',tab!=='recebimentos');
   document.getElementById('app-tab-analise').classList.toggle('hidden',tab!=='analise');
+  document.getElementById('app-tab-agenda').classList.toggle('hidden',tab!=='agenda');
   document.getElementById('app-tab-mapavendas').classList.add('hidden');
   document.getElementById('app-tab-crmseven').classList.add('hidden');
   document.getElementById('app-tab-financeiroseven').classList.add('hidden');
@@ -1793,7 +1849,9 @@ function switchAppTab(tab){
   document.getElementById('tabbtn-cotacao').classList.toggle('active',tab==='cotacao');
   document.getElementById('tabbtn-recebimentos').classList.toggle('active',tab==='recebimentos');
   document.getElementById('tabbtn-analise').classList.toggle('active',tab==='analise');
+  document.getElementById('tabbtn-agenda').classList.toggle('active',tab==='agenda');
   if(tab==='analise') renderAnalise('mc');
+  if(tab==='agenda') renderAgenda('mc');
   if(tab==='salvos') renderPedidosSalvos();
   if(tab==='cotacao') renderCotacaoTab();
   if(tab==='recebimentos') renderRecebimentosTab();
@@ -1825,6 +1883,7 @@ const ABAS_CATALOGO={
   'mc.salvos':        {g:'mcmoto', cat:'compras',    rot:'Pedidos Salvos',           sel:'#tabbtn-salvos'},
   'mc.recebimentos':  {g:'mcmoto', cat:'compras',    rot:'Recebimentos',             sel:'#tabbtn-recebimentos'},
   'mc.analise':       {g:'mcmoto', cat:'compras',    rot:'Análise de Fornecedor',    sel:'#tabbtn-analise'},
+  'mc.agenda':        {g:'mcmoto', cat:'compras',    rot:'Agenda de Compras',        sel:'#tabbtn-agenda'},
   'mc.painel':        {g:'mcmoto', cat:'vendas',     rot:'Painel Mensal',            sel:'#subtabs-vendas [data-mapatab="painel"]'},
   'mc.diarias':       {g:'mcmoto', cat:'vendas',     rot:'Vendas Diárias',           sel:'#subtabs-vendas [data-mapatab="diarias"]'},
   'mc.grupos':        {g:'mcmoto', cat:'vendas',     rot:'Grupo de Produto',         sel:'#subtabs-vendas [data-mapatab="grupos"]'},
@@ -1846,6 +1905,7 @@ const ABAS_CATALOGO={
   'sv.crm':           {g:'rhsseven', cat:'seven',    rot:'CRM',                      sel:'#subtabs-rhsseven [data-target="crm"]'},
   'sv.compras':       {g:'rhsseven', cat:'seven',    rot:'Compras',                  sel:'#subtabs-rhsseven [data-target="comprasseven"]'},
   'sv.analise':       {g:'rhsseven', cat:'seven',    rot:'Compras › Análise de Fornecedor', sel:'#tabbtn-analise-seven'},
+  'sv.agenda':        {g:'rhsseven', cat:'seven',    rot:'Compras › Agenda de Compras',     sel:'#tabbtn-agenda-seven'},
   'sv.recebimentos':  {g:'rhsseven', cat:'seven',    rot:'Compras › Recebimentos',   sel:'#tabbtn-recebimentos-seven'},
   'sv.fin.pagar':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Pagar',   sel:'#catbtn-fs-contaspagar'},
   'sv.fin.receber':   {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Receber', sel:'#catbtn-fs-contasreceber'},
@@ -2118,7 +2178,7 @@ function aplicarPermissoes(){
      - o botão Compras aparece se o usuário tiver sv.compras OU sv.analise;
      - com apenas sv.analise, escondemos Montar/Cotação/Pedidos Salvos. */
   const btnComprasSv=document.querySelector('#subtabs-rhsseven [data-target="comprasseven"]');
-  if(btnComprasSv) btnComprasSv.classList.toggle('hidden', !(podeAba('sv.compras')||podeAba('sv.analise')||podeAba('sv.recebimentos')));
+  if(btnComprasSv) btnComprasSv.classList.toggle('hidden', !(podeAba('sv.compras')||podeAba('sv.analise')||podeAba('sv.recebimentos')||podeAba('sv.agenda')));
   ['tabbtn-montar-seven','tabbtn-cotacao-seven','tabbtn-salvos-seven'].forEach(id=>{
     const b=document.getElementById(id);
     if(b) b.classList.toggle('hidden', !podeAba('sv.compras'));
@@ -2337,6 +2397,303 @@ function setUsarFornRealMc(v,fonte){
   localStorage.setItem('af_forn_real',v?'1':'0');
   _analiseAberto.mc=null; _analiseAberto.seven=null;
   renderAnalise(fonte||'mc');
+}
+
+/* ============================== AGENDA DE COMPRAS ==============================
+   Responde uma pergunta só: quando eu tenho de mandar o próximo pedido para cada
+   fornecedor? Cruza duas datas e fica com a mais apertada:
+
+     ruptura  = quando o primeiro item importante do fornecedor zera
+                (estoque ÷ pico mensal, em dias), menos o prazo de entrega
+     hábito   = última compra + o ritmo com que você compra daquele fornecedor
+
+   Prioridade é dos itens de CURVA A — Pareto 80/95 dentro da empresa, calculado das duas
+   formas que o usuário pediu: por VALOR (pico × custo) e por QUANTIDADE (pico). O item é A
+   se for A em qualquer uma das duas, e são só os itens A (ou B, quando não há A) que
+   definem a data do fornecedor. Item C não faz ninguém correr.
+
+   A demanda é o PICO mensal (it.k), a mesma base do Montar Pedido e da Análise de
+   Fornecedor — decisão do usuário 06/08/2026, para a agenda não brigar com o resto do
+   painel. É conservador de propósito: antecipa o pedido em item de giro irregular.
+
+   AGENDA_COMPRAS_* vem de gerar_agenda_compras.py e é a única coisa aqui que o painel não
+   tinha: [ultimaCompraAAAAMMDD, ritmoEmDias, nCompras, valorTipico]. Na SEVEN a chave leva
+   a unidade ("3|EMBUS") porque cada loja compra por conta própria. */
+const AGENDA_COMPRAS_MC = {"ANTARES MOTOS, SERVICOS E PECAS LTDA":[20260708,38,18,6230.1],"CONORTE COMERCIAL NORTE MINAS DE BATERIA":[20260516,35,14,5034.0],"G&B AUTO PECAS ALTERNATIVAS LTDA":[20260728,24,28,8789.31],"LM COMERCIAL E DISTRIBUIDORA LTDA":[20260724,7,62,14989.57],"PATRULHA ELETRONICA E  PROTEMAX":[20260728,30,16,185.42],"TAURUS HELMETS IND DE CAPACETES LTDA":[20250912,30,6,4127.05],"UNIFORT LTDA":[20260723,20,30,4162.34],"G.A.G VALADARES CONFECCOES LTDA EPP":[20260427,205,3,3812.5],"IMS RACING COMERCIAL E DIST LTDA":[20260424,133,5,9573.66],"RAPIDO MONTES CLAROS TRANSPORTES LTDA":[20260715,42,5,507.57],"GALLO DE OURO MOTOPARTS":[20250924,122,3,1394.5],"AUTOFIX LTDA":[20260625,0,2,677.27],"RAMETTA & SOARES LTDA":[20260603,98,5,787.0],"DAMASIO DISTRIBUIDORA DE MOTOPECAS DE MI":[20260513,25,20,6112.71],"THIAGO PATRICK SILVA FREITAS 09779543660":[20260713,31,13,450.0],"MASTEC CARTUCHOS E TONER DE MONTES CLARO":[20260210,84,7,80.0],"VIRTUS TRADING COMERCIO EXTERIOR":[20251031,136,4,1368.56],"ETAM COMERCIO DE PECAS IMPORTACAO E SERV":[20251124,0,1,1653.58],"EUROSTAR DO BRASIL S/A":[20260410,73,8,8736.26],"PANTANEIRO IND. E COM. DE CAPAS EIRELI":[20260121,1,2,12168.83],"STARPLAST INDUSTRIA E COMERCIO LTDA":[20260623,334,2,14238.22],"STARPLAST DA BAHIA INDUSTRIA E COMERCIO":[20260611,346,2,10857.78],"COMERCIAL MOTOCICLO S/A":[20260624,18,17,8548.15],"MERCOLUB LUBRIFICANTES LTDA":[20250925,75,6,4580.8],"LEIDIANE MOREIRA DE SOUSA 15942399670":[20260609,82,8,1030.0],"INDUSTRIA E COMERCIO DE VISEIRAS EIRELI":[20260715,80,9,8606.7],"MOTO CIDADE PECAS PARA MOTOS LTDA - ME":[20260228,62,8,641.75],"TABOO INDUSTRIA E COMERCIO LTDA ME":[20260518,25,2,2399.62],"HL DISTRIBUICAO MOTO BIKE LTDA":[20260109,36,2,8205.78],"PROTERCAPAS LTDA":[20251222,156,4,14812.8],"ANTARES MOTOS - SANTO EXPEDITO":[20260418,74,9,511.64],"BRUDOVAN PNEUS LTDA - BH":[20260422,0,1,2189.0],"HL DISTRIBUICAO MATRIZ":[20260721,0,1,6311.02],"SAMARA HEMANUELLE GONCALVES SILVA 093903":[20260120,0,1,597.9],"WGK INDUSTRIA MECANICA LTDA - EPP":[20260408,130,5,9197.07],"FELIPE A. DE SOUZA":[20260610,10,41,130.0],"DANIDREA INDUSTRIA E COMERCIO LTDA":[20251112,0,1,8553.54],"DUNAX LUBRIFICANTES LTDA MG VAREJO":[20260507,113,6,882.8],"W VALADARES COMERCIO DE PECAS E ACESSORI":[20260427,133,4,1868.7],"PLIM TELECOMUNICACOES LTDA":[20260730,28,2,210.0],"TELEREDE TELECOMUNICA�OES COMERCIAIS LTD":[20260720,32,17,180.0],"ATRIA LUB COMERCIO DE LUBRIFICANTES S.A.":[20260708,37,11,9380.3],"T&J COMERCIO DE PAPELARIA CIA LTDA":[20250905,124,4,137.2],"RAPIDO MONTES CLAROS TRANSPORTE LTDA - M":[20260519,170,3,279.22],"MEGATRON IND. E COM. ATACAD.DE PECAS P/M":[20251219,0,1,3848.13],"VEDAMOTORS COMPONENTES TECNICOS LTDA":[20260323,118,3,12883.01],"EMBALAMONTES COMERCIO DE EMBALAGENS EIRE":[20260513,54,12,594.0],"SOARES NASCIMENTO CONTABILIDADE":[20260715,31,16,1644.5],"PREMIER ATACADISTA DE IPATINGA LTDA":[20260626,87,5,2143.9],"DELLAS COMERCIO E TRANSPORTES LTDA":[20260731,14,19,3150.7],"ENERGIA ERBS INDUSTRIA E TRANSPORTE LTDA":[20260119,101,5,1216.32],"DECMINAS DISTRIBUICAO E LOGISTICA S.A.":[20260706,89,7,686.7],"LBS COMERCIAL LTDA":[20251030,185,2,7285.17],"MAGNETRON INDUSTRIA E COMERCIO DE COMPON":[20260307,19,16,4456.85],"COMPANHIA BRASILEIRA DE DISTRIBUICAO AUT":[20260714,40,19,2960.9],"KARLA NOGUEIRA":[20250908,6,22,118.0],"M.G ATACADISTA DE PECAS E ACESSORIOS AUT":[20251204,0,1,1251.75],"EXPRESSO TRANSMONTES LTDA":[20251223,54,4,278.99],"PERIMETRAL COMERCIO DE ACESSORIOS PARA M":[20260413,0,2,5717.89],"DISTRIBUIDORA MINEIRA DE FILTROS AUTOMOT":[20260805,53,10,7043.36],"M3 SOFTWARE SISTEMAS":[20260723,30,14,800.0],"J.B. BRASIL INDUSTRIA E COMERCIO DE MOTO":[20260530,376,2,5723.8],"MIX MOTOS":[20251208,46,3,702.0],"ALZILAN":[20250930,0,1,5040.2],"SEVEN MOTOPECAS DIGITAL IPATINGA":[20260122,89,2,5811.92],"SEVEN ATACADO CONTAGEM":[20260731,32,7,2635.07],"PIRACAPAS":[20251206,0,1,1923.92],"RODOCAP CARGAS":[20251208,0,1,93.13],"FACIL MULTILUB LTDA":[20260317,62,2,4698.8],"MIX MOTO PECAS":[20260730,155,2,577.5],"ECOPARTS DISTRIBUIDORA DE AUTOPECAS LTDA":[20260702,125,2,21510.11],"BOOMERANG MOTO PECAS":[20260326,6,2,3402.08],"HIPERCG COMERCIO E IMPORTACAO DE PECAS L":[20260530,71,2,4688.66],"PLASVAL INDUSTRIA E COMERCIO DE MOTOPECA":[20260408,0,1,9496.07],"MW TAX RECUPERACAO DE CREDITOS LTDA":[20260724,18,5,862.44],"VILLELA BRASIL CONSULTORIA EM GESTAO EMP":[20260715,0,1,1598.3],"GRAFICA QUALITY":[20260522,0,1,2275.0],"NACIONAL MOTO - LJ - 023":[20260611,0,1,3742.8],"CHAN PNEUS COMERCIO E REPRESENTACOES":[20260717,0,1,80.0],"H2 MOTO PARTS LTDA":[20260718,0,1,9920.23],"RONALDO TIAGO DE SANTANA LTDA":[20260723,0,1,9408.8],"BATERIAS PIONEIRO INDUSTRIAL LTDA":[20260703,0,1,13417.32]};
+const AGENDA_COMPRAS_SEVEN = {"3|********":[20251212,92,6,308.95],"3|BRUDOVAN":[20260120,22,11,467.94],"3|HL DISTRIBUIDORA":[20260331,28,11,0.0],"3|F7 BRETAS":[20260625,2,165,976.65],"3|LM":[20260513,16,25,2839.55],"3|OTOBAI LTDA":[20260603,18,34,959.35],"3|BEL LUBE 1":[20260629,11,43,1380.24],"3|.":[20260528,6,79,110.84],"3|LAVAR MOTOS":[20260113,14,18,50.0],"3|UNIFORT":[20260521,51,5,1238.93],"3|RODA FORTE":[20260626,105,5,70.0],"3|ANTENAS AMBEV":[20260320,235,3,1495.0],"3|VIA MANG MANGUEIRAS E CONEXÕES":[20260414,212,3,55.0],"3|POSTO SUPREMO LTDA":[20260416,36,8,20.0],"3|GEMOS MOTOS":[20260609,9,36,73.5],"3|FERRAGENS PREÇO FINO":[20260528,63,6,18.15],"5|ALX LUB":[20260220,116,3,3986.16],"5|F7 BRETAS":[20260527,14,4,8734.95],"3|DMF FILTROS E OLEOS AUTOMOTIVO":[20260129,29,8,0.0],"5|ECOPARTS DISTRIBUIDORA CONTAGE":[20260624,25,11,12026.13],"3|HANBAI":[20251013,42,3,253.5],"3|G&B AUTO PECAS ALTERNATIVAS  -":[20260612,14,21,1281.66],"3|LOJA DOS ROLAMENTOS LTDA":[20260305,64,6,67.5],"5|Max":[20260323,105,3,10154.24],"4|TOTAL CAPAS":[20260420,58,5,2678.65],"4|CORTECO":[20260710,53,5,1552.5],"4|DNA DISTRIBUIDORA":[20260730,138,4,226.67],"4|MG ATACADISTA":[20260728,11,18,1985.0],"3|JOAO CARRANCAS":[20251024,58,4,150.0],"5|AWA":[20260206,76,3,13070.45],"5|VALPLAS":[20260520,256,2,9524.42],"3|DNA DISTRIBUIDORA":[20260626,9,24,128.85],"5|DDL":[20251128,143,2,7634.23],"5|EBF":[20260130,39,4,4717.64],"5|TOTAL CAPAS":[20260724,60,6,2713.38],"4|VEDAMOTORS":[20260330,26,8,9793.9],"5|EMBUS":[20260716,26,15,22682.46],"3|BEL LUBRIFICANTES ESPECIAIS LT":[20251126,0,1,0.0],"4|ALTERNATIVA MOTO PECAS- BINHA":[20260713,41,4,4690.0],"4|UNIFORT":[20260520,16,6,7190.57],"3|R2 DISTRIBUIDORA MOTOPEÇAS":[20260619,35,7,378.7],"5|UNIFORT":[20260622,32,6,4590.77],"5|TOTAL MAXPARTS":[20260715,28,11,8709.54],"4|GRX COMERCIAL":[20260121,0,1,19302.55],"5|SEVEN ATACADO CONTAGEM":[20260710,32,9,6556.49],"5|WABTEC BRASIL FABRICACAO E MAN":[20260720,122,2,12683.34],"5|BLACK MORGAN MOTO PECAS LTDA":[20260320,0,1,3568.81],"5|MOTOCICLO":[20260730,22,13,3588.0],"4|JB BRASIL":[20260416,83,2,10474.31],"4|MOTOCICLO":[20260624,19,10,2764.71],"3|DECMINAS DIST.LOGISTICA S/A":[20260418,62,3,0.0],"5|Magnetron Ind Com Compon LTDA":[20260713,31,5,8291.92],"4|Magnetron Ind Com Compon LTDA":[20260528,79,2,5489.93],"4|ECOPARTS DISTRIBUIDORA CONTAGE":[20260701,42,6,12815.24],"4|CATIMOTO":[20260531,38,3,4970.99],"3|MOTOCICLO":[20260318,21,6,2059.25],"3|BIELA":[20260325,150,3,170.0],"5|VEDAMOTORS":[20260717,31,12,8138.39],"5|CATIMOTO":[20260519,0,1,2602.1],"3|MOTO FEST":[20260402,258,2,123.14],"5|DANIDREA":[20260602,59,7,9621.78],"5|LAQUILA":[20260729,84,5,3768.56],"3|PANTERA RODAS":[20251205,38,5,40.0],"5|WGK":[20260610,82,5,5989.1],"5|FURIOUS":[20260326,52,6,5907.95],"5|MEGAVILLE":[20251215,53,4,6850.55],"3|KALANGO":[20251008,0,1,393.9],"3|FIX CENTER PARAFUSOS":[20251021,0,1,20.0],"4|SUPORTE PLACA":[20251016,0,1,4095.0],"3|PIONEIRO MOTOS":[20260414,118,3,200.0],"3|BEL DISTRIBUIDOR DE LUBRIFICAN":[20250924,0,1,0.0],"3|ROLAMENTOS EXPRESS":[20260528,20,4,62.0],"4|EMBUS":[20251208,33,4,45622.79],"5|BRECKAR":[20251028,0,1,6699.62],"4|PROJETIL":[20251103,0,1,6455.96],"4|JF MOTOBIKE":[20251103,0,1,4526.95],"4|SEVEN\r\n90726\r\nSEVEN MOTOPECAS":[20260312,41,6,5445.52],"5|RIFFEL MOTO PECAS LTDA":[20260526,173,2,8917.31],"5|AJOTAVE":[20251204,0,1,8910.45],"5|PROTERCAPAS LTDA":[20251217,0,1,16936.2],"4|PROTERCAPAS LTDA":[20251218,0,1,16936.2],"5|RW FERRAMENTARIA":[20260525,68,5,1560.0],"4|RW FERRAMENTARIA":[20260608,47,4,1000.0],"5|VISEIRAS":[20260302,86,3,3425.39],"3|MOTO ROMA":[20260602,42,5,439.81],"5|FNA":[20260803,100,3,9337.4],"4|AWA":[20260703,67,2,8601.08],"3|LAVA JATO":[20260508,0,1,160.0],"5|CORTECO":[20260413,0,1,2747.5],"5|EGK":[20260413,0,1,1605.38],"5|PROJETIL":[20260305,192,2,5394.99],"4|VALFLEX":[20260518,0,1,5447.9],"5|FABRECK":[20250818,0,1,15500.0],"4|CIRCUIT":[20250925,0,1,4121.28],"4|HL DISTRIBUIDORA":[20251001,0,1,2576.88],"5|CIRCUIT":[20251002,0,1,4121.28],"4|DIAFRAG":[20251017,0,1,15169.0],"3|ATRIA LUB COM LUBRIFICANTES SA":[20260106,0,1,2037.0],"3|WDA MOTOS PEÇAS":[20251124,0,1,185.0],"5|JF MOTOBIKE":[20260626,233,2,7998.39],"4|KALANGO":[20251125,0,1,4536.0],"4|VALPLAS":[20260211,0,1,6893.2],"5|JB BRASIL":[20260304,0,1,5508.6],"5|MELC":[20260116,0,1,4024.83],"5|M C MOTO":[20260129,0,1,9161.92],"3|PERIMETRAL COM ACESS MOTOC":[20260408,0,1,10731.67],"5|VALFLEX":[20260515,0,1,7211.9],"4|G&B AUTO PECAS ALTERNATIVAS  -":[20260727,10,2,5982.14],"4|M C MOTO":[20260730,0,1,1347.0],"4|RETIMINAS":[20260730,0,1,320.0],"4|ROLAMENTOS EXPRESS":[20260803,4,2,33.0],"4|DELLAS":[20260730,0,1,5578.48],"5|PROJECAO MOTO PARTS":[20260730,0,1,6177.86],"5|SEVEN":[20260803,0,1,1919.04],"5|MBR MOTO PARTS":[20260602,0,1,5401.61],"4|BEL DISTRIBUIDOR DE LUBRIFICAN":[20260714,0,1,0.0],"4|GEMOS MOTOS":[20260803,17,2,159.5],"4|BEL LUBE 1":[20260803,0,1,0.0],"5|TRAVABEM":[20260609,0,1,4290.0],"5|MG ATACADISTA":[20260708,0,1,6010.0],"3|WASHINGTON SILVA DOS REIS":[20260630,0,1,60.0]};
+
+const AGENDA_FONTES={
+  mc:{px:'ag', titulo:'MC MOTO', temUnidade:false, dados:()=>RAW_DATA,
+      hist:it=>AGENDA_COMPRAS_MC[fornecedorAnalise(it,'mc')]},
+  seven:{px:'ags', titulo:'RHS-SEVEN', temUnidade:true,
+      dados:()=>{
+        const permitidas=unidadesPermitidas();
+        const sel=(document.getElementById('ags-unidade')||{}).value||'';
+        return RAW_DATA_SEVEN.filter(x=>permitidas.includes(String(x.u)) && (!sel||String(x.u)===sel));
+      },
+      /* cada unidade compra por conta própria: fica com a compra mais recente entre as
+         unidades em foco e com o ritmo mais curto — quem compra mais miúdo manda na data */
+      hist:it=>{
+        const nome=fornecedorAnalise(it,'seven'), permitidas=unidadesPermitidas();
+        const sel=(document.getElementById('ags-unidade')||{}).value||'';
+        let melhor=null;
+        (sel?[sel]:permitidas).forEach(u=>{
+          const h=AGENDA_COMPRAS_SEVEN[u+'|'+nome];
+          if(!h) return;
+          if(!melhor||h[0]>melhor[0]) melhor=melhor?[h[0],(melhor[1]&&h[1])?Math.min(melhor[1],h[1]):(h[1]||melhor[1]),melhor[2]+h[2],Math.max(melhor[3],h[3])]:h.slice();
+          else melhor=[melhor[0],(melhor[1]&&h[1])?Math.min(melhor[1],h[1]):(melhor[1]||h[1]),melhor[2]+h[2],Math.max(melhor[3],h[3])];
+        });
+        return melhor;
+      }}
+};
+let _agendaAberto={mc:null,seven:null};
+const LS_AG_COBERTURA='agenda_cobertura_meses', LS_AG_PRAZO='agenda_prazo_dias';
+
+function agNum(id,padrao){
+  const el=document.getElementById(id);
+  const v=parseInt(el&&el.value,10);
+  return (v>=0)?v:padrao;
+}
+function agData(n){ const d=new Date(); d.setDate(d.getDate()+Math.round(n)); return d; }
+function agFmtData(d){ return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }
+function agDeInt(n){ return new Date(Math.floor(n/10000), Math.floor(n/100)%100-1, n%100); }
+function agDias(d){ return Math.round((d-new Date().setHours(0,0,0,0))/86400000); }
+
+/* Curva ABC da empresa inteira, nas duas visões que o usuário pediu. Pareto acumulado:
+   até 80% = A, até 95% = B, resto = C. Devolve por item a melhor das duas classificações. */
+function agCurvas(itens){
+  const curva={};
+  [['v',i=>(i.k||0)*(i.p||0)],['q',i=>(i.k||0)]].forEach(([tag,peso])=>{
+    const arr=itens.map(i=>({k:i.c+'_'+(i.u||0),w:peso(i)})).filter(x=>x.w>0).sort((a,b)=>b.w-a.w);
+    const tot=arr.reduce((s,x)=>s+x.w,0)||1;
+    let acc=0;
+    arr.forEach(x=>{
+      acc+=x.w;
+      const c=(acc/tot<=0.8)?'A':(acc/tot<=0.95?'B':'C');
+      const atual=curva[x.k];
+      curva[x.k]=(!atual||c<atual)?c:atual;    // 'A'<'B'<'C': fica com a melhor das duas
+    });
+  });
+  return curva;
+}
+
+function calcularAgenda(fonte){
+  const cfg=AGENDA_FONTES[fonte];
+  const meses=agNum(cfg.px+'-cobertura',2)||2;
+  const prazo=agNum(cfg.px+'-prazo',15);
+  const busca=((document.getElementById(cfg.px+'-busca')||{}).value||'').trim().toUpperCase();
+  const itens=cfg.dados();
+  const curva=agCurvas(itens);
+
+  const porForn={};
+  itens.forEach(it=>{
+    const pico=it.k||0;
+    if(pico<=0) return;                       // sem venda no ano não entra na agenda
+    const hist=cfg.hist(it);
+    if(!hist) return;                         // fornecedor sem compra nos últimos 12 meses
+    const forn=fornecedorAnalise(it,fonte);
+    const g=porForn[forn]||(porForn[forn]={fornecedor:forn,hist:hist,itens:[],repor:0,valor:0,
+                                           itensA:0,rupturaA:0});
+    const estoque=Math.max(0,it.e||0), custo=it.pc||it.p||0;
+    const cv=curva[it.c+'_'+(it.u||0)]||'C';
+    const diasCobertura=Math.round(estoque/pico*30);   // pico = consumo de um mês
+    const alvo=Math.round(pico*meses);
+    const comprar=Math.max(0,alvo-estoque);
+    const linha={c:it.c,u:it.u,d:it.d,pico,estoque,custo,curva:cv,dias:diasCobertura,
+                 comprar,valor:comprar*custo};
+    g.itens.push(linha);
+    if(cv==='A'){ g.itensA++; if(diasCobertura<=prazo) g.rupturaA++; }
+    if(comprar>0){ g.repor++; g.valor+=linha.valor; }
+  });
+
+  const hoje=new Date().setHours(0,0,0,0);
+  let lista=Object.values(porForn).map(g=>{
+    g.itens.sort((a,b)=>a.dias-b.dias||b.valor-a.valor);
+    // a data manda pelos itens A; sem item A, pelos B; sem B, por qualquer um
+    const pri=g.itens.filter(i=>i.curva==='A');
+    const sec=pri.length?pri:g.itens.filter(i=>i.curva==='B');
+    const base=(sec.length?sec:g.itens);
+    /* Item que JÁ zerou não define data de pedido: ele não vai zerar de novo, e pedir hoje
+       não desfaz a falta de ontem. Ele conta na urgência (itens A em ruptura) e no peso da
+       fila. A data olha o próximo a cair — o primeiro item que ainda tem estoque. */
+    g.critico=base.find(i=>i.estoque>0)||null;
+    g.diasRuptura=g.critico?g.critico.dias:(base.length?0:999);
+    g.porRuptura=g.critico?(g.critico.dias-prazo):(base.length?-prazo:999);
+    const ultima=agDeInt(g.hist[0]);
+    g.diasUltima=Math.round((hoje-ultima)/86400000);
+    g.ritmo=g.hist[1];
+    /* O ritmo só descreve a realidade enquanto você ainda está dentro dele. Fornecedor que
+       você comprava a cada 6 dias e não compra há 332 não está "326 dias atrasado" — você
+       parou de comprar dele, e aí quem manda é a ruptura. Sem esse corte a agenda inteira
+       fica vermelha e não prioriza nada. */
+    g.foraDoRitmo=(!g.ritmo)||(g.diasUltima>g.ritmo*2);   // pulou um ciclo inteiro: saiu do padrão
+    g.porHabito=g.foraDoRitmo?null:(g.ritmo-g.diasUltima);
+    g.dias=(g.porHabito===null)?g.porRuptura:Math.min(g.porRuptura,g.porHabito);
+    g.motivo=(g.porHabito!==null&&g.porHabito<=g.porRuptura)?'ritmo':'ruptura';
+    g.data=agData(g.dias);
+    g.bucket=(g.dias<0)?0:(g.dias<=7?1:(g.dias<=15?2:(g.dias<=30?3:4)));
+    // peso da fila: o que está parando de girar nos itens que importam
+    g.valorA=g.itens.filter(i=>i.curva==='A'&&i.comprar>0).reduce((s,i)=>s+i.valor,0);
+    return g;
+  }).filter(g=>g.repor>0);
+
+  const total=lista.length;
+  const atrasados=lista.filter(g=>g.dias<0);
+  const semana=lista.filter(g=>g.dias>=0&&g.dias<=7);
+  const valorUrgente=atrasados.concat(semana).reduce((s,g)=>s+g.valor,0);
+  const rupturaA=lista.reduce((s,g)=>s+g.rupturaA,0);
+  if(busca) lista=lista.filter(g=>g.fornecedor.toUpperCase().includes(busca));
+  /* Dentro do atrasado a contagem de dias não ordena nada (todo mundo está no vermelho):
+     quem vem primeiro é quem tem mais dinheiro parando em item de curva A. Nos demais
+     baldes vale a data mesmo — ali a agenda é agenda. */
+  lista.sort((a,b)=> a.bucket-b.bucket ||
+    (a.bucket===0 ? (b.rupturaA-a.rupturaA || b.valorA-a.valorA) : (a.dias-b.dias || b.valorA-a.valorA)));
+  return {lista,total,atrasados:atrasados.length,semana:semana.length,valorUrgente,rupturaA,meses,prazo};
+}
+
+const AG_BUCKETS=[
+  {rot:'Atrasado — já era para ter pedido', cor:'#dc2626', bg:'#fef2f2'},
+  {rot:'Esta semana',                        cor:'#ea580c', bg:'#fff7ed'},
+  {rot:'Próximos 15 dias',                   cor:'#ca8a04', bg:'#fefce8'},
+  {rot:'Este mês',                           cor:'#0369a1', bg:'#f0f9ff'},
+  {rot:'Depois de 30 dias',                  cor:'#64748b', bg:'#f8fafc'}
+];
+
+function renderAgenda(fonte){
+  const cfg=AGENDA_FONTES[fonte];
+  if(fonte==='seven') montarSelectUnidadeAgenda();
+  const r=calcularAgenda(fonte);
+
+  document.getElementById(cfg.px+'-kpis').innerHTML=
+    '<div class="stat red"><div class="val">'+r.atrasados+'</div><div class="lbl">Fornecedores atrasados</div></div>'+
+    '<div class="stat red"><div class="val">'+r.rupturaA.toLocaleString('pt-BR')+'</div><div class="lbl">Itens curva A em ruptura</div></div>'+
+    '<div class="stat"><div class="val">'+r.semana+'</div><div class="lbl">Para pedir esta semana</div></div>'+
+    '<div class="stat"><div class="val">'+fmt(r.valorUrgente)+'</div><div class="lbl">Valor a pedir até 7 dias</div></div>'+
+    '<div class="stat"><div class="val">'+r.total+'</div><div class="lbl">Fornecedores na agenda</div></div>';
+
+  const cont=document.getElementById(cfg.px+'-tabela');
+  if(!r.lista.length){
+    cont.innerHTML='<div class="empty" style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:40px">Nenhum fornecedor precisa de pedido com estes filtros. 🎉</div>';
+    return;
+  }
+  let bucketAtual=-1, linhas='';
+  r.lista.forEach(g=>{
+    if(g.bucket!==bucketAtual){
+      bucketAtual=g.bucket;
+      const b=AG_BUCKETS[bucketAtual];
+      linhas+='<tr><td colspan="7" style="padding:7px 12px;background:'+b.bg+';color:'+b.cor+
+        ';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px">'+b.rot+'</td></tr>';
+    }
+    const b=AG_BUCKETS[g.bucket];
+    const aberto=(_agendaAberto[fonte]===g.fornecedor);
+    const quando=(g.dias<0)?('há '+(-g.dias)+' dia'+(g.dias===-1?'':'s')):
+                 (g.dias===0?'hoje':('em '+g.dias+' dia'+(g.dias===1?'':'s')));
+    let detalhe='';
+    if(aberto){
+      const cabUn=cfg.temUnidade?'<th class="num" style="padding:6px 8px">Un.</th>':'';
+      const aComprar=g.itens.filter(i=>i.comprar>0);
+      detalhe='<tr><td colspan="7" style="padding:0;background:#f8fafc"><div style="padding:10px 14px">'+
+        '<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'+
+        '<thead><tr style="background:#e2e8f0">'+
+          '<th style="padding:6px 8px;text-align:left">Cód.</th>'+cabUn+
+          '<th style="padding:6px 8px;text-align:left">Descrição</th>'+
+          '<th class="num" style="padding:6px 8px">Curva</th>'+
+          '<th class="num" style="padding:6px 8px">Pico/mês</th><th class="num" style="padding:6px 8px">Estoque</th>'+
+          '<th class="num" style="padding:6px 8px">Dura</th><th class="num" style="padding:6px 8px">Pedir</th>'+
+          '<th class="num" style="padding:6px 8px">Custo</th><th class="num" style="padding:6px 8px">Valor</th>'+
+        '</tr></thead><tbody>'+
+        aComprar.map(i=>{
+          const corCurva=i.curva==='A'?'#dc2626':(i.curva==='B'?'#ca8a04':'#94a3b8');
+          const corDias=i.dias<=r.prazo?'#dc2626':(i.dias<=30?'#ca8a04':'#64748b');
+          return '<tr>'+
+            '<td style="padding:5px 8px;color:#94a3b8;font-size:11px">'+i.c+'</td>'+
+            (cfg.temUnidade?'<td class="num" style="padding:5px 8px;font-weight:700;color:#0369a1">'+i.u+'</td>':'')+
+            '<td style="padding:5px 8px">'+escHtml(i.d||'')+'</td>'+
+            '<td class="num" style="padding:5px 8px;font-weight:700;color:'+corCurva+'">'+i.curva+'</td>'+
+            '<td class="num" style="padding:5px 8px;color:#7c3aed;font-weight:600">'+i.pico+'</td>'+
+            '<td class="num" style="padding:5px 8px">'+i.estoque+'</td>'+
+            '<td class="num" style="padding:5px 8px;color:'+corDias+';font-weight:600">'+i.dias+'d</td>'+
+            '<td class="num" style="padding:5px 8px;font-weight:700">'+i.comprar+'</td>'+
+            '<td class="num" style="padding:5px 8px">'+fmt(i.custo)+'</td>'+
+            '<td class="num" style="padding:5px 8px;font-weight:600">'+fmt(i.valor)+'</td>'+
+          '</tr>';
+        }).join('')+
+        '</tbody></table></div></td></tr>';
+    }
+    const ritmoTxt=g.ritmo?('a cada '+g.ritmo+'d'+(g.foraDoRitmo?' — fora do ritmo':'')):'compra única';
+    linhas+='<tr onclick="toggleAgendaForn(\''+fonte+'\',this.dataset.f)" data-f="'+escHtml(g.fornecedor)+'" style="cursor:pointer;border-bottom:1px solid #f1f5f9">'+
+      '<td style="padding:9px 12px;font-weight:600">'+(aberto?'▼ ':'▶ ')+escHtml(g.fornecedor)+
+        '<div style="font-size:10px;color:#94a3b8;font-weight:400">última compra há '+g.diasUltima+'d · '+ritmoTxt+'</div></td>'+
+      '<td style="padding:9px 12px;white-space:nowrap"><span style="color:'+b.cor+';font-weight:700">'+agFmtData(g.data)+'</span>'+
+        '<div style="font-size:10px;color:'+b.cor+'">'+quando+'</div></td>'+
+      '<td style="padding:9px 12px;font-size:11px;color:#64748b">'+
+        (g.motivo==='ritmo'?'seu ritmo de compra':'ruptura de item '+(g.critico?g.critico.curva:''))+
+        (g.critico?'<div style="font-size:10px;color:#94a3b8">'+escHtml((g.critico.d||'').slice(0,30))+' dura '+g.critico.dias+'d</div>':'')+'</td>'+
+      '<td class="num" style="padding:9px 12px">'+g.itensA+
+        (g.rupturaA?'<div style="font-size:10px;color:#dc2626;font-weight:700">'+g.rupturaA+' em ruptura</div>':'')+'</td>'+
+      '<td class="num" style="padding:9px 12px">'+g.repor+'</td>'+
+      '<td class="num" style="padding:9px 12px;font-weight:700">'+fmt(g.valor)+
+        (g.hist[3]?'<div style="font-size:10px;color:#94a3b8;font-weight:400">típico '+fmt(g.hist[3])+'</div>':'')+'</td>'+
+      '<td style="padding:9px 12px;width:90px"><div style="background:#f1f5f9;border-radius:4px;height:14px;overflow:hidden">'+
+        '<div style="height:100%;background:'+b.cor+';width:'+Math.max(4,Math.min(100,Math.round((30-Math.min(30,Math.max(-30,g.dias)))/60*100)))+'%"></div></div></td>'+
+    '</tr>'+detalhe;
+  });
+
+  cont.innerHTML='<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
+    '<thead><tr style="background:#1a1a2e;color:#fff">'+
+      '<th style="padding:9px 12px;text-align:left;font-size:11px;text-transform:uppercase">Fornecedor</th>'+
+      '<th style="padding:9px 12px;text-align:left;font-size:11px;text-transform:uppercase">Pedir em</th>'+
+      '<th style="padding:9px 12px;text-align:left;font-size:11px;text-transform:uppercase">Por quê</th>'+
+      '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">Itens A</th>'+
+      '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">A repor</th>'+
+      '<th class="num" style="padding:9px 12px;font-size:11px;text-transform:uppercase">Valor do pedido</th>'+
+      '<th style="padding:9px 12px;font-size:11px;text-transform:uppercase">Urgência</th>'+
+    '</tr></thead><tbody>'+linhas+'</tbody></table></div>'+
+    '<div style="font-size:11px;color:#94a3b8;margin-top:8px">Clique em um fornecedor para ver os itens do pedido. '+
+    'A data sai da ruptura do primeiro item de curva A (menos o prazo de entrega) ou do seu ritmo de compra — o que vier antes.</div>';
+}
+
+function toggleAgendaForn(fonte,forn){
+  _agendaAberto[fonte]=(_agendaAberto[fonte]===forn)?null:forn;
+  renderAgenda(fonte);
+}
+function salvarAgendaParam(fonte){
+  localStorage.setItem(LS_AG_COBERTURA,String(agNum(AGENDA_FONTES[fonte].px+'-cobertura',2)));
+  localStorage.setItem(LS_AG_PRAZO,String(agNum(AGENDA_FONTES[fonte].px+'-prazo',15)));
+  ['ag','ags'].forEach(px=>{
+    const a=document.getElementById(px+'-cobertura'), b=document.getElementById(px+'-prazo');
+    if(a) a.value=localStorage.getItem(LS_AG_COBERTURA)||2;
+    if(b) b.value=localStorage.getItem(LS_AG_PRAZO)||15;
+  });
+  renderAgenda(fonte);
+}
+function montarSelectUnidadeAgenda(){
+  const sel=document.getElementById('ags-unidade');
+  if(!sel||sel.dataset.pronto) return;
+  const permitidas=unidadesPermitidas();
+  sel.innerHTML='<option value="">Todas</option>'+permitidas.map(u=>'<option value="'+u+'">Unidade '+u+'</option>').join('');
+  sel.dataset.pronto='1';
+}
+function exportarAgenda(fonte){
+  const cfg=AGENDA_FONTES[fonte], r=calcularAgenda(fonte);
+  if(!r.lista.length){alert('Nada a exportar: nenhum fornecedor precisa de pedido.');return;}
+  const esc=t=>'"'+String(t==null?'':t).replace(/"/g,'""')+'"';
+  const fmtNum=n=>(n||0).toFixed(2).replace('.',',');
+  let csv='﻿AGENDA DE COMPRAS - '+cfg.titulo+'\n';
+  csv+='Data:;'+new Date().toLocaleDateString('pt-BR')+'\n';
+  csv+='Cobertura do pedido;'+r.meses+' meses;Prazo de entrega;'+r.prazo+' dias\n\n';
+  csv+='Fornecedor;Pedir em;Dias;Motivo;Ultima compra (dias);Ritmo (dias);Itens A;Itens A em ruptura;Itens a repor;Valor do pedido;Pedido tipico\n';
+  r.lista.forEach(g=>{
+    csv+=[esc(g.fornecedor),g.data.toLocaleDateString('pt-BR'),g.dias,g.motivo,g.diasUltima,g.ritmo||'',
+          g.itensA,g.rupturaA,g.repor,fmtNum(g.valor),fmtNum(g.hist[3])].join(';')+'\n';
+  });
+  csv+='\n\nITENS A PEDIR\nFornecedor;Codigo;'+(cfg.temUnidade?'Unidade;':'')+'Descricao;Curva;Pico mensal;Estoque;Dura (dias);Pedir;Custo;Valor\n';
+  r.lista.forEach(g=>g.itens.filter(i=>i.comprar>0).forEach(i=>{
+    csv+=[esc(g.fornecedor),i.c].concat(cfg.temUnidade?[i.u]:[])
+         .concat([esc(i.d),i.curva,i.pico,i.estoque,i.dias,i.comprar,fmtNum(i.custo),fmtNum(i.valor)]).join(';')+'\n';
+  }));
+  baixarArquivo(csv,'text/csv;charset=utf-8','agenda_compras_'+cfg.px+'_'+new Date().toLocaleDateString('pt-BR').split('/').join('-')+'.csv');
 }
 
 /* Data (YYYYMMDD) de N dias atrás — usada para ignorar mercadoria recém-chegada. */
@@ -4610,9 +4967,9 @@ window._ultimoTabSeven='montar';
 
 function switchAppTabSeven(tab){
   // respeita as permissões: cai na primeira sub-aba de Compras que o usuário pode ver
-  const _permSv={montar:'sv.compras',cotacao:'sv.compras',salvos:'sv.compras',analise:'sv.analise',recebimentos:'sv.recebimentos'};
+  const _permSv={montar:'sv.compras',cotacao:'sv.compras',salvos:'sv.compras',analise:'sv.analise',recebimentos:'sv.recebimentos',agenda:'sv.agenda'};
   if(!podeAba(_permSv[tab]||'sv.compras')){
-    const alt=['montar','recebimentos','analise'].find(t=>podeAba(_permSv[t]));
+    const alt=['montar','recebimentos','analise','agenda'].find(t=>podeAba(_permSv[t]));
     if(alt) tab=alt;
   }
   window._ultimoTabSeven=tab;
@@ -4621,12 +4978,15 @@ function switchAppTabSeven(tab){
   document.getElementById('app-tab-cotacao-seven').classList.toggle('hidden',tab!=='cotacao');
   document.getElementById('app-tab-analise-seven').classList.toggle('hidden',tab!=='analise');
   document.getElementById('app-tab-recebimentos-seven').classList.toggle('hidden',tab!=='recebimentos');
+  document.getElementById('app-tab-agenda-seven').classList.toggle('hidden',tab!=='agenda');
   document.getElementById('tabbtn-montar-seven').classList.toggle('active',tab==='montar');
   document.getElementById('tabbtn-salvos-seven').classList.toggle('active',tab==='salvos');
   document.getElementById('tabbtn-cotacao-seven').classList.toggle('active',tab==='cotacao');
   document.getElementById('tabbtn-analise-seven').classList.toggle('active',tab==='analise');
   document.getElementById('tabbtn-recebimentos-seven').classList.toggle('active',tab==='recebimentos');
+  document.getElementById('tabbtn-agenda-seven').classList.toggle('active',tab==='agenda');
   if(tab==='analise') renderAnalise('seven');
+  if(tab==='agenda') renderAgenda('seven');
   if(tab==='recebimentos') renderRecebimentosSeven();
   if(tab==='montar') renderSeven();
   if(tab==='salvos') renderPedidosSalvosSeven();
