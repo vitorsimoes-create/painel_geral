@@ -1,0 +1,46 @@
+name: Publicar painel no GitHub Pages
+
+# Substitui o pipeline legado "pages build and deployment", cujo passo de deploy
+# passou a estourar o timeout de 10 min em 100% das tentativas a partir de
+# 06/08/2026 11:49Z (o build concluia, so o deploy travava). Este workflow usa o
+# caminho moderno (upload-pages-artifact + deploy-pages), que e outro pipeline.
+#
+# IMPORTANTE: exige Settings > Pages > Source = "GitHub Actions".
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # permite disparar na mao pela aba Actions
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Nao cancela um deploy em andamento: a rotina diaria pode empurrar
+# varios commits seguidos e queremos que o ultimo prevaleca.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empacotar o site (raiz do repositorio)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
