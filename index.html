@@ -1973,6 +1973,7 @@ const ABAS_CATALOGO={
   'mc.relatorio':     {g:'mcmoto', cat:'financeiro', rot:'Relatório Gerencial',      sel:'#subtabs-financeiro [data-target="relatoriomc"]'},
   'mc.comissao':      {g:'mcmoto', cat:'vendas',     rot:'Vendas por Grupo de Comissão', sel:'#subtabs-vendas [data-target="vendascomissao"]'},
   'mc.graficos':      {g:'mcmoto', cat:'vendas',     rot:'Gráficos',                 sel:'#subtabs-vendas [data-target="graficos"]'},
+  'mc.monitorfechamento': {g:'mcmoto', cat:'vendas', rot:'Monitor de Fechamento',    sel:'#subtabs-vendas [data-target="monitorfechamento"]'},
   'mc.contaspagar':   {g:'mcmoto', cat:'financeiro', rot:'Contas a Pagar',           sel:'#subtabs-financeiro [data-mapatab="contaspagar"]'},
   'mc.contasreceber': {g:'mcmoto', cat:'financeiro', rot:'Contas a Receber',         sel:'#subtabs-financeiro [data-target="contasrecebermc"]'},
   'sv.unidades':      {g:'rhsseven', cat:'seven',    rot:'Vendas › Painel Mensal',   sel:'#subtabs-sevenvendas [data-mapatab="unidades"]'},
@@ -1997,7 +1998,11 @@ const ABAS_SV=TODAS_ABAS.filter(k=>ABAS_CATALOGO[k].g==='rhsseven');
 // Unidades de negócio da SEVEN — cada usuário pode ser limitado a algumas delas
 const UNIDADES_SEVEN=['3','4','5'];
 
-// Configuração publicada (default). O master pode alterar pela tela de gestão.
+/* Configuração publicada (default). O master pode alterar pela tela de gestão.
+   `todasAbasMc: true` = acesso total à MC MOTO: o usuário recebe TODAS as abas da
+   MC MOTO, inclusive as que ainda vão ser criadas. Basta registrar a aba nova em
+   ABAS_CATALOGO que ela já entra — a lista `abas` desses usuários não precisa ser
+   mexida (é usada só para o que for de fora da MC MOTO, ex.: RHS/SEVEN). */
 const USUARIOS_PADRAO=[
   {
     "id": "master",
@@ -2013,26 +2018,11 @@ const USUARIOS_PADRAO=[
   },
   {
     "id": "u_mc",
-    "nome": "MC MOTO",
+    "nome": "DIOGO",
     "hash": "17b59215ba29f554228a0e5e84b128e9d1efb1abd18edc6484bf8032496a398b",
     "master": false,
-    "abas": [
-      "mc.montar",
-      "mc.cotacao",
-      "mc.salvos",
-      "mc.recebimentos",
-      "mc.analise",
-      "mc.painel",
-      "mc.diarias",
-      "mc.grupos",
-      "mc.consistencia",
-      "mc.fornecedor",
-      "mc.historicas",
-      "mc.comissao",
-      "mc.graficos",
-      "mc.contaspagar",
-      "mc.contasreceber"
-    ],
+    "todasAbasMc": true,
+    "abas": [],
     "unidades": [
       "3",
       "4",
@@ -2175,10 +2165,21 @@ function getUsuarios(){
     const raw=localStorage.getItem(LS_USUARIOS);
     if(raw){
       const arr=JSON.parse(raw);
-      if(Array.isArray(arr) && arr.length) return arr;
+      if(Array.isArray(arr) && arr.length) return _herdarAcessoTotalMc(arr);
     }
   }catch(e){}
   return JSON.parse(JSON.stringify(USUARIOS_PADRAO));
+}
+/* Cada navegador guarda a própria cópia da configuração, que pode ser antiga e não
+   conhecer o "acesso total à MC MOTO". Esse flag é decisão publicada, então vem
+   sempre do USUARIOS_PADRAO: assim o usuário recebe as abas novas na hora, sem
+   depender de o master mandar um link de acesso novo a cada aba criada. */
+function _herdarAcessoTotalMc(arr){
+  return arr.map(u=>{
+    const padrao=USUARIOS_PADRAO.find(p=>p.id===u.id);
+    if(!padrao || !padrao.todasAbasMc) return u;
+    return Object.assign({},u,{todasAbasMc:true});
+  });
 }
 function setUsuarios(arr){ localStorage.setItem(LS_USUARIOS,JSON.stringify(arr)); }
 
@@ -2220,7 +2221,12 @@ function usuarioAtual(){
 }
 function abasDoUsuario(u){
   if(!u) return [];
-  return u.master ? TODAS_ABAS.slice() : (u.abas||[]).filter(k=>ABAS_CATALOGO[k]);
+  if(u.master) return TODAS_ABAS.slice();
+  const proprias=(u.abas||[]).filter(k=>ABAS_CATALOGO[k]);
+  /* Acesso total à MC MOTO: as abas da MC MOTO vêm do catálogo, não da lista
+     salva — aba nova da MC MOTO já nasce liberada para esse usuário. */
+  if(u.todasAbasMc) return [...new Set(ABAS_MC.concat(proprias))];
+  return proprias;
 }
 function podeAba(chave){ return abasDoUsuario(usuarioAtual()).includes(chave); }
 /* Unidades da SEVEN liberadas para o usuário logado. Master vê todas; usuário sem
@@ -2379,7 +2385,7 @@ function tentarDesbloquear(e){
      duas senhas so diferem por caixa. */
   const digitada=String(document.getElementById('lock-senha').value||'').trim();
   const u=getUsuarios().find(x=>senhaConfere(x,digitada));
-  if(u && (u.master || (u.abas&&u.abas.length))){
+  if(u && (u.master || abasDoUsuario(u).length)){
     sessionStorage.setItem('painel_usuario',u.id);
     document.getElementById('lock-overlay').classList.add('hidden');
     aplicarPermissoes();
@@ -3731,10 +3737,10 @@ function fecharGestaoUsuarios(){
 function renderGestaoUsuarios(){
   const lista=document.getElementById('users-lista');
   lista.innerHTML=_usersEdit.map(u=>{
-    const n=u.master?TODAS_ABAS.length:(u.abas||[]).length;
+    const n=u.master?TODAS_ABAS.length:abasDoUsuario(u).length;
     const sel=(u.id===_userSelId);
     const un=(u.unidades||UNIDADES_SEVEN).map(String);
-    const temSeven=u.master||(u.abas||[]).some(k=>ABAS_CATALOGO[k]&&ABAS_CATALOGO[k].g==='rhsseven');
+    const temSeven=u.master||abasDoUsuario(u).some(k=>ABAS_CATALOGO[k].g==='rhsseven');
     const rotUn=(temSeven&&un.length&&un.length<UNIDADES_SEVEN.length)?' · un. '+un.join('/'):'';
     return '<div onclick="selecionarUsuario(\''+u.id+'\')" style="padding:9px 10px;border-radius:7px;cursor:pointer;margin-bottom:4px;'+
       (sel?'background:#1a1a2e;color:#fff':'background:#fff;border:1px solid #e2e8f0')+'">'+
@@ -3757,19 +3763,29 @@ function renderFormUsuario(){
       '<button class="btn btn-primary" style="margin-top:14px" onclick="salvarUsuario()">💾 Salvar</button>';
     return;
   }
-  const marcadas=new Set(u.abas||[]);
-  const bloco=(titulo,chaves,grupoId)=>
+  const marcadas=new Set(abasDoUsuario(u));
+  const autoMc=!!u.todasAbasMc;
+  /* `travado` = as abas do bloco são decididas pelo catálogo, não por marcação
+     manual. Mostramos marcadas e desabilitadas para o master enxergar o acesso. */
+  const bloco=(titulo,chaves,grupoId,travado)=>
     '<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">'+
       '<div style="background:#f1f5f9;padding:8px 12px;display:flex;align-items:center;gap:10px">'+
         '<strong style="font-size:12px">'+titulo+'</strong>'+
-        '<button class="btn btn-outline" style="margin-left:auto;font-size:11px;padding:3px 8px" onclick="marcarGrupo(\''+grupoId+'\',true)">marcar todas</button>'+
-        '<button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="marcarGrupo(\''+grupoId+'\',false)">limpar</button>'+
+        (travado?'':
+          '<button class="btn btn-outline" style="margin-left:auto;font-size:11px;padding:3px 8px" onclick="marcarGrupo(\''+grupoId+'\',true)">marcar todas</button>'+
+          '<button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="marcarGrupo(\''+grupoId+'\',false)">limpar</button>')+
       '</div>'+
-      '<div style="padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px">'+
-        chaves.map(k=>'<label style="font-size:12px;display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer">'+
-          '<input type="checkbox" class="uf-aba uf-'+grupoId+'" value="'+k+'"'+(marcadas.has(k)?' checked':'')+'>'+
+      '<div style="padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px'+(travado?';opacity:.7':'')+'">'+
+        chaves.map(k=>'<label style="font-size:12px;display:flex;align-items:center;gap:6px;padding:3px 0;cursor:'+(travado?'default':'pointer')+'">'+
+          '<input type="checkbox" class="uf-aba uf-'+grupoId+'" value="'+k+'"'+(marcadas.has(k)?' checked':'')+(travado?' disabled':'')+'>'+
           escHtml(ABAS_CATALOGO[k].rot)+'</label>').join('')+
       '</div></div>';
+  const toggleAutoMc=
+    '<label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;margin-bottom:12px;padding:10px 12px;border:1px solid #99f6e4;background:#f0fdfa;border-radius:8px;cursor:pointer">'+
+      '<input type="checkbox" id="uf-todasmc" style="margin-top:2px"'+(autoMc?' checked':'')+' onchange="alternarAcessoTotalMc(this.checked)">'+
+      '<span><strong>Acesso total à MC MOTO</strong><br>'+
+      'Libera todas as abas da MC MOTO e já inclui automaticamente <strong>toda aba nova</strong> que for criada — sem precisar voltar aqui.</span>'+
+    '</label>';
   box.innerHTML=
     '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">'+
       '<div><label style="font-size:12px;color:#475569">Nome</label>'+
@@ -3777,8 +3793,9 @@ function renderFormUsuario(){
       '<div><label style="font-size:12px;color:#475569">Senha</label>'+
       '<input id="uf-senha" value="'+escHtml(u.senha)+'" style="display:block;width:180px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px"></div>'+
     '</div>'+
-    bloco('🏍️ MC MOTO',ABAS_MC,'mc')+
-    bloco('🏢 RHS/SEVEN',ABAS_SV,'sv')+
+    toggleAutoMc+
+    bloco('🏍️ MC MOTO',ABAS_MC,'mc',autoMc)+
+    bloco('🏢 RHS/SEVEN',ABAS_SV,'sv',false)+
     // unidades de negócio da SEVEN que este usuário pode enxergar
     (function(){
       const un=new Set((u.unidades||UNIDADES_SEVEN).map(String));
@@ -3797,7 +3814,15 @@ function renderFormUsuario(){
     '</div>';
 }
 function marcarGrupo(grupoId,valor){
-  document.querySelectorAll('.uf-'+grupoId).forEach(c=>c.checked=valor);
+  document.querySelectorAll('.uf-'+grupoId).forEach(c=>{ if(!c.disabled) c.checked=valor; });
+}
+/* Liga/desliga o acesso total à MC MOTO sem perder o que já estava marcado na tela. */
+function alternarAcessoTotalMc(valor){
+  const u=_usersEdit.find(x=>x.id===_userSelId);
+  if(!u || u.master) return;
+  u.abas=[...document.querySelectorAll('.uf-aba')].filter(c=>c.checked).map(c=>c.value);
+  u.todasAbasMc=!!valor;
+  renderFormUsuario();
 }
 function salvarUsuario(){
   const u=_usersEdit.find(x=>x.id===_userSelId);
@@ -3812,6 +3837,9 @@ function salvarUsuario(){
     if(!nome){ alert('O nome não pode ficar em branco.'); return; }
     u.nome=nome;
     u.abas=[...document.querySelectorAll('.uf-aba')].filter(c=>c.checked).map(c=>c.value);
+    u.todasAbasMc=document.getElementById('uf-todasmc').checked;
+    // com acesso total, as abas da MC MOTO vêm do catálogo — não são salvas na lista
+    if(u.todasAbasMc) u.abas=u.abas.filter(k=>!ABAS_MC.includes(k));
     const un=[...document.querySelectorAll('.uf-unidade')].filter(c=>c.checked).map(c=>c.value);
     u.unidades=un.length?un:UNIDADES_SEVEN.slice();   // nenhuma marcada = todas
   }
@@ -4076,7 +4104,7 @@ function abrirFornMercadoriaSeven(){
 }
 
 function gerarLinkAcesso(){
-  const semAcesso=_usersEdit.filter(u=>!u.master && !(u.abas||[]).length).map(u=>u.nome);
+  const semAcesso=_usersEdit.filter(u=>!u.master && !abasDoUsuario(u).length).map(u=>u.nome);
   const link=location.origin+location.pathname+'#cfg='+_cfgEncode(_usersEdit);
   const aviso=semAcesso.length
     ? '\n\nATENÇÃO: sem nenhuma aba liberada (não conseguirão entrar): '+semAcesso.join(', ')
