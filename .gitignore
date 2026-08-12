@@ -17,3 +17,6 @@ __pycache__/
 _estimativas.json
 *.xlsx
 backup_comissao_avista_*.csv
+
+# Monitor de fechamento — snapshots/relatorios locais (estado, como um banco; nunca publicar)
+monitor_fechamento/
