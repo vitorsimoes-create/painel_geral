@@ -38,6 +38,27 @@ Tabela de consulta rápida com todas as regras numéricas do painel. Para o cont
 | Risco de inadimplência — limiar | crescimento médio diário da semana **> 20%** | `gerar_risco_cliente.py` | [04-rhs-seven](04-rhs-seven.md) |
 | Média de compra semanal (contexto) | soma de 13 semanas ÷ 13 (fixo, não ÷ semanas ativas) | `gerar_risco_cliente.py` | [04-rhs-seven](04-rhs-seven.md) |
 
+## Nome de cliente e de fornecedor
+
+Regra do painel: **toda citação a cliente ou fornecedor sai pela RAZÃO SOCIAL**, nunca pelo nome fantasia (decisão do usuário, 04/08/2026). Onde o banco tem a coluna certa, é ela e ponto:
+
+| Base | Entidade | Coluna usada | Fantasia (não usar) |
+|---|---|---|---|
+| `projeto_f7` (SEVEN) | cliente | `TCLI_NOME_RAZAO` | `TCLI_FANTASIA` |
+| `projeto_f7` (SEVEN) | fornecedor | `TFOR_NOME_RAZAO` | `TFOR_FANTASIA` |
+| `mc_moto` | cliente | `clientes.RAZAO` | `clientes.NOME` (apelido curto) |
+| `mc_moto` | fornecedor | *não há coluna confiável* — ver abaixo | — |
+
+**Fornecedor da MC MOTO** é a exceção: o cadastro mistura as duas colunas, registro a registro (`NOME` "UNIFORT LTDA" / `RAZAO` "UNIFORT", mas `NOME` "SEVEN ATACADO CONTAGEM" / `RAZAO` "SEVEN MOTOPECAS LTDA"). A regra escolhida vive em `_nomes.py` (`forn_mc()`, versão SQL, e `escolher_forn_mc()`, versão Python — as duas dão o mesmo resultado nos 1.626 cadastros):
+
+1. vence o nome que tem sufixo de empresa (LTDA, LIMITADA, EIRELI, S/A, ME, EPP, MEI, SOCIEDADE, COOPERATIV);
+2. se só um dos dois tem, é ele;
+3. se nenhum tem, vence o **mais longo** — `fornecedores.NOME` é `varchar(40)` e chega cortado em 192 cadastros, enquanto `RAZAO` tem 60.
+
+Consequência prática: o mesmo fornecedor passa a aparecer com o **mesmo nome em todas as abas**. Antes, Montar Pedido usava `NOME` e Contas a Pagar usava `RAZAO`.
+
+Cuidado ao mexer: `gerar_forn_real_seven.py` reconhece os cadastros "que não identificam ninguém" (a distribuidora do próprio grupo) pelo **`TFOR_FANTASIA`**, não pelo nome exibido — a razão social de "F7 BRETAS SEVEN" é `MERCURIO IND. COM. DE MOTOPECAS LTDA`, um nome de empresa comum.
+
 ## Glossário
 
 - **MC (Margem de Contribuição)**: venda menos custo da mercadoria, em R$. Fórmula exata varia por sub-aba — ver tabela acima.
