@@ -1177,14 +1177,18 @@ function atualizarLabelFornecedor(){
 
 /* As paginas geradas (relatorio, clientes, contas, mapa...) abrem em IFRAME, e o
    navegador guarda o iframe em cache mesmo com Ctrl+F5 na pagina de fora — o usuario
-   ficava vendo numero velho depois de a rotina rodar. Carimbamos a data de hoje no
-   src: muda uma vez por dia, que e a frequencia com que esses arquivos sao regerados. */
+   ficava vendo numero velho depois de a rotina rodar.
+   O carimbo era a DATA de hoje, e isso nao bastava: a rotina regera os arquivos durante
+   o dia, entao dois usuarios que abriram o painel em horas diferentes ficavam com copias
+   diferentes do MESMO dia — um via 6.970,26 e o outro 7.454,82 na venda do dia 10/08.
+   Agora o carimbo muda a cada carregamento do painel: o iframe sempre vem do servidor,
+   e o custo e so o download desses arquivos uma vez por abertura do painel. */
 function carimbarIframes(){
-  const hoje=new Date().toISOString().slice(0,10);
+  const agora=Date.now();
   document.querySelectorAll('iframe[src]').forEach(function(f){
     const src=f.getAttribute('src');
     if(!src || /^https?:/i.test(src) || src.indexOf('?d=')>=0) return;
-    f.setAttribute('src', src.split('?')[0]+'?d='+hoje);
+    f.setAttribute('src', src.split('?')[0]+'?d='+agora);
   });
 }
 
