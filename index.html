@@ -707,6 +707,7 @@
     <button id="tabbtn-recebimentos-seven" class="app-tab" onclick="switchAppTabSeven('recebimentos')">📦 Recebimentos</button>
     <button id="tabbtn-analise-seven" class="app-tab" onclick="switchAppTabSeven('analise')">🔎 Análise de Fornecedor</button>
     <button id="tabbtn-agenda-seven" class="app-tab" onclick="switchAppTabSeven('agenda')">📅 Agenda de Compras</button>
+    <button id="tabbtn-transferencia" class="app-tab" onclick="switchAppTabSeven('transferencia')">🔄 Transferência</button>
   </div>
 
   <div id="app-tab-montar-seven" class="main" style="padding:0">
@@ -990,6 +991,38 @@
     <div id="ags-tabela"></div>
   </div>
 
+  <div id="app-tab-transferencia" class="main hidden" style="padding:0">
+    <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
+      <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">🔄 Transferência entre lojas — unidades 4 e 5</h2>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px">
+        Antes de comprar do fornecedor, tira do estoque que já é seu. <strong>Sobra na origem</strong> = estoque − (pico × fator),
+        a mesma conta da Análise de Fornecedor. <strong>Falta no destino</strong> = (pico × cobertura) − estoque, a mesma do Montar Pedido.
+        Transfere o menor dos dois. A coluna <strong>“Parado lá”</strong> mostra há quanto tempo o item não vende na loja de origem —
+        item que não gira lá é o melhor candidato a sair.
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos meses de venda a origem pode manter antes de sobrar">Sobra acima de (× pico)</label>
+          <input type="number" id="tr-fator" value="3" min="1" step="1" onchange="salvarTransfParam()" style="width:110px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos meses de venda o destino precisa cobrir">Destino cobre (meses)</label>
+          <input type="number" id="tr-cobertura" value="2" min="1" step="1" onchange="salvarTransfParam()" style="width:110px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Direção</label>
+          <select id="tr-direcao" onchange="renderTransferencia()" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none">
+            <option value="">As duas</option><option value="4-5">Unidade 4 → 5</option><option value="5-4">Unidade 5 → 4</option>
+          </select></div>
+        <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Ordenar por</label>
+          <select id="tr-ordem" onchange="setTransfOrdem(this.value)" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none">
+            <option value="valor">Maior valor</option><option value="qtd">Maior quantidade</option>
+            <option value="parado">Mais parado na origem</option><option value="ruptura">Ruptura no destino</option>
+          </select></div>
+        <div style="flex:1;min-width:180px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar</label>
+          <input type="text" id="tr-busca" oninput="renderTransferencia()" placeholder="descrição, código ou fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
+        <button class="btn btn-outline" onclick="exportarTransferencia()">⬇ Excel</button>
+      </div>
+    </div>
+    <div class="stats" id="tr-kpis" style="margin-bottom:16px"></div>
+    <div id="tr-tabela"></div>
+  </div>
+
   <div id="app-tab-cotacao-seven" class="main hidden" style="padding:0">
     <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
       <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:12px">📊 Itens selecionados para cotação (<span id="cotacao-sel-count-seven">0</span>)</h2>
@@ -1200,6 +1233,9 @@ function init(){
     if(a) a.value=localStorage.getItem(LS_AG_COBERTURA)||2;
     if(b) b.value=localStorage.getItem(LS_AG_PRAZO)||15;
   });
+  const trF=document.getElementById('tr-fator'), trC=document.getElementById('tr-cobertura');
+  if(trF) trF.value=localStorage.getItem(LS_TR_FATOR)||3;
+  if(trC) trC.value=localStorage.getItem(LS_TR_COBERTURA)||2;
   // acesso recebido por link: confirma para a pessoa que já pode entrar
   if(_cfgImportada){
     const okEl=document.getElementById('lock-cfg-ok');
@@ -1990,6 +2026,7 @@ const ABAS_CATALOGO={
   'sv.compras':       {g:'rhsseven', cat:'seven',    rot:'Compras',                  sel:'#subtabs-rhsseven [data-target="comprasseven"]'},
   'sv.analise':       {g:'rhsseven', cat:'seven',    rot:'Compras › Análise de Fornecedor', sel:'#tabbtn-analise-seven'},
   'sv.agenda':        {g:'rhsseven', cat:'seven',    rot:'Compras › Agenda de Compras',     sel:'#tabbtn-agenda-seven'},
+  'sv.transferencia': {g:'rhsseven', cat:'seven',    rot:'Compras › Transferência',         sel:'#tabbtn-transferencia'},
   'sv.recebimentos':  {g:'rhsseven', cat:'seven',    rot:'Compras › Recebimentos',   sel:'#tabbtn-recebimentos-seven'},
   'sv.fin.pagar':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Pagar',   sel:'#catbtn-fs-contaspagar'},
   'sv.fin.receber':   {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Receber', sel:'#catbtn-fs-contasreceber'},
@@ -2267,7 +2304,7 @@ function aplicarPermissoes(){
      - o botão Compras aparece se o usuário tiver sv.compras OU sv.analise;
      - com apenas sv.analise, escondemos Montar/Cotação/Pedidos Salvos. */
   const btnComprasSv=document.querySelector('#subtabs-rhsseven [data-target="comprasseven"]');
-  if(btnComprasSv) btnComprasSv.classList.toggle('hidden', !(podeAba('sv.compras')||podeAba('sv.analise')||podeAba('sv.recebimentos')||podeAba('sv.agenda')));
+  if(btnComprasSv) btnComprasSv.classList.toggle('hidden', !(podeAba('sv.compras')||podeAba('sv.analise')||podeAba('sv.recebimentos')||podeAba('sv.agenda')||podeAba('sv.transferencia')));
   ['tabbtn-montar-seven','tabbtn-cotacao-seven','tabbtn-salvos-seven'].forEach(id=>{
     const b=document.getElementById(id);
     if(b) b.classList.toggle('hidden', !podeAba('sv.compras'));
@@ -2741,6 +2778,152 @@ function renderAgenda(fonte){
     '</tr></thead><tbody>'+linhas+'</tbody></table></div>'+
     '<div style="font-size:11px;color:#94a3b8;margin-top:8px">Clique em um fornecedor para ver os itens do pedido. '+
     'A data sai da ruptura do primeiro item de curva A (menos o prazo de entrega) ou do seu ritmo de compra — o que vier antes.</div>';
+}
+
+/* ============================== TRANSFERÊNCIA ENTRE LOJAS ==============================
+   Só RHS/SEVEN, unidades 4 e 5 (decisão do usuário 09/08/2026). Acha o item que sobra numa
+   loja e falta na outra — antes de comprar do fornecedor, tira do estoque que já é seu.
+
+     sobra na origem  = estoque − pico × fator          (a mesma conta da Análise de
+                                                         Fornecedor, fator 3 por padrão)
+     falta no destino = pico × cobertura − estoque      (a mesma conta do Montar Pedido,
+                                                         2 meses por padrão)
+     transferir       = o menor dos dois
+
+   O caso que motivou a aba: item 7192 (RETROVISOR Z 400), 27 peças paradas na unidade 4,
+   onde nunca vendeu, e estoque zero na 5, onde vende. Por isso a coluna "parado" da origem
+   fica em destaque — item que não gira lá é o melhor candidato a sair.
+
+   Limite conhecido: só entra item cadastrado nas DUAS unidades (3.491 dos códigos). Se o
+   destino não tem o produto no cadastro, não há pico para medir a necessidade. */
+const TRANSF_UNIDADES=[4,5];
+let _transfOrdem='valor';
+const LS_TR_FATOR='transf_fator', LS_TR_COBERTURA='transf_cobertura';
+
+function calcularTransferencia(){
+  const fator=Math.max(1,agNum('tr-fator',3));
+  const meses=Math.max(1,agNum('tr-cobertura',2));
+  const dir=((document.getElementById('tr-direcao')||{}).value)||'';
+  const busca=((document.getElementById('tr-busca')||{}).value||'').trim().toUpperCase();
+  const permitidas=unidadesPermitidas();
+
+  const porUn={};
+  TRANSF_UNIDADES.forEach(u=>{ porUn[u]={}; });
+  RAW_DATA_SEVEN.forEach(it=>{
+    if(TRANSF_UNIDADES.includes(it.u) && permitidas.includes(String(it.u))) porUn[it.u][it.c]=it;
+  });
+
+  const lista=[];
+  TRANSF_UNIDADES.forEach(origem=>{
+    TRANSF_UNIDADES.forEach(destino=>{
+      if(origem===destino) return;
+      if(dir && dir!==(origem+'-'+destino)) return;
+      Object.keys(porUn[origem]).forEach(cod=>{
+        const o=porUn[origem][cod], d=porUn[destino][cod];
+        if(!d) return;                                   // destino não tem o item cadastrado
+        const estO=Math.max(0,o.e||0), estD=Math.max(0,d.e||0);
+        const sobra=Math.floor(estO-(o.k||0)*fator);
+        if(sobra<=0) return;
+        const falta=Math.round((d.k||0)*meses-estD);
+        if(falta<=0) return;                             // destino não precisa
+        const qtd=Math.min(sobra,falta);
+        if(qtd<=0) return;
+        const custo=o.pc||o.p||0;
+        const par=paradoDe(o);
+        lista.push({c:o.c, d:o.d, origem, destino, estO, estD, picoO:o.k||0, picoD:d.k||0,
+                    sobra, falta, qtd, custo, valor:qtd*custo, parado:par,
+                    ruptura:estD<=0, g:o.g, forn:fornecedorAnalise(o,'seven')});
+      });
+    });
+  });
+
+  const total=lista.length;
+  const pecas=lista.reduce((s,x)=>s+x.qtd,0);
+  const valor=lista.reduce((s,x)=>s+x.valor,0);
+  const rupturas=lista.filter(x=>x.ruptura).length;
+  let vis=busca?lista.filter(x=>(x.d||'').toUpperCase().includes(busca)||String(x.c)===busca
+                               ||(x.forn||'').toUpperCase().includes(busca)):lista;
+  const ordem={
+    valor:(a,b)=>b.valor-a.valor,
+    qtd:(a,b)=>b.qtd-a.qtd,
+    parado:(a,b)=>(b.parado?b.parado.dias||99999:-1)-(a.parado?a.parado.dias||99999:-1),
+    ruptura:(a,b)=>(b.ruptura-a.ruptura)||b.valor-a.valor
+  };
+  vis=vis.slice().sort(ordem[_transfOrdem]||ordem.valor);
+  return {lista:vis,total,pecas,valor,rupturas,fator,meses};
+}
+
+function renderTransferencia(){
+  const r=calcularTransferencia();
+  document.getElementById('tr-kpis').innerHTML=
+    '<div class="stat"><div class="val">'+r.total.toLocaleString('pt-BR')+'</div><div class="lbl">Transferências sugeridas</div></div>'+
+    '<div class="stat"><div class="val">'+r.pecas.toLocaleString('pt-BR')+'</div><div class="lbl">Peças a mover</div></div>'+
+    '<div class="stat green"><div class="val">'+fmt(r.valor)+'</div><div class="lbl">Valor que deixa de ser comprado</div></div>'+
+    '<div class="stat red"><div class="val">'+r.rupturas.toLocaleString('pt-BR')+'</div><div class="lbl">Cobrem ruptura no destino</div></div>';
+
+  const cont=document.getElementById('tr-tabela');
+  if(!r.lista.length){
+    cont.innerHTML='<div class="empty" style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:40px">Nenhuma transferência com estes filtros.</div>';
+    return;
+  }
+  const linhas=r.lista.slice(0,400).map(i=>{
+    const par=i.parado
+      ? '<span class="tag" style="background:'+i.parado.bg+';color:'+i.parado.cor+'" title="'+escHtml(i.parado.txt)+'">'+i.parado.rot+'</span>'
+      : '<span class="tag" style="background:#f1f5f9;color:#cbd5e1">—</span>';
+    return '<tr style="border-bottom:1px solid #f1f5f9">'+
+      '<td style="padding:7px 10px;color:#94a3b8;font-size:11px">'+i.c+'</td>'+
+      '<td style="padding:7px 10px">'+escHtml(i.d||'')+
+        '<div style="font-size:10px;color:#94a3b8">'+escHtml((i.forn||'').slice(0,34))+'</div></td>'+
+      '<td style="padding:7px 10px;white-space:nowrap;font-weight:700;color:#0369a1">'+i.origem+' → '+i.destino+'</td>'+
+      '<td class="num" style="padding:7px 10px">'+i.estO+
+        '<div style="font-size:10px;color:#94a3b8">pico '+i.picoO+'</div></td>'+
+      '<td style="padding:7px 10px">'+par+'</td>'+
+      '<td class="num" style="padding:7px 10px'+(i.ruptura?';color:#dc2626;font-weight:700':'')+'">'+i.estD+
+        '<div style="font-size:10px;color:#94a3b8">pico '+i.picoD+(i.ruptura?' · zerado':'')+'</div></td>'+
+      '<td class="num" style="padding:7px 10px;font-weight:700;color:#166534;font-size:15px">'+i.qtd+'</td>'+
+      '<td class="num" style="padding:7px 10px">'+fmt(i.custo)+'</td>'+
+      '<td class="num" style="padding:7px 10px;font-weight:700">'+fmt(i.valor)+'</td>'+
+    '</tr>';
+  }).join('');
+  const corte=r.lista.length>400?'<div style="font-size:11px;color:#94a3b8;margin-top:8px">Mostrando as 400 primeiras de '+r.lista.length.toLocaleString('pt-BR')+' — use a busca ou baixe o Excel para ver todas.</div>':'';
+  cont.innerHTML='<div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:auto">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
+    '<thead><tr style="background:#1a1a2e;color:#fff">'+
+      '<th style="padding:9px 10px;text-align:left;font-size:11px;text-transform:uppercase">Cód.</th>'+
+      '<th style="padding:9px 10px;text-align:left;font-size:11px;text-transform:uppercase">Descrição</th>'+
+      '<th style="padding:9px 10px;text-align:left;font-size:11px;text-transform:uppercase">De → Para</th>'+
+      '<th class="num" style="padding:9px 10px;font-size:11px;text-transform:uppercase">Estoque origem</th>'+
+      '<th style="padding:9px 10px;text-align:left;font-size:11px;text-transform:uppercase" title="Há quanto tempo o item não vende na loja de origem">Parado lá</th>'+
+      '<th class="num" style="padding:9px 10px;font-size:11px;text-transform:uppercase">Estoque destino</th>'+
+      '<th class="num" style="padding:9px 10px;font-size:11px;text-transform:uppercase">Transferir</th>'+
+      '<th class="num" style="padding:9px 10px;font-size:11px;text-transform:uppercase">Custo</th>'+
+      '<th class="num" style="padding:9px 10px;font-size:11px;text-transform:uppercase">Valor</th>'+
+    '</tr></thead><tbody>'+linhas+'</tbody></table></div>'+corte;
+}
+
+function setTransfOrdem(v){ _transfOrdem=v; renderTransferencia(); }
+function salvarTransfParam(){
+  localStorage.setItem(LS_TR_FATOR,String(agNum('tr-fator',3)));
+  localStorage.setItem(LS_TR_COBERTURA,String(agNum('tr-cobertura',2)));
+  renderTransferencia();
+}
+function exportarTransferencia(){
+  const r=calcularTransferencia();
+  if(!r.lista.length){alert('Nada a exportar: nenhuma transferência sugerida.');return;}
+  let csv='﻿TRANSFERENCIA ENTRE LOJAS - RHS/SEVEN (unidades '+TRANSF_UNIDADES.join(' e ')+')\n';
+  csv+='Sobra na origem;estoque - pico x '+r.fator+'\n';
+  csv+='Falta no destino;pico x '+r.meses+' meses - estoque\n';
+  csv+='Data:;'+new Date().toLocaleDateString('pt-BR')+'\n\n';
+  csv+='Codigo;Descricao;Fornecedor;De;Para;Estoque origem;Pico origem;Parado na origem;'+
+       'Estoque destino;Pico destino;Sobra;Falta;Transferir;Custo unit. (R$);Valor (R$)\n';
+  r.lista.forEach(i=>{
+    csv+=[i.c,'"'+String(i.d||'').replace(/"/g,'""')+'"','"'+String(i.forn||'').replace(/"/g,'""')+'"',
+          i.origem,i.destino,i.estO,i.picoO,(i.parado?i.parado.rot:''),i.estD,i.picoD,
+          i.sobra,i.falta,i.qtd,i.custo.toFixed(2).replace('.',','),i.valor.toFixed(2).replace('.',',')
+         ].join(';')+'\n';
+  });
+  csv+='\nTOTAL;;;;;;;;;;;;'+r.pecas+';;'+r.valor.toFixed(2).replace('.',',')+'\n';
+  baixarArquivo(csv,'text/csv;charset=utf-8','transferencia_seven_'+new Date().toLocaleDateString('pt-BR').split('/').join('-')+'.csv');
 }
 
 function toggleAgendaForn(fonte,forn){
@@ -5089,9 +5272,9 @@ window._ultimoTabSeven='montar';
 
 function switchAppTabSeven(tab){
   // respeita as permissões: cai na primeira sub-aba de Compras que o usuário pode ver
-  const _permSv={montar:'sv.compras',cotacao:'sv.compras',salvos:'sv.compras',analise:'sv.analise',recebimentos:'sv.recebimentos',agenda:'sv.agenda'};
+  const _permSv={montar:'sv.compras',cotacao:'sv.compras',salvos:'sv.compras',analise:'sv.analise',recebimentos:'sv.recebimentos',agenda:'sv.agenda',transferencia:'sv.transferencia'};
   if(!podeAba(_permSv[tab]||'sv.compras')){
-    const alt=['montar','recebimentos','analise','agenda'].find(t=>podeAba(_permSv[t]));
+    const alt=['montar','recebimentos','analise','agenda','transferencia'].find(t=>podeAba(_permSv[t]));
     if(alt) tab=alt;
   }
   window._ultimoTabSeven=tab;
@@ -5101,14 +5284,17 @@ function switchAppTabSeven(tab){
   document.getElementById('app-tab-analise-seven').classList.toggle('hidden',tab!=='analise');
   document.getElementById('app-tab-recebimentos-seven').classList.toggle('hidden',tab!=='recebimentos');
   document.getElementById('app-tab-agenda-seven').classList.toggle('hidden',tab!=='agenda');
+  document.getElementById('app-tab-transferencia').classList.toggle('hidden',tab!=='transferencia');
   document.getElementById('tabbtn-montar-seven').classList.toggle('active',tab==='montar');
   document.getElementById('tabbtn-salvos-seven').classList.toggle('active',tab==='salvos');
   document.getElementById('tabbtn-cotacao-seven').classList.toggle('active',tab==='cotacao');
   document.getElementById('tabbtn-analise-seven').classList.toggle('active',tab==='analise');
   document.getElementById('tabbtn-recebimentos-seven').classList.toggle('active',tab==='recebimentos');
   document.getElementById('tabbtn-agenda-seven').classList.toggle('active',tab==='agenda');
+  document.getElementById('tabbtn-transferencia').classList.toggle('active',tab==='transferencia');
   if(tab==='analise') renderAnalise('seven');
   if(tab==='agenda') renderAgenda('seven');
+  if(tab==='transferencia') renderTransferencia();
   if(tab==='recebimentos') renderRecebimentosSeven();
   if(tab==='montar') renderSeven();
   if(tab==='salvos') renderPedidosSalvosSeven();
