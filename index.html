@@ -10,6 +10,7 @@
   <button class="app-tab sub-sevenvendas" data-mapatab="unifor" onclick="abrirSubAbaVendasSeven('unifor',this)">🏭 Vendas por Fornecedor</button>
   <button class="app-tab sub-sevenvendas" data-mapatab="unihist" onclick="abrirSubAbaVendasSeven('unihist',this)">📚 Vendas Históricas</button>
   <button class="app-tab sub-sevenvendas" data-mapatab="clientes" onclick="abrirSubAbaVendasSeven('clientes',this)">👥 Clientes</button>
+  <button class="app-tab sub-sevenvendas" data-mapatab="premiacao" onclick="abrirSubAbaVendasSeven('premiacao',this)">🏆 Premiação</button>
 </div>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
@@ -597,6 +598,12 @@
 <div id="app-tab-clientesseven" class="main hidden" style="max-width:100%">
   <div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;height:calc(100vh - 180px)">
     <iframe id="iframe-clientesseven" src="clientes-seven.html" style="width:100%;height:100%;border:none;display:block"></iframe>
+  </div>
+</div>
+
+<div id="app-tab-premiacaoseven" class="main hidden" style="max-width:100%">
+  <div style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;height:calc(100vh - 180px)">
+    <iframe id="iframe-premiacaoseven" src="premiacao-seven.html" style="width:100%;height:100%;border:none;display:block"></iframe>
   </div>
 </div>
 
@@ -1979,7 +1986,7 @@ function switchAppTab(tab){
   if(chip) chip.classList.toggle('hidden',tab!=='montar' && tab!=='cotacao');
 }
 
-const GRUPOS_MAIN=['app-tab-dashboard','app-tab-clientesmc','app-tab-clientesseven','app-tab-relatoriomc','app-tab-montar','app-tab-salvos','app-tab-cotacao','app-tab-recebimentos','app-tab-mapavendas','app-tab-crmseven','app-tab-financeiroseven','app-tab-comprasseven','app-tab-contasrecebermc','app-tab-vendashistoricas','app-tab-vendascomissao','app-tab-graficos','app-tab-monitorfechamento'];
+const GRUPOS_MAIN=['app-tab-dashboard','app-tab-clientesmc','app-tab-clientesseven','app-tab-premiacaoseven','app-tab-relatoriomc','app-tab-montar','app-tab-salvos','app-tab-cotacao','app-tab-recebimentos','app-tab-mapavendas','app-tab-crmseven','app-tab-financeiroseven','app-tab-comprasseven','app-tab-contasrecebermc','app-tab-vendashistoricas','app-tab-vendascomissao','app-tab-graficos','app-tab-monitorfechamento'];
 const SUBTABS_ROWS=['subtabs-compras','subtabs-vendas','subtabs-financeiro','subtabs-rhsseven','subtabs-sevenvendas'];
 const CATEGORIAS_MCMOTO=['compras','vendas','financeiro'];
 let _mapaTabPendente=null;
@@ -2021,6 +2028,7 @@ const ABAS_CATALOGO={
   'sv.unifor':        {g:'rhsseven', cat:'seven',    rot:'Vendas › Vendas por Fornecedor', sel:'#subtabs-sevenvendas [data-mapatab="unifor"]'},
   'sv.unihist':       {g:'rhsseven', cat:'seven',    rot:'Vendas › Vendas Históricas',     sel:'#subtabs-sevenvendas [data-mapatab="unihist"]'},
   'sv.clientes':      {g:'rhsseven', cat:'seven',    rot:'Vendas › Clientes',              sel:'#subtabs-sevenvendas [data-mapatab="clientes"]'},
+  'sv.premiacao':     {g:'rhsseven', cat:'seven',    rot:'Vendas › Premiação',             sel:'#subtabs-sevenvendas [data-mapatab="premiacao"]'},
   'sv.relatorio':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Relatório Gerencial', sel:'#catbtn-fs-relatorio'},
   'sv.crm':           {g:'rhsseven', cat:'seven',    rot:'CRM',                      sel:'#subtabs-rhsseven [data-target="crm"]'},
   'sv.compras':       {g:'rhsseven', cat:'seven',    rot:'Compras',                  sel:'#subtabs-rhsseven [data-target="comprasseven"]'},
@@ -4468,9 +4476,13 @@ function abrirSubAbaVendasSeven(mapatab,btnEl){
   document.querySelectorAll('#subtabs-sevenvendas .sub-sevenvendas')
     .forEach(b=>b.classList.toggle('active', b.dataset.mapatab===mapatab));
   GRUPOS_MAIN.forEach(id=>document.getElementById(id).classList.add('hidden'));
-  // Clientes da SEVEN e pagina propria (clientes-seven.html), nao uma aba do Mapa
+  // Clientes e Premiacao da SEVEN sao paginas proprias, nao abas do Mapa
   if(mapatab==='clientes'){
     document.getElementById('app-tab-clientesseven').classList.remove('hidden');
+    return;
+  }
+  if(mapatab==='premiacao'){
+    document.getElementById('app-tab-premiacaoseven').classList.remove('hidden');
     return;
   }
   document.getElementById('app-tab-mapavendas').classList.remove('hidden');

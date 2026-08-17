@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premiação — RHS/SEVEN</title>
+<style>
+ *{box-sizing:border-box;margin:0;padding:0}
+ body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:#0d1117;color:#e6edf3;
+      padding:18px;font-size:13px}
+ .topo{background:linear-gradient(135deg,#111827,#1f2937);border:2px solid #f0b429;
+       border-radius:12px;padding:16px 20px;text-align:center;margin-bottom:14px}
+ .topo h1{font-size:22px;letter-spacing:.5px;color:#fff;font-weight:800}
+ .topo h1 b{color:#f0b429}
+ .topo .lema{font-size:11px;color:#9aa4b2;margin-top:5px;text-transform:uppercase;letter-spacing:1px}
+ .barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#161b22;
+        border:1px solid #30363d;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px}
+ .barra b{color:#f0b429}
+ select,input{background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:6px;
+              padding:5px 8px;font-size:12px;font-family:inherit}
+ input[type=number]{width:96px;text-align:right}
+ .btn{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;
+      padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+ .btn:hover{border-color:#f0b429}
+ .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin-bottom:14px}
+ .kpi{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px 14px}
+ .kpi label{display:block;font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+ .kpi .v{font-size:20px;font-weight:800;color:#fff}
+ .kpi .s{font-size:11px;color:#8b949e;margin-top:2px}
+ .kpi.ok{border-color:#238636}.kpi.ok .v{color:#3fb950}
+ .kpi.no{border-color:#6e2f2f}
+ .premios{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:14px}
+ .pr{border-radius:12px;padding:14px;border:2px solid}
+ .pr h3{font-size:14px;margin-bottom:4px}
+ .pr .cond{font-size:11px;color:#9aa4b2;min-height:32px;line-height:1.5}
+ .pr .eq{border-radius:8px;padding:9px;text-align:center;margin:10px 0 8px;font-weight:800;font-size:20px;color:#fff}
+ .pr .vend{text-align:center;font-size:11px;color:#9aa4b2;text-transform:uppercase;letter-spacing:.5px}
+ .pr .vendv{text-align:center;font-size:17px;font-weight:800}
+ .pr .status{margin-top:10px;text-align:center;font-size:11px;font-weight:700;border-radius:6px;padding:5px}
+ .d{border-color:#238636;background:#0f2417}.d .eq{background:#1a7f37}.d .vendv{color:#3fb950}
+ .s{border-color:#1f6feb;background:#0d1b2e}.s .eq{background:#1f6feb}.s .vendv{color:#58a6ff}
+ .m{border-color:#f0b429;background:#241d0d}.m .eq{background:#b8860b}.m .vendv{color:#f0b429}
+ .grid2{display:grid;grid-template-columns:minmax(260px,1fr) 2fr;gap:12px;align-items:start}
+ .cx{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px}
+ .cx h2{font-size:12px;color:#f0b429;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+ .regra{font-size:11.5px;color:#c9d1d9;line-height:1.6;margin-bottom:8px;padding-left:18px;position:relative}
+ .regra:before{content:'✓';position:absolute;left:0;color:#3fb950;font-weight:800}
+ .max{margin-top:12px;border-top:1px solid #30363d;padding-top:10px}
+ .max .l{display:flex;justify-content:space-between;font-size:11.5px;padding:3px 0;color:#c9d1d9}
+ .max .t{display:flex;justify-content:space-between;font-weight:800;color:#f0b429;font-size:13px;
+         border-top:1px solid #30363d;margin-top:6px;padding-top:6px}
+ table{width:100%;border-collapse:collapse;font-size:12px}
+ th,td{padding:5px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid #21262d}
+ thead th{position:sticky;top:0;background:#1f2937;color:#f0b429;font-size:10px;
+          text-transform:uppercase;letter-spacing:.5px;z-index:2}
+ .tw{max-height:60vh;overflow:auto;border:1px solid #30363d;border-radius:8px}
+ tr.sem td{background:#0d1b2e;color:#58a6ff;font-weight:700;text-align:center;font-size:11px}
+ tr.hoje td{background:#1c2128}
+ tr.fut td{color:#6e7681}
+ .ok{color:#3fb950;font-weight:700}.nao{color:#f85149}
+ .nota{font-size:11px;color:#6e7681;margin-top:12px;line-height:1.7}
+ @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+</style></head><body>
+
+<div class="topo">
+  <h1>🏆 PROGRAMA DE PREMIAÇÃO — <b>METAS QUE GERAM RESULTADOS!</b></h1>
+  <div class="lema">Juntos somos mais fortes. Juntos batemos nossas metas!</div>
+</div>
+
+<div class="barra">
+  <b>Mês:</b><select id="mes" onchange="render()"></select>
+  <span style="width:1px;height:20px;background:#30363d"></span>
+  <b>Meta mensal:</b><input type="number" id="p-meta" step="1000" onchange="salvar()">
+  <b>Dias úteis:</b><input type="number" id="p-dias" style="width:60px" onchange="salvar()">
+  <b>Vendedores:</b><input type="number" id="p-time" style="width:60px" onchange="salvar()">
+  <span style="width:1px;height:20px;background:#30363d"></span>
+  <b>Prêmios da equipe:</b>
+  <input type="number" id="p-pd" style="width:74px" title="prêmio diário da equipe" onchange="salvar()">
+  <input type="number" id="p-ps" style="width:74px" title="prêmio semanal da equipe" onchange="salvar()">
+  <input type="number" id="p-pm" style="width:74px" title="prêmio mensal da equipe" onchange="salvar()">
+  <button class="btn" onclick="padrao()">Voltar ao padrão</button>
+  <span style="flex:1"></span>
+  <span id="ger" style="font-size:11px;color:#6e7681"></span>
+</div>
+
+<div class="kpis" id="kpis"></div>
+<div class="premios" id="premios"></div>
+
+<div class="grid2">
+  <div>
+    <div class="cx">
+      <h2>Regras importantes</h2>
+      <div id="regras"></div>
+      <div class="max" id="maximo"></div>
+    </div>
+  </div>
+  <div class="cx">
+    <h2>Acompanhamento do mês</h2>
+    <div class="tw"><table id="tbl">
+      <thead><tr>
+        <th style="text-align:left">Dia</th><th style="text-align:left">Data</th>
+        <th>Meta do dia</th><th>Venda do dia</th><th>Meta acumulada</th><th>Acumulado</th>
+        <th>Prêmio do dia</th><th>Equipe</th><th>Por vendedor</th>
+      </tr></thead><tbody id="body"></tbody></table></div>
+  </div>
+</div>
+
+<div class="nota" id="nota"></div>
+
+<script>
+const D={"dias":[["2025-08-18",4525.33,15],["2025-08-19",7121.99,18],["2025-08-20",9902.8,24],["2025-08-21",8705.37,23],["2025-08-22",8730.56,30],["2025-08-25",5523.29,26],["2025-08-26",11572.77,33],["2025-08-27",9608.52,30],["2025-08-28",6126.72,25],["2025-08-29",16980.18,32],["2025-09-01",8320.82,36],["2025-09-02",8228.65,28],["2025-09-03",9025.04,28],["2025-09-04",7205.57,18],["2025-09-05",4355.58,28],["2025-09-08",6434.78,28],["2025-09-09",7345.31,26],["2025-09-10",9619.88,25],["2025-09-11",3625.34,21],["2025-09-12",9665.29,28],["2025-09-15",8093.17,20],["2025-09-16",4037.06,23],["2025-09-17",3052.54,22],["2025-09-18",12270.44,24],["2025-09-19",6215.4,13],["2025-09-22",3794.91,19],["2025-09-23",7852.61,27],["2025-09-24",4563.75,26],["2025-09-25",5451.2,19],["2025-09-26",13576.72,31],["2025-09-29",4930.07,22],["2025-09-30",7829.7,21],["2025-10-01",8980.88,29],["2025-10-02",6055.01,22],["2025-10-03",11071.15,29],["2025-10-06",12514.13,22],["2025-10-07",12163.16,30],["2025-10-08",10833.06,23],["2025-10-09",7335.69,25],["2025-10-10",5257.83,17],["2025-10-13",13210.45,34],["2025-10-14",3732.95,18],["2025-10-15",13513.94,31],["2025-10-16",9752.92,27],["2025-10-17",8036.67,24],["2025-10-20",17649.59,26],["2025-10-21",10497.72,29],["2025-10-22",9409.53,33],["2025-10-23",8690.91,26],["2025-10-24",23802.39,22],["2025-10-27",8527.99,28],["2025-10-28",13414.62,32],["2025-10-29",3025.61,21],["2025-10-30",5147.38,15],["2025-10-31",4738.24,20],["2025-11-03",5126.05,24],["2025-11-04",6808.33,24],["2025-11-05",13451.6,19],["2025-11-06",1872.1,20],["2025-11-07",5704.5,23],["2025-11-10",5483.03,21],["2025-11-11",15701.82,35],["2025-11-12",16495.07,23],["2025-11-13",6764.51,31],["2025-11-14",14384.93,21],["2025-11-17",6830.48,26],["2025-11-18",10381.12,24],["2025-11-19",14585.91,25],["2025-11-21",5610.88,23],["2025-11-24",10543.22,31],["2025-11-25",8954.07,23],["2025-11-26",4217.56,27],["2025-11-27",8724.19,26],["2025-11-28",4878.67,25],["2025-12-01",9168.85,29],["2025-12-02",7839.01,27],["2025-12-03",9574.56,21],["2025-12-04",11594.34,23],["2025-12-05",20001.42,32],["2025-12-08",4457.75,23],["2025-12-09",6345.28,23],["2025-12-10",18875.05,40],["2025-12-11",8695.01,21],["2025-12-12",4853.07,21],["2025-12-15",3546.51,18],["2025-12-16",4113.75,30],["2025-12-17",4372.67,22],["2025-12-18",14479.96,30],["2025-12-19",4095.09,21],["2025-12-22",5007.42,22],["2025-12-23",8659.64,21],["2026-01-05",10771.64,17],["2026-01-06",3315.49,17],["2026-01-07",7370.71,25],["2026-01-08",6495.26,20],["2026-01-09",7200.53,28],["2026-01-12",11048.79,22],["2026-01-13",3762.72,17],["2026-01-14",6630.23,21],["2026-01-15",6330.09,30],["2026-01-16",6956.74,25],["2026-01-19",4196.1,16],["2026-01-20",6962.93,24],["2026-01-21",4716.71,22],["2026-01-22",6388.91,24],["2026-01-23",19845.9,42],["2026-01-26",6808.46,23],["2026-01-27",2353.59,16],["2026-01-28",5422.44,23],["2026-01-29",7058.64,14],["2026-01-30",8609.86,21],["2026-02-02",3245.32,18],["2026-02-03",5658.08,20],["2026-02-04",2474.99,21],["2026-02-05",7808.46,21],["2026-02-06",7655.58,33],["2026-02-09",2925.51,14],["2026-02-10",4261.18,13],["2026-02-11",6061.11,14],["2026-02-12",7929.67,27],["2026-02-13",3221.19,24],["2026-02-18",5975.93,17],["2026-02-19",6788.31,26],["2026-02-20",11800.22,32],["2026-02-23",3660.64,15],["2026-02-24",7702.48,22],["2026-02-25",5965.77,23],["2026-02-26",5061.54,15],["2026-02-27",11211.23,22],["2026-03-02",5735.68,20],["2026-03-03",31066.17,61],["2026-03-04",10383.47,8],["2026-03-05",8792.37,41],["2026-03-06",6728.88,17],["2026-03-09",5945.72,24],["2026-03-10",5805.92,27],["2026-03-11",12678.06,20],["2026-03-12",14070.42,24],["2026-03-13",11577.6,11],["2026-03-16",9022.35,16],["2026-03-17",7210.83,30],["2026-03-18",7916.76,23],["2026-03-19",5383.71,20],["2026-03-20",6975.46,20],["2026-03-23",2267.03,17],["2026-03-24",10901.8,30],["2026-03-25",4013.67,22],["2026-03-26",5701.26,21],["2026-03-27",6677.08,18],["2026-03-30",14029.37,36],["2026-03-31",5362.19,18],["2026-04-01",5654.7,10],["2026-04-02",13815.26,24],["2026-04-06",5234.28,19],["2026-04-07",6599.17,22],["2026-04-08",6731.76,22],["2026-04-09",5564.09,14],["2026-04-10",10194.75,29],["2026-04-13",6709.6,23],["2026-04-14",4328.04,22],["2026-04-15",3822.25,19],["2026-04-16",5142.18,17],["2026-04-17",11425.47,29],["2026-04-20",6058.67,14],["2026-04-22",4466.07,15],["2026-04-23",3892.51,16],["2026-04-24",8151.36,19],["2026-04-27",9805.6,18],["2026-04-28",390.32,3],["2026-04-29",8761.01,17],["2026-04-30",10033.32,19],["2026-05-04",3781.25,16],["2026-05-05",4259.46,11],["2026-05-06",3141.11,13],["2026-05-07",6799.58,12],["2026-05-08",1457.95,11],["2026-05-11",2458.9,6],["2026-05-12",7253.82,22],["2026-05-13",3333.15,10],["2026-05-14",466.0,11],["2026-05-15",4648.68,18],["2026-05-18",5355.61,9],["2026-05-19",5588.33,10],["2026-05-20",13646.6,9],["2026-05-21",2877.43,9],["2026-05-22",3439.34,10],["2026-05-25",894.34,7],["2026-05-26",2839.79,12],["2026-05-27",4452.99,11],["2026-05-28",2790.9,11],["2026-05-29",1731.76,13],["2026-06-01",1766.46,5],["2026-06-02",5992.14,11],["2026-06-03",7430.73,16],["2026-06-05",4322.37,12],["2026-06-08",366.45,6],["2026-06-09",4440.07,17],["2026-06-10",6308.45,7],["2026-06-11",21855.87,15],["2026-06-12",3234.37,13],["2026-06-15",864.55,11],["2026-06-16",1769.99,6],["2026-06-17",1719.43,7],["2026-06-18",16306.7,28],["2026-06-19",5724.17,17],["2026-06-22",111.16,3],["2026-06-23",828.04,9],["2026-06-24",279.24,5],["2026-06-25",3959.0,5],["2026-06-26",8495.94,10],["2026-06-29",1399.94,5],["2026-06-30",1097.04,7],["2026-07-01",1656.78,13],["2026-07-02",3291.82,16],["2026-07-03",13743.79,32],["2026-07-06",5827.47,25],["2026-07-07",3489.58,27],["2026-07-08",11932.98,18],["2026-07-09",6655.59,17],["2026-07-10",3892.07,24],["2026-07-13",3204.64,28],["2026-07-14",1291.83,14],["2026-07-15",6337.95,24],["2026-07-16",2844.9,11],["2026-07-17",5091.51,23],["2026-07-20",814.14,17],["2026-07-21",3366.83,25],["2026-07-22",2108.37,19],["2026-07-23",3920.5,21],["2026-07-24",3701.59,21],["2026-07-27",6116.85,25],["2026-07-28",1330.43,17],["2026-07-29",7023.4,33],["2026-07-30",5383.89,24],["2026-07-31",9886.28,31],["2026-08-03",4137.08,17],["2026-08-04",4361.7,26],["2026-08-05",4756.56,16],["2026-08-06",2411.84,24],["2026-08-07",4938.52,32],["2026-08-10",4827.28,28],["2026-08-11",6583.95,29],["2026-08-12",5026.85,23],["2026-08-13",2330.5,20],["2026-08-14",3147.66,18]],"geradoEm":"17/08/2026 08:44"};
+const LS='premiacao_seven_params';
+const PADRAO={meta:160000, dias:21, time:3, pd:60, ps:300, pm:750};
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const fmt=n=>'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0=n=>'R$ '+Math.round(Number(n||0)).toLocaleString('pt-BR');
+const rot=m=>{const p=m.split('-');return MES[+p[1]-1]+'/'+p[0].slice(2)};
+const dia=d=>d.slice(8)+'/'+d.slice(5,7);
+
+function par(){
+  let p={};
+  try{ p=JSON.parse(localStorage.getItem(LS)||'{}'); }catch(e){ p={}; }
+  return Object.assign({}, PADRAO, p);
+}
+function salvar(){
+  const p={};
+  [['meta','p-meta'],['dias','p-dias'],['time','p-time'],['pd','p-pd'],['ps','p-ps'],['pm','p-pm']]
+    .forEach(function(x){ const v=parseFloat(document.getElementById(x[1]).value); if(!isNaN(v)&&v>0) p[x[0]]=v; });
+  localStorage.setItem(LS, JSON.stringify(p));
+  render();
+}
+function padrao(){ localStorage.removeItem(LS); render(); }
+
+/* Meta diaria: meta mensal dividida pelos dias uteis, arredondada PARA CIMA em R$ 10 —
+   e assim que o cartaz chega em R$ 7.620 a partir de 160.000/21 = 7.619,05. */
+function metaDiaria(p){ return Math.ceil(p.meta/p.dias/10)*10; }
+/* A meta acumulada nunca passa da meta do mes: por isso o ultimo dia fecha em 160.000
+   e nao em 21 x 7.620. */
+function metaAcum(p, n){ return Math.min(metaDiaria(p)*n, p.meta); }
+
+function meses(){
+  const s={}; D.dias.forEach(function(d){ s[d[0].slice(0,7)]=1; });
+  return Object.keys(s).sort().reverse();
+}
+
+function render(){
+  const p=par();
+  [['meta','p-meta'],['dias','p-dias'],['time','p-time'],['pd','p-pd'],['ps','p-ps'],['pm','p-pm']]
+    .forEach(function(x){ document.getElementById(x[1]).value=p[x[0]]; });
+
+  const sel=document.getElementById('mes'), ms=meses();
+  if(!sel.options.length){
+    sel.innerHTML=ms.map(function(m){return '<option value="'+m+'">'+rot(m)+'</option>'}).join('');
+  }
+  const ym=sel.value||ms[0];
+  document.getElementById('ger').textContent='Gerado em '+D.geradoEm+' · unidade 4 — Seven Contagem';
+
+  const md=metaDiaria(p);
+  const linhas=D.dias.filter(function(d){ return d[0].slice(0,7)===ym; });
+
+  /* Numeramos os dias COM MOVIMENTO na ordem (decisao do usuario): o 1o dia que teve
+     venda e o dia 1 da tabela, mesmo que seja um domingo. */
+  let acum=0, premiosDia=0, diasBatidos=0;
+  const reg=linhas.map(function(d,i){
+    const n=i+1, venda=d[1];
+    acum+=venda;
+    const ma=metaAcum(p,n);
+    const bateu = venda>=md && acum>=ma;
+    if(bateu){ premiosDia++; diasBatidos++; }
+    return {n:n, data:d[0], venda:venda, acum:acum, meta:md, metaAcum:ma, bateu:bateu};
+  });
+
+  // semanas = blocos FECHADOS de 5 dias uteis (1-5, 6-10, ...); sobra de dias nao forma semana
+  const metaSem=md*5;
+  const semanas=[];
+  for(let i=0;i+5<=reg.length;i+=5){
+    const bloco=reg.slice(i,i+5);
+    const soma=bloco.reduce(function(s,r){return s+r.venda},0);
+    semanas.push({de:bloco[0].n, ate:bloco[4].n, soma:soma, bateu:soma>=metaSem});
+  }
+  const semanasOk=semanas.filter(function(s){return s.bateu}).length;
+  const totalMes=acum;
+  const bateuMes=totalMes>=p.meta;
+
+  const ganhoEquipe = premiosDia*p.pd + semanasOk*p.ps + (bateuMes?p.pm:0);
+  const ganhoVend = ganhoEquipe/p.time;
+  const semanasPossiveis=Math.floor(p.dias/5);
+  const maxVend=(p.dias*p.pd + semanasPossiveis*p.ps + p.pm)/p.time;
+
+  // ---------- KPIs ----------
+  const falta=p.meta-totalMes;
+  const diasRestantes=Math.max(p.dias-reg.length,0);
+  document.getElementById('kpis').innerHTML=
+    '<div class="kpi"><label>Meta mensal</label><div class="v">'+fmt0(p.meta)+'</div>'+
+      '<div class="s">'+p.dias+' dias úteis · '+p.time+' vendedores</div></div>'+
+    '<div class="kpi"><label>Meta diária</label><div class="v">'+fmt0(md)+'</div>'+
+      '<div class="s">meta da semana '+fmt0(metaSem)+'</div></div>'+
+    '<div class="kpi'+(bateuMes?' ok':'')+'"><label>Faturamento do mês</label><div class="v">'+fmt0(totalMes)+'</div>'+
+      '<div class="s">'+(bateuMes?'meta batida':'faltam '+fmt0(falta)+
+        (diasRestantes?' em '+diasRestantes+' dia'+(diasRestantes>1?'s':''):''))+'</div></div>'+
+    '<div class="kpi"><label>Dias batidos</label><div class="v">'+diasBatidos+' / '+reg.length+'</div>'+
+      '<div class="s">'+(reg.length?Math.round(diasBatidos/reg.length*100):0)+'% dos dias com venda</div></div>'+
+    '<div class="kpi"><label>Semanas batidas</label><div class="v">'+semanasOk+' / '+semanas.length+'</div>'+
+      '<div class="s">blocos fechados de 5 dias</div></div>'+
+    '<div class="kpi ok"><label>Ganho por vendedor</label><div class="v">'+fmt0(ganhoVend)+'</div>'+
+      '<div class="s">de '+fmt0(maxVend)+' possíveis · equipe '+fmt0(ganhoEquipe)+'</div></div>';
+
+  // ---------- cards de premio ----------
+  function card(cls,icone,titulo,cond,eq,st,okTxt){
+    return '<div class="pr '+cls+'"><h3>'+icone+' '+titulo+'</h3><div class="cond">'+cond+'</div>'+
+      '<div class="eq">'+fmt0(eq)+'</div>'+
+      '<div class="vend">por vendedor</div><div class="vendv">'+fmt0(eq/p.time)+'</div>'+
+      '<div class="status" style="background:'+(st?'#1a7f37':'#21262d')+';color:'+(st?'#fff':'#8b949e')+'">'+okTxt+'</div></div>';
+  }
+  document.getElementById('premios').innerHTML=
+    card('d','📅','Meta diária',
+         'Venda do dia ≥ '+fmt0(md)+' <b>e</b> acumulado ≥ meta acumulada do dia.',
+         p.pd, premiosDia>0, premiosDia+' de '+reg.length+' dias · '+fmt0(premiosDia*p.pd)+' ganhos')+
+    card('s','🗓️','Meta semanal',
+         'Bloco de 5 dias úteis com soma ≥ '+fmt0(metaSem)+'.',
+         p.ps, semanasOk>0, semanasOk+' de '+semanas.length+' semanas · '+fmt0(semanasOk*p.ps)+' ganhos')+
+    card('m','🏆','Meta mensal',
+         'Faturamento do mês ≥ '+fmt0(p.meta)+'.',
+         p.pm, bateuMes, bateuMes?'BATIDA · '+fmt0(p.pm)+' ganhos':'faltam '+fmt0(falta));
+
+  // ---------- regras e teto ----------
+  document.getElementById('regras').innerHTML=
+    '<div class="regra">Prêmio diário: venda do dia ≥ <b>'+fmt0(md)+'</b> <b>E</b> acumulado do mês ≥ meta acumulada daquele dia.</div>'+
+    '<div class="regra">Prêmio semanal: a cada bloco fechado de 5 dias úteis, soma ≥ <b>'+fmt0(metaSem)+'</b>.</div>'+
+    '<div class="regra">Prêmio mensal: faturamento do mês ≥ <b>'+fmt0(p.meta)+'</b>.</div>'+
+    '<div class="regra">Todos os prêmios são da equipe e divididos igualmente entre os '+p.time+' vendedores.</div>'+
+    '<div class="regra">Conta a venda <b>líquida de devolução</b> da unidade 4, e o dia é numerado pela ordem dos dias com movimento.</div>';
+  document.getElementById('maximo').innerHTML=
+    '<div style="font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Ganho máximo no mês, por vendedor</div>'+
+    '<div class="l"><span>'+p.dias+' prêmios diários</span><b>'+fmt0(p.dias*p.pd/p.time)+'</b></div>'+
+    '<div class="l"><span>'+semanasPossiveis+' prêmios semanais</span><b>'+fmt0(semanasPossiveis*p.ps/p.time)+'</b></div>'+
+    '<div class="l"><span>Prêmio mensal</span><b>'+fmt0(p.pm/p.time)+'</b></div>'+
+    '<div class="t"><span>Total máximo</span><span>'+fmt0(maxVend)+'</span></div>';
+
+  // ---------- tabela ----------
+  let html='', si=0;
+  reg.forEach(function(r){
+    html+='<tr'+(r.bateu?'':'')+'>'+
+      '<td style="text-align:left;color:#8b949e">'+r.n+'</td>'+
+      '<td style="text-align:left">'+dia(r.data)+'</td>'+
+      '<td>'+fmt0(r.meta)+'</td>'+
+      '<td class="'+(r.venda>=r.meta?'ok':'nao')+'">'+fmt(r.venda)+'</td>'+
+      '<td style="color:#8b949e">'+fmt0(r.metaAcum)+'</td>'+
+      '<td class="'+(r.acum>=r.metaAcum?'ok':'nao')+'">'+fmt(r.acum)+'</td>'+
+      '<td>'+(r.bateu?'<span class="ok">✔ ganhou</span>':'<span class="nao">—</span>')+'</td>'+
+      '<td>'+(r.bateu?fmt0(p.pd):'—')+'</td>'+
+      '<td>'+(r.bateu?fmt0(p.pd/p.time):'—')+'</td></tr>';
+    if(r.n%5===0 && si<semanas.length){
+      const s=semanas[si++];
+      html+='<tr class="sem"><td colspan="9">SEMANA '+si+' (dias '+s.de+' a '+s.ate+') — '+
+        fmt(s.soma)+' de '+fmt0(metaSem)+' · '+
+        (s.bateu?'<span class="ok">✔ BATIDA · '+fmt0(p.ps)+' para a equipe ('+fmt0(p.ps/p.time)+' por vendedor)</span>'
+                :'<span class="nao">não batida</span>')+'</td></tr>';
+    }
+  });
+  // linhas dos dias que ainda faltam para completar o mes
+  for(let n=reg.length+1;n<=p.dias;n++){
+    html+='<tr class="fut"><td style="text-align:left">'+n+'</td><td style="text-align:left">—</td>'+
+      '<td>'+fmt0(md)+'</td><td>—</td><td>'+fmt0(metaAcum(p,n))+'</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>';
+  }
+  document.getElementById('body').innerHTML=html || '<tr><td colspan="9" style="text-align:center;color:#6e7681;padding:20px">Sem vendas neste mês.</td></tr>';
+
+  document.getElementById('nota').innerHTML=
+    'Faturamento da <b>unidade 4 (Seven Contagem)</b>, líquido de devolução, por data de emissão do pedido. '+
+    'O <b>dia 1</b> é o primeiro dia do mês com movimento — dia sem venda nenhuma não ocupa posição na tabela. '+
+    'A <b>meta acumulada</b> é a meta diária multiplicada pela posição do dia, limitada à meta do mês, e é por isso que o último dia fecha exatamente em '+fmt0(p.meta)+'. '+
+    'A <b>semana</b> é um bloco fechado de 5 dias úteis; sobra de dias no fim do mês não forma semana. '+
+    'Os parâmetros da barra ficam salvos <b>neste navegador</b> — mudá-los não altera o que já foi pago, só a simulação da tela.';
+}
+render();
+</script>
+</body>
+</html>
