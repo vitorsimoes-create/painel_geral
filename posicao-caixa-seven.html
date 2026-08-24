@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Posição de Caixa — SEVEN</title>
+<style>
+  * { box-sizing:border-box; }
+  body { font-family:Arial,Helvetica,sans-serif; background:#f2f4f7; margin:0; padding:20px; color:#222; }
+  h1 { background:#0f766e; color:#fff; padding:14px 18px; border-radius:6px; font-size:18px; margin:0 0 6px; }
+  .sub { font-size:12px; color:#666; margin-bottom:16px; }
+  .barra-controles { display:flex; align-items:center; gap:14px; background:#fff; border-radius:8px;
+    padding:10px 16px; box-shadow:0 1px 3px rgba(0,0,0,.12); margin-bottom:18px; font-size:13px; flex-wrap:wrap; }
+  .barra-controles b { color:#0f766e; }
+  .barra-controles label { display:flex; align-items:center; gap:5px; cursor:pointer; user-select:none; }
+  .barra-controles input[type=checkbox] { width:15px; height:15px; cursor:pointer; accent-color:#0f766e; }
+  .sep { width:1px; height:22px; background:#e2e8f0; }
+  .modo-btn { padding:6px 16px; border:1px solid #e2e8f0; border-radius:20px; background:#fff;
+    cursor:pointer; font-size:12px; font-weight:bold; color:#64748b; }
+  .modo-btn.ativo { background:#0f766e; border-color:#0f766e; color:#fff; }
+  .saldo-ini { border:1px solid #e2e8f0; border-radius:6px; padding:6px 9px; font-size:13px;
+    width:150px; text-align:right; }
+  .cards { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+  .card { background:#fff; border-radius:8px; padding:12px 16px; box-shadow:0 1px 3px rgba(0,0,0,.12);
+    min-width:170px; flex:1; }
+  .card label { display:block; font-size:11px; color:#666; margin-bottom:4px; }
+  .card .calc { font-weight:bold; font-size:19px; color:#1f4e78; }
+  .card.entra .calc { color:#0a7a25; }
+  .card.sai .calc { color:#c00000; }
+  .card.neg .calc { color:#c00000; }
+  .grafico { background:#fff; border-radius:8px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.12);
+    margin-bottom:20px; }
+  .grafico h2 { font-size:13px; margin:0 0 10px; color:#444; }
+  .gbar { display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:11px; }
+  .gbar .glabel { width:80px; color:#666; text-align:right; flex-shrink:0; }
+  .gbar .gtrack { flex:1; background:#f1f5f9; border-radius:3px; height:15px; position:relative; }
+  .gbar .gzero { position:absolute; left:50%; top:0; bottom:0; width:1px; background:#cbd5e1; }
+  .gbar .gfill { height:100%; position:absolute; top:0; }
+  .gbar .gfill.pos { background:#0a7a25; left:50%; border-radius:0 3px 3px 0; }
+  .gbar .gfill.negf { background:#c00000; right:50%; border-radius:3px 0 0 3px; }
+  .gbar .gval { width:120px; flex-shrink:0; font-weight:bold; text-align:right; }
+  table { width:100%; border-collapse:collapse; background:#fff; font-size:12px; }
+  th, td { padding:6px 10px; text-align:right; border-bottom:1px solid #eee; white-space:nowrap; }
+  th { background:#0f766e; color:#fff; font-size:10px; text-transform:uppercase; position:sticky; top:0; }
+  td:first-child, th:first-child { text-align:left; }
+  tr.fds td { background:#fafafa; color:#94a3b8; }
+  tr.hoje td { background:#ecfdf5; font-weight:bold; }
+  td.neg { color:#c00000; }
+  td.zero { color:#cbd5e1; }
+  .tabela-wrap { background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.12);
+    overflow:hidden; margin-bottom:20px; max-height:560px; overflow-y:auto; }
+  .aviso { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px 16px;
+    font-size:12px; color:#78350f; margin-bottom:20px; line-height:1.7; }
+  .aviso b { color:#92400e; }
+  .footer-note { font-size:11px; color:#888; margin-top:10px; line-height:1.7; }
+  .sem-dados { padding:20px; text-align:center; color:#888; background:#f2f4f7; border-radius:8px; }
+</style></head><body>
+<h1>💰 Posição de Caixa — SEVEN</h1>
+<div class="sub" id="sub"></div>
+
+<div class="barra-controles">
+  <b>Unidade de negócio:</b>
+  <div id="filtro-unidades" style="display:flex; gap:12px; flex-wrap:wrap"></div>
+  <div class="sep"></div>
+  <b>Saldo inicial:</b>
+  <input type="number" step="0.01" class="saldo-ini" id="saldo-ini" placeholder="0,00">
+  <span style="font-size:11px;color:#888">o que está em caixa/banco hoje</span>
+  <div class="sep"></div>
+  <b>Horizonte:</b>
+  <button class="modo-btn" data-dias="7" onclick="setDias(7)">7 dias</button>
+  <button class="modo-btn ativo" data-dias="30" onclick="setDias(30)">30 dias</button>
+  <button class="modo-btn" data-dias="60" onclick="setDias(60)">60 dias</button>
+  <button class="modo-btn" data-dias="90" onclick="setDias(90)">90 dias</button>
+  <div class="sep"></div>
+  <label><input type="checkbox" id="chk-atraso" onchange="renderizar()"> Jogar os vencidos para hoje</label>
+</div>
+
+<div class="cards" id="kpis"></div>
+<div class="grafico"><h2>Saldo projetado, dia a dia</h2><div id="graf"></div></div>
+<div class="tabela-wrap"><table id="tabela"><thead></thead><tbody></tbody></table></div>
+<div class="aviso" id="aviso"></div>
+<div class="footer-note" id="nota"></div>
+
+<script>
+const D = {"hoje":"2026-08-24","entradas":{"5":{"2026-09-04":{"boleto":11729.53},"2026-09-08":{"boleto":5072.92},"2026-09-16":{"boleto":2138.26},"2026-09-02":{"boleto":3431.24},"2026-09-30":{"boleto":1491.35},"2026-08-28":{"boleto":7537.27},"2026-09-25":{"boleto":3879.9},"2026-09-21":{"boleto":1261.69},"2026-10-21":{"boleto":572.98},"2026-09-28":{"boleto":1021.98},"2026-09-17":{"boleto":3002.49},"2026-09-29":{"boleto":3660.41},"2026-09-01":{"boleto":5151.99},"2026-10-27":{"boleto":1641.46},"2026-08-30":{"boleto":1054.13},"2026-08-29":{"boleto":705.04},"2026-09-18":{"boleto":9898.44},"2026-10-16":{"boleto":7713.7},"2026-10-02":{"boleto":6899.65},"2026-09-03":{"boleto":4067.41},"2026-10-03":{"boleto":1506.44},"2026-11-02":{"boleto":1506.44},"2026-12-02":{"boleto":1506.55},"2026-09-07":{"boleto":2208.43},"2026-10-05":{"boleto":1221.22},"2026-11-13":{"boleto":2728.05},"2026-12-11":{"boleto":1094.7},"2026-09-09":{"boleto":3190.33},"2026-10-09":{"boleto":3725.94},"2026-10-23":{"boleto":2176.31},"2026-11-20":{"boleto":1075.81},"2026-08-24":{"boleto":688.89},"2026-10-01":{"boleto":1501.49},"2026-10-29":{"boleto":1191.08},"2026-08-31":{"boleto":1745.14},"2026-10-04":{"boleto":675.02},"2026-11-03":{"boleto":3046.93},"2026-12-03":{"boleto":1033.33},"2026-11-26":{"boleto":843.45},"2027-01-02":{"boleto":328.09},"2026-09-14":{"boleto":2508.28},"2026-10-12":{"boleto":2557.5},"2026-09-20":{"boleto":682.51},"2026-10-14":{"boleto":366.57},"2026-08-25":{"boleto":2178.02},"2026-09-24":{"boleto":2403.09},"2026-10-24":{"boleto":1289.42},"2026-10-07":{"boleto":1411.56},"2026-09-11":{"boleto":7772.71},"2026-12-24":{"boleto":370.95},"2026-11-04":{"boleto":631.79},"2026-09-15":{"boleto":2553.25},"2026-08-27":{"boleto":2718.44},"2026-10-13":{"boleto":1576.36},"2026-10-28":{"boleto":590.47},"2026-11-25":{"boleto":590.47},"2026-12-23":{"boleto":590.47},"2026-10-06":{"boleto":3817.31},"2026-10-15":{"boleto":1617.96},"2026-11-12":{"boleto":1545.67},"2026-10-30":{"boleto":2453.37},"2026-09-05":{"boleto":687.23},"2026-08-26":{"boleto":1547.64},"2026-11-27":{"boleto":441.56},"2026-12-10":{"boleto":367.16},"2026-11-11":{"boleto":356.31},"2026-09-12":{"boleto":356.31},"2026-10-08":{"boleto":1357.04},"2026-11-07":{"boleto":652.04},"2026-09-19":{"boleto":460.83},"2026-10-18":{"boleto":689.97},"2026-10-19":{"boleto":460.98},"2026-11-17":{"boleto":1056.98},"2026-09-10":{"boleto":1525.09},"2026-10-11":{"boleto":302.08},"2026-09-13":{"boleto":324.96},"2026-09-22":{"boleto":757.39},"2026-10-20":{"boleto":747.23},"2026-12-15":{"boleto":366.89},"2026-10-22":{"boleto":393.95},"2026-11-19":{"boleto":393.95},"2026-11-24":{"boleto":628.42},"2026-11-23":{"boleto":640.06},"2026-12-01":{"boleto":344.01},"2026-12-29":{"boleto":344.01},"2026-11-05":{"boleto":705.24},"2026-11-06":{"boleto":1222.98},"2026-12-04":{"boleto":480.01},"2026-11-09":{"boleto":950.78},"2026-12-07":{"boleto":668.03},"2026-11-01":{"boleto":355.2},"2026-09-23":{"boleto":326.2},"2026-11-10":{"boleto":494.01},"2026-11-22":{"boleto":326.43},"2026-12-22":{"boleto":326.43},"2026-10-25":{"boleto":303.3}},"4":{"2026-09-09":{"boleto":2474.02},"2026-10-07":{"boleto":2143.18},"2026-11-04":{"boleto":709.34},"2026-10-26":{"boleto":2451.18},"2026-09-07":{"boleto":1469.84},"2026-09-02":{"boleto":5255.33},"2026-08-31":{"boleto":5271.27},"2026-09-30":{"boleto":2452.28},"2026-09-28":{"boleto":4958.75},"2026-09-10":{"boleto":1123.74},"2026-10-08":{"boleto":727.27},"2026-09-18":{"boleto":1526.53},"2026-10-16":{"boleto":1526.53},"2026-11-13":{"boleto":900.61},"2026-08-28":{"boleto":5036.34},"2026-09-11":{"boleto":1681.94},"2026-09-17":{"boleto":1811.28},"2026-10-15":{"boleto":1125.37},"2026-10-05":{"boleto":673.66},"2026-08-24":{"boleto":1739.8},"2026-09-21":{"boleto":1098.17},"2026-10-19":{"boleto":788.65},"2026-09-08":{"boleto":1664.61},"2026-09-03":{"boleto":4947.0},"2026-10-01":{"boleto":4003.08},"2026-10-29":{"boleto":4003.08},"2026-11-26":{"boleto":3264.27},"2026-08-25":{"boleto":3441.51},"2026-09-25":{"boleto":4046.5},"2026-10-23":{"boleto":2355.07},"2026-08-27":{"boleto":2505.8},"2026-09-24":{"boleto":1355.9},"2026-10-30":{"boleto":336.52},"2026-09-16":{"boleto":2374.36},"2026-09-01":{"boleto":1710.82},"2026-10-02":{"boleto":336.52},"2026-11-20":{"boleto":1684.97},"2026-09-22":{"boleto":324.81},"2026-09-04":{"boleto":1000.38},"2026-10-09":{"boleto":1206.43},"2026-08-26":{"boleto":2363.82},"2026-09-23":{"boleto":1509.54},"2026-10-21":{"boleto":1208.9},"2026-09-29":{"boleto":665.19},"2026-10-27":{"boleto":302.08},"2026-11-18":{"boleto":744.96},"2026-12-16":{"boleto":744.96},"2026-11-25":{"boleto":729.15},"2026-10-28":{"boleto":1406.89},"2026-10-06":{"boleto":754.17},"2026-11-03":{"boleto":754.17},"2026-12-01":{"boleto":754.17},"2026-11-06":{"boleto":353.77},"2026-09-15":{"boleto":915.15},"2026-10-13":{"boleto":516.74},"2026-11-10":{"boleto":516.74},"2026-10-14":{"boleto":404.45}}},"saidas":{"4":{"2026-11-10":9973.95,"2026-12-10":9109.26,"2026-12-01":6727.73,"2026-12-29":896.04,"2027-01-26":896.04,"2027-02-23":896.02,"2026-09-05":792.81,"2026-09-20":8191.1,"2026-10-05":2220.65,"2026-10-20":7792.8,"2026-11-04":792.8,"2026-11-19":792.8,"2026-12-04":792.8,"2026-08-26":2210.35,"2026-09-11":3298.45,"2026-09-08":6747.19,"2026-10-06":6747.19,"2026-11-20":7000.0,"2026-12-20":7000.0,"2026-11-03":7150.55,"2026-09-10":8540.0,"2026-10-10":8540.0,"2026-09-23":345.87,"2026-10-21":345.87,"2026-11-18":749.23,"2026-12-16":345.89,"2026-09-07":2173.87,"2026-09-17":569.26,"2026-08-29":5544.74,"2026-09-13":6893.74,"2026-09-28":963.16,"2026-10-13":963.16,"2026-10-28":963.16,"2026-11-12":1532.42,"2026-11-02":1427.85,"2026-11-30":1427.84,"2026-10-15":569.26,"2026-09-18":1394.62,"2026-10-16":1724.49,"2026-09-15":4870.0,"2026-09-16":430.86,"2026-08-31":4769.01,"2026-08-27":1349.0,"2026-09-27":1349.07,"2026-09-14":995.68,"2026-10-12":995.68,"2026-11-09":995.68,"2026-12-07":995.65,"2027-01-04":995.72,"2026-09-22":746.02,"2026-10-07":746.02,"2026-10-22":746.02,"2026-11-06":746.02,"2026-11-21":746.0,"2026-10-11":1433.96,"2026-11-15":329.87,"2026-09-19":403.36,"2026-10-04":403.36,"2026-10-19":403.36,"2026-08-24":285.9},"5":{"2026-09-01":4848.18,"2026-10-01":4779.4,"2026-11-01":3500.0,"2026-12-01":7220.84,"2026-09-03":1279.39,"2026-09-05":6137.53,"2026-10-05":8731.92,"2026-11-05":2026.85,"2026-12-05":1000.0,"2026-09-15":1141.91,"2026-10-15":500.0,"2026-11-15":500.0,"2026-12-15":500.0,"2026-08-25":4321.56,"2026-09-08":13255.11,"2026-09-21":1152.29,"2026-08-28":2921.44,"2026-10-06":3720.83,"2026-11-03":3720.83,"2026-09-22":2276.22,"2026-09-20":5721.14,"2026-09-04":5507.95,"2026-09-17":7171.9,"2026-10-17":7171.89,"2026-11-17":184.33,"2026-12-17":184.33,"2027-01-17":184.33,"2027-02-17":184.33,"2027-03-17":184.33,"2026-09-28":5114.82,"2026-10-28":1954.69,"2026-11-28":400.0,"2026-12-28":400.0,"2027-01-28":400.0,"2027-02-28":400.0,"2027-03-31":400.0,"2026-09-11":7785.21,"2026-08-29":1554.69,"2026-09-13":1554.69,"2026-10-13":1554.69,"2026-09-14":8330.08,"2026-08-30":3383.32,"2026-10-14":5169.94,"2026-11-13":5015.61,"2026-09-18":3662.21,"2026-08-27":982.68,"2026-09-26":713.65,"2026-08-26":1653.67,"2026-09-23":1653.67,"2026-10-21":1653.66,"2026-09-25":2879.5,"2026-10-02":3320.21,"2026-10-09":922.97,"2026-10-16":922.98,"2026-11-04":2010.75,"2026-12-04":2010.76,"2026-09-12":2513.23,"2026-09-27":1493.47,"2026-10-12":2513.1,"2026-10-27":1493.47,"2026-11-11":2513.1,"2026-11-26":1493.47,"2026-12-12":1493.47,"2026-09-10":2541.41,"2026-10-10":1956.53,"2026-10-25":1956.53,"2026-11-09":1956.53,"2026-08-31":3896.1,"2026-11-14":154.34,"2026-12-14":154.34,"2027-01-14":154.34,"2027-02-14":154.34,"2027-03-14":154.34,"2027-04-14":154.34,"2027-05-14":154.34,"2027-06-14":154.34},"3":{"2026-08-28":1208.46,"2502-07-27":431.77,"2026-08-31":316.66}},"atrasoReceber":{"3":{"boleto":2682.0},"4":{"boleto":57552.25},"5":{"boleto":32278.89}},"atrasoPagar":{"4":482204.42,"3":174167.53,"5":108791.24},"cartaoJaCaiu":{"3":977450.74,"4":4237.34,"5":14895.27},"carteiraFora":{"3":{"Promissoria":812403.87,"Cheque":339.98,"Duplicata":7234.77},"4":{"Promissoria":44042.89,"Cheque":21701.18,"Duplicata":252.28},"5":{"Promissoria":2491.78}},"venda":{"4":94194.94,"5":165043.27,"3":4060.76},"titulado":{"5":128347.56,"4":74806.53,"3":4060.76},"diasVenda":30,"geradoEm":"24/08/2026 11:23"};
+const LS_SALDO = 'caixa_saldo_seven';
+const CATS = [['cartao','Cartão (D+1)'],['pix','PIX'],['boleto','Boleto/carnê'],['outros','Outros']];
+let DIAS = 30;
+
+function fmt(n){ return 'R$ ' + Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtCurto(n){
+  const a = Math.abs(n||0);
+  if(a >= 1000) return (n<0?'-':'') + 'R$ ' + (a/1000).toFixed(1).replace('.',',') + 'k';
+  return fmt(n);
+}
+function fmtData(iso){ return iso ? iso.split('-').reverse().join('/') : '—'; }
+function diaSemana(iso){
+  return ['dom','seg','ter','qua','qui','sex','sáb'][new Date(iso + 'T12:00:00').getDay()];
+}
+function ehFimDeSemana(iso){
+  const g = new Date(iso + 'T12:00:00').getDay();
+  return g === 0 || g === 6;
+}
+function somaDias(iso, n){
+  const d = new Date(iso + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0,10);
+}
+
+function unidades(){
+  return Array.from(document.querySelectorAll('.filtro-unidade:checked')).map(function(el){ return el.value; });
+}
+function montaFiltro(){
+  const div = document.getElementById('filtro-unidades');
+  const uns = {};
+  Object.keys(D.entradas).forEach(function(u){ uns[u] = 1; });
+  Object.keys(D.saidas).forEach(function(u){ uns[u] = 1; });
+  Object.keys(uns).sort().forEach(function(u){
+    const l = document.createElement('label');
+    l.innerHTML = '<input type="checkbox" class="filtro-unidade" value="' + u + '" checked> Unidade ' + u;
+    div.appendChild(l);
+  });
+}
+
+/* O saldo inicial e por RECORTE de unidades: o saldo de "3+5" nao e o de "5". */
+function chaveSaldo(){ return unidades().slice().sort().join('+') || '-'; }
+function saldos(){ try{ return JSON.parse(localStorage.getItem(LS_SALDO) || '{}'); }catch(e){ return {}; } }
+function saldoInicial(){ const v = saldos()[chaveSaldo()]; return v == null ? 0 : +v; }
+function setSaldoInicial(v){
+  const s = saldos();
+  if(v === '') delete s[chaveSaldo()]; else s[chaveSaldo()] = +v;
+  localStorage.setItem(LS_SALDO, JSON.stringify(s));
+  renderizar();
+}
+function mostraSaldoSalvo(){
+  const v = saldos()[chaveSaldo()];
+  document.getElementById('saldo-ini').value = (v == null ? '' : v);
+}
+function setDias(n){
+  DIAS = n;
+  Array.prototype.forEach.call(document.querySelectorAll('.modo-btn'), function(b){
+    b.classList.toggle('ativo', +b.dataset.dias === n);
+  });
+  renderizar();
+}
+
+/* Serie diaria do recorte atual: entra, sai, liquido e saldo acumulado. */
+function serie(){
+  const uns = unidades(), fim = somaDias(D.hoje, DIAS), dias = {};
+  function reg(iso){
+    return dias[iso] || (dias[iso] = {cartao:0, pix:0, boleto:0, outros:0, entra:0, sai:0});
+  }
+  uns.forEach(function(u){
+    const e = D.entradas[u] || {};
+    Object.keys(e).forEach(function(iso){
+      if(iso < D.hoje || iso > fim) return;
+      const r = reg(iso);
+      Object.keys(e[iso]).forEach(function(cat){ r[cat] += e[iso][cat]; r.entra += e[iso][cat]; });
+    });
+    const s = D.saidas[u] || {};
+    Object.keys(s).forEach(function(iso){
+      if(iso < D.hoje || iso > fim) return;
+      reg(iso).sai += s[iso];
+    });
+  });
+  if(document.getElementById('chk-atraso').checked){
+    const r = reg(D.hoje);
+    uns.forEach(function(u){
+      const a = D.atrasoReceber[u] || {};
+      Object.keys(a).forEach(function(cat){ r[cat] += a[cat]; r.entra += a[cat]; });
+      r.sai += (D.atrasoPagar[u] || 0);
+    });
+  }
+  let saldo = saldoInicial();
+  return Object.keys(dias).sort().map(function(iso){
+    const d = dias[iso];
+    d.iso = iso;
+    d.liquido = d.entra - d.sai;
+    saldo += d.liquido;
+    d.saldo = saldo;
+    return d;
+  });
+}
+
+function totalAtraso(campo){
+  return unidades().reduce(function(s, u){
+    const a = D[campo][u];
+    if(a == null) return s;
+    if(typeof a === 'number') return s + a;
+    return s + Object.keys(a).reduce(function(x, k){ return x + a[k]; }, 0);
+  }, 0);
+}
+
+function renderKpis(linhas){
+  const entra = linhas.reduce(function(s, d){ return s + d.entra; }, 0);
+  const sai = linhas.reduce(function(s, d){ return s + d.sai; }, 0);
+  const fim = linhas.length ? linhas[linhas.length - 1].saldo : saldoInicial();
+  const pior = linhas.reduce(function(m, d){ return d.saldo < m.saldo ? d : m; },
+                             {saldo: saldoInicial(), iso: D.hoje});
+  document.getElementById('kpis').innerHTML =
+    '<div class="card"><label>Saldo inicial (hoje)</label><div class="calc">' + fmt(saldoInicial()) + '</div></div>' +
+    '<div class="card entra"><label>Entradas em ' + DIAS + ' dias</label><div class="calc">' + fmt(entra) + '</div></div>' +
+    '<div class="card sai"><label>Saídas em ' + DIAS + ' dias</label><div class="calc">' + fmt(sai) + '</div></div>' +
+    '<div class="card' + (fim < 0 ? ' neg' : '') + '"><label>Saldo em ' + DIAS + ' dias</label><div class="calc">' + fmt(fim) + '</div></div>' +
+    '<div class="card' + (pior.saldo < 0 ? ' neg' : '') + '"><label>Pior dia (' + fmtData(pior.iso) + ')</label><div class="calc">' + fmt(pior.saldo) + '</div></div>';
+}
+
+function renderGrafico(linhas){
+  const alvo = document.getElementById('graf');
+  if(!linhas.length){ alvo.innerHTML = '<div class="sem-dados">Nada previsto no período.</div>'; return; }
+  let teto = 0;
+  linhas.forEach(function(d){ if(Math.abs(d.saldo) > teto) teto = Math.abs(d.saldo); });
+  if(!teto) teto = 1;
+  alvo.innerHTML = linhas.map(function(d){
+    const pct = Math.abs(d.saldo) / teto * 50;
+    const cor = d.saldo < 0 ? '#c00000' : '#0a7a25';
+    return '<div class="gbar"><div class="glabel">' + fmtData(d.iso).slice(0,5) + ' ' + diaSemana(d.iso) + '</div>' +
+      '<div class="gtrack"><div class="gzero"></div>' +
+      '<div class="gfill ' + (d.saldo < 0 ? 'negf' : 'pos') + '" style="width:' + pct + '%"></div></div>' +
+      '<div class="gval" style="color:' + cor + '">' + fmtCurto(d.saldo) + '</div></div>';
+  }).join('');
+}
+
+function renderTabela(linhas){
+  const thead = document.querySelector('#tabela thead');
+  const tbody = document.querySelector('#tabela tbody');
+  thead.innerHTML = '<tr><th>Data</th>' +
+    CATS.map(function(c){ return '<th>' + c[1] + '</th>'; }).join('') +
+    '<th>Entradas</th><th>Saídas</th><th>Líquido do dia</th><th>Saldo acumulado</th></tr>';
+  if(!linhas.length){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#888">Nada previsto no período.</td></tr>';
+    return;
+  }
+  function cel(v, neg){
+    if(!v) return '<td class="zero">—</td>';
+    return '<td' + (neg ? ' class="neg"' : '') + '>' + fmt(v) + '</td>';
+  }
+  tbody.innerHTML = linhas.map(function(d){
+    const cls = (d.iso === D.hoje) ? 'hoje' : (ehFimDeSemana(d.iso) ? 'fds' : '');
+    return '<tr class="' + cls + '"><td>' + fmtData(d.iso) +
+      ' <span style="color:#94a3b8">' + diaSemana(d.iso) + '</span></td>' +
+      CATS.map(function(c){ return cel(d[c[0]]); }).join('') +
+      cel(d.entra) + cel(d.sai, true) +
+      '<td' + (d.liquido < 0 ? ' class="neg"' : '') + '>' +
+      (d.liquido ? fmt(d.liquido) : '<span style="color:#cbd5e1">—</span>') + '</td>' +
+      '<td' + (d.saldo < 0 ? ' class="neg"' : '') + '><b>' + fmt(d.saldo) + '</b></td></tr>';
+  }).join('');
+}
+
+/* Quanto da venda recente nao virou titulo: dinheiro + cartao nao lancado. */
+function cobertura(){
+  let venda = 0, tit = 0;
+  unidades().forEach(function(u){
+    venda += (D.venda[u] || 0);
+    tit += (D.titulado[u] || 0);
+  });
+  const fora = Math.max(venda - tit, 0);
+  return {venda: venda, fora: fora, pct: venda > 0 ? fora / venda * 100 : 0};
+}
+
+/* Cobranca em carteira (tipo CA) que a regra manda desconsiderar em contas a
+   receber. Fora do cartao e, quase sempre, promissoria — divida real de cliente.
+   Some da projecao, mas o numero continua visivel para o usuario decidir. */
+function carteiraFora(){
+  const por = {};
+  let total = 0;
+  unidades().forEach(function(u){
+    const f = D.carteiraFora[u] || {};
+    Object.keys(f).forEach(function(nome){ por[nome] = (por[nome] || 0) + f[nome]; total += f[nome]; });
+  });
+  const detalhe = Object.keys(por).sort(function(a, b){ return por[b] - por[a]; })
+    .map(function(n){ return n + ' ' + fmt(por[n]); }).join(', ');
+  return {total: total, detalhe: detalhe};
+}
+
+function renderAviso(){
+  const c = cobertura();
+  const vencR = totalAtraso('atrasoReceber'), vencP = totalAtraso('atrasoPagar');
+  const cart = unidades().reduce(function(s, u){ return s + (D.cartaoJaCaiu[u] || 0); }, 0);
+  const carteira = carteiraFora();
+  document.getElementById('aviso').innerHTML =
+    '<b>O que esta projeção não enxerga.</b><br>' +
+    '• <b>' + fmt(c.fora) + '</b> dos últimos ' + D.diasVenda + ' dias de venda (' + c.pct.toFixed(0) +
+      '% de ' + fmt(c.venda) + ') não gerou título nenhum. É dinheiro em espécie somado ao cartão que a loja ' +
+      'deixou de lançar — não dá para separar um do outro, então nada disso entra na previsão.<br>' +
+    '• <b>Vencidos, fora da projeção:</b> ' + fmt(vencR) + ' a receber e ' + fmt(vencP) + ' a pagar. ' +
+      'Data vencida não é previsão; marque <i>"jogar os vencidos para hoje"</i> para vê-los somados ao primeiro dia.<br>' +
+    '• <b>' + fmt(cart) + '</b> em títulos de cartão que, pela regra D+1, já deveriam ter caído há mais de um dia. ' +
+      'O ERP nunca deu baixa neles; esse dinheiro já está na conta e por isso já faz parte do saldo inicial que você digita.' +
+    (carteira.total ? '<br>• <b>' + fmt(carteira.total) + '</b> em cobrança na <b>carteira</b> (' + carteira.detalhe + ') ' +
+      'ficaram de fora: a regra em vigor manda desconsiderar tudo que está com tipo de cobrança CA em contas a receber. ' +
+      'Isso tirou o cartão, mas leva junto a promissória e o cheque, que são dívida real de cliente. ' +
+      'Se quiser esse dinheiro dentro da projeção, é só pedir para separar cartão de carteira.' : '');
+}
+
+function renderizar(){
+  const linhas = serie();
+  renderKpis(linhas);
+  renderGrafico(linhas);
+  renderTabela(linhas);
+  renderAviso();
+  document.getElementById('sub').textContent =
+    'Gerado em ' + D.geradoEm + ' · posição de ' + fmtData(D.hoje) +
+    ' · projeção de ' + DIAS + ' dias · unidade(s) ' + (unidades().join(', ') || '—');
+}
+
+montaFiltro();
+document.getElementById('filtro-unidades').addEventListener('change', function(){
+  mostraSaldoSalvo();
+  renderizar();
+});
+document.getElementById('saldo-ini').addEventListener('change', function(){ setSaldoInicial(this.value); });
+mostraSaldoSalvo();
+document.getElementById('nota').innerHTML =
+  '<b>Como a conta é feita:</b> saldo inicial + títulos a receber que vencem no dia − títulos a pagar que vencem no dia, ' +
+  'acumulado dia após dia. O saldo inicial é digitado por você e fica salvo <b>neste navegador</b>, por recorte de unidade — ' +
+  'o ERP não tem um saldo bancário confiável para puxar automaticamente.<br>' +
+  '<b>Cartão é D+1:</b> venda no cartão vira dinheiro no dia seguinte, então a data de caixa do título de cartão é a ' +
+  '<b>emissão + 1 dia</b>, e não o vencimento gravado no ERP.<br>' +
+  '<b>Atenção à linha do cartão:</b> as unidades 4 e 5 pararam de emitir título de cartão (ago e set/2025). Enquanto não ' +
+  'voltarem a lançar, a coluna "Cartão (D+1)" fica zerada nelas e a venda no cartão some dentro do dinheiro. A unidade 3 lança normalmente.';
+renderizar();
+</script></body></html>

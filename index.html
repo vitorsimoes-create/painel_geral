@@ -642,6 +642,7 @@
   <div style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:8px;display:flex;gap:8px;margin-bottom:12px">
     <button id="catbtn-fs-contaspagar" class="categoria-tab active" onclick="switchCategoriaFinanceiroSeven('contaspagar')">💳 Contas a Pagar</button>
     <button id="catbtn-fs-contasreceber" class="categoria-tab" onclick="switchCategoriaFinanceiroSeven('contasreceber')">💵 Contas a Receber</button>
+    <button id="catbtn-fs-caixa" class="categoria-tab" onclick="switchCategoriaFinanceiroSeven('caixa')">💰 Posição de Caixa</button>
     <button id="catbtn-fs-riscocliente" class="categoria-tab" onclick="switchCategoriaFinanceiroSeven('riscocliente')">⚠️ Risco/Cliente</button>
     <button id="catbtn-fs-relatorio" class="categoria-tab" onclick="switchCategoriaFinanceiroSeven('relatorio')">📋 Relatório Gerencial</button>
   </div>
@@ -653,6 +654,9 @@
   </div>
   <div id="fs-relatorio" class="fs-painel hidden" style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;height:calc(100vh - 240px)">
     <iframe id="iframe-relatorioseven" src="relatorio-seven.html" style="width:100%;height:100%;border:none;display:block"></iframe>
+  </div>
+  <div id="fs-caixa" class="fs-painel hidden" style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;height:calc(100vh - 240px)">
+    <iframe id="iframe-caixa-seven" src="posicao-caixa-seven.html" style="width:100%;height:100%;border:none;display:block"></iframe>
   </div>
   <div id="fs-riscocliente" class="fs-painel hidden" style="background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;height:calc(100vh - 240px)">
     <iframe id="iframe-riscocliente" src="risco-cliente.html" style="width:100%;height:100%;border:none;display:block"></iframe>
@@ -2044,6 +2048,7 @@ const ABAS_CATALOGO={
   'sv.recebimentos':  {g:'rhsseven', cat:'seven',    rot:'Compras › Recebimentos',   sel:'#tabbtn-recebimentos-seven'},
   'sv.fin.pagar':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Pagar',   sel:'#catbtn-fs-contaspagar'},
   'sv.fin.receber':   {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Contas a Receber', sel:'#catbtn-fs-contasreceber'},
+  'sv.fin.caixa':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Posição de Caixa', sel:'#catbtn-fs-caixa'},
   'sv.fin.risco':     {g:'rhsseven', cat:'sevenfin', rot:'Financeiro › Risco/Cliente',    sel:'#catbtn-fs-riscocliente'}
 };
 const TODAS_ABAS=Object.keys(ABAS_CATALOGO);
@@ -2357,7 +2362,7 @@ function aplicarUnidadesPermitidas(){
   }
   // 2) iframes do Financeiro da SEVEN (mesma origem): esconde as unidades bloqueadas.
   //    Roda mesmo sem restrição para ser idempotente (reexibe o que voltou a ser permitido).
-  ['iframe-contaspagar-seven','iframe-contasreceber-seven','iframe-riscocliente'].forEach(id=>{
+  ['iframe-contaspagar-seven','iframe-contasreceber-seven','iframe-riscocliente','iframe-caixa-seven'].forEach(id=>{
     const ifr=document.getElementById(id);
     if(!ifr) return;
     const aplicar=()=>{
@@ -4581,7 +4586,7 @@ function abrirSubAbaVendasSeven(mapatab,btnEl){
   }catch(e){ _mapaTabPendente=mapatab; }
 }
 
-const FS_PERM={contaspagar:'sv.fin.pagar',contasreceber:'sv.fin.receber',riscocliente:'sv.fin.risco',relatorio:'sv.relatorio'};
+const FS_PERM={contaspagar:'sv.fin.pagar',contasreceber:'sv.fin.receber',caixa:'sv.fin.caixa',riscocliente:'sv.fin.risco',relatorio:'sv.relatorio'};
 let _ultimaFinSeven='contaspagar';
 function switchCategoriaFinanceiroSeven(categoria){
   // respeita as permissões: se a pill não for permitida, abre a primeira liberada
@@ -4591,7 +4596,7 @@ function switchCategoriaFinanceiroSeven(categoria){
     categoria=alt;
   }
   _ultimaFinSeven=categoria;
-  ['contaspagar','contasreceber','riscocliente','relatorio'].forEach(c=>{
+  ['contaspagar','contasreceber','caixa','riscocliente','relatorio'].forEach(c=>{
     document.getElementById('catbtn-fs-'+c).classList.toggle('active',c===categoria);
     document.getElementById('fs-'+c).classList.toggle('hidden',c!==categoria);
   });
