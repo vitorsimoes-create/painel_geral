@@ -46,6 +46,8 @@
   td.neg { color:#c00000; }
   td.zero { color:#cbd5e1; }
   td.prev { color:#7c3aed; }
+  td.esp { color:#0a7a25; }
+  td.fora { color:#cbd5e1; text-decoration:line-through; }
   .tabela-wrap { background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.12);
     overflow:hidden; margin-bottom:20px; max-height:560px; overflow-y:auto; }
   .aviso { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px 16px;
@@ -56,7 +58,8 @@
     font-size:11px; }
   .mix .fatia b { display:block; font-size:14px; margin-top:2px; }
   .mix .fatia.cartao b { color:#7c3aed; }
-  .mix .fatia.avista b { color:#0a7a25; }
+  .mix .fatia.especie b { color:#0a7a25; }
+  .mix .fatia.digital b { color:#2563eb; }
   .mix .fatia.aprazo b { color:#a15c00; }
   .footer-note { font-size:11px; color:#888; margin-top:10px; line-height:1.7; }
   .sem-dados { padding:20px; text-align:center; color:#888; background:#f2f4f7; border-radius:8px; }
@@ -76,6 +79,7 @@
   <button class="modo-btn" data-dias="90" onclick="setDias(90)">90 dias</button>
   <div class="sep"></div>
   <label><input type="checkbox" id="chk-prev" checked onchange="renderizar()"> Incluir venda prevista</label>
+  <label><input type="checkbox" id="chk-especie" checked onchange="renderizar()"> Incluir dinheiro em espécie</label>
   <label><input type="checkbox" id="chk-atraso" onchange="renderizar()"> Jogar os vencidos para hoje</label>
 </div>
 
@@ -87,7 +91,7 @@
 <div class="footer-note" id="nota"></div>
 
 <script>
-const D = {"hoje":"2026-08-24","receber":{"2026-08-24":1700.0,"2026-09-10":500.0,"2026-09-09":1832.0,"2026-08-27":1179.0,"2026-08-31":317.0,"2026-08-25":318.0},"pagar":{"2026-08-29":9309.21,"2026-09-29":9507.33,"2026-08-31":17263.72,"2026-09-15":6986.38,"2026-08-28":3500.52,"2026-09-12":3500.5,"2026-09-27":2583.37,"2026-10-12":2655.87,"2026-10-27":2090.89,"2026-11-11":1681.53,"2026-09-13":5506.11,"2026-08-24":18006.62,"2026-09-07":12454.57,"2026-09-22":6625.73,"2026-10-07":9494.2,"2026-10-22":1009.6,"2026-09-09":10527.45,"2026-09-24":5309.95,"2026-10-09":9560.79,"2026-10-24":1353.68,"2026-11-08":9353.68,"2026-11-23":1895.52,"2026-12-08":9353.66,"2026-08-25":11879.02,"2026-10-18":1947.73,"2026-09-08":24804.43,"2026-09-18":3655.95,"2026-09-28":4705.06,"2026-10-08":20710.71,"2026-09-23":12124.63,"2026-10-23":8649.7,"2026-09-11":4687.31,"2026-10-01":13934.38,"2026-10-21":4328.3,"2026-09-06":1285.78,"2026-09-21":6887.29,"2026-10-06":3545.57,"2026-11-05":1697.11,"2026-11-07":10183.57,"2026-09-30":1557.88,"2026-10-15":6042.81,"2026-10-30":2401.71,"2026-11-14":1557.85,"2026-11-22":1632.95,"2026-12-07":12472.54,"2026-10-14":6266.37,"2026-09-16":2677.25,"2026-11-27":843.84,"2026-09-04":1255.19,"2026-10-02":4881.94,"2026-12-15":1646.92,"2026-10-20":4650.71,"2026-11-17":13100.84,"2026-12-24":391.82,"2026-09-03":391.86,"2026-10-29":4534.69,"2026-11-26":391.86,"2027-01-14":550.51,"2026-08-27":2544.48,"2026-11-19":550.56,"2026-12-17":10995.28,"2026-11-04":464.42,"2027-02-26":369.9,"2026-11-06":6296.28,"2026-12-04":369.92,"2027-01-01":369.92,"2027-01-29":369.92,"2027-03-15":541.8,"2026-10-26":1041.84,"2026-12-21":2541.84,"2027-01-18":541.84,"2027-02-15":541.84,"2026-10-05":3510.39,"2026-10-19":1344.24,"2026-11-02":1344.27,"2026-09-01":3023.5,"2026-10-13":410.5,"2026-11-10":4481.84,"2026-11-03":2259.79,"2026-09-25":5317.87,"2026-11-20":3058.87,"2026-08-26":3551.49,"2026-09-10":4072.5,"2026-11-01":16136.26,"2026-12-02":13000.0,"2027-01-02":13000.0,"2026-09-20":4500.0,"2026-08-30":3007.45,"2026-09-14":3589.13,"2026-11-13":2508.08,"2027-01-06":2080.96,"2027-02-06":411.36,"2026-12-06":411.36,"2026-12-10":4072.5,"2026-10-25":210.0,"2026-11-25":710.0,"2026-12-25":710.0,"2026-09-02":4142.34,"2026-09-17":12360.04,"2026-10-16":1708.2,"2026-11-21":2500.0,"2026-12-22":2500.0,"2026-10-17":10444.72,"2027-01-17":10444.72,"2027-02-17":10444.72,"2027-03-17":10444.72,"2027-04-17":10444.72,"2027-05-17":10444.72,"2027-06-17":10444.72,"2027-07-17":10444.72,"2027-08-17":10444.72,"2027-09-17":10444.72,"2027-10-17":10444.72,"2027-11-17":10444.72,"2027-12-17":10444.72,"2026-11-16":856.0,"2027-05-07":4870.0,"2027-06-07":4870.0,"2027-07-07":4870.0,"2027-01-07":7670.0,"2027-02-08":4870.0,"2027-03-08":4870.0,"2027-04-07":4870.0,"2027-05-25":500.0,"2027-06-25":500.0,"2027-07-26":500.0,"2027-01-25":500.0,"2027-02-25":500.0,"2027-03-25":500.0,"2027-04-26":500.0,"2026-11-28":553.71,"2026-12-28":553.71,"2027-01-27":553.71,"2026-09-26":839.76,"2027-03-07":1669.6,"2027-04-06":1669.6,"2027-05-06":1669.6,"2027-06-05":1669.6,"2027-07-05":1669.6,"2027-08-04":1669.6,"2027-09-03":1669.6,"2027-10-03":1669.6,"2027-11-02":1669.6,"2027-12-02":1669.6,"2028-01-01":1669.6,"2028-01-31":1669.6,"2028-03-01":1669.6,"2028-03-31":1669.6,"2028-04-30":1669.6,"2028-05-30":1669.6,"2028-06-29":1669.6,"2028-07-29":1669.6,"2028-08-28":1669.6,"2028-09-27":1669.6,"2028-10-27":1669.6,"2028-11-26":1669.6,"2028-12-26":1669.6,"2029-01-25":1669.6,"2029-02-24":1669.6,"2029-03-26":1669.6,"2029-04-25":1669.6,"2029-05-25":1669.6,"2029-06-24":1669.6,"2029-07-24":1669.6,"2029-08-23":1669.6,"2029-09-22":1669.6,"2029-10-22":1669.6,"2029-11-21":1669.6,"2029-12-21":1669.6,"2030-01-20":1669.6,"2030-02-19":1669.6,"2030-03-21":1669.6,"2030-04-20":1669.6,"2030-05-20":1669.6,"2030-06-19":1669.6,"2030-07-19":1669.6,"2030-08-18":1669.6,"2030-09-17":1669.6,"2030-10-17":1669.6,"2030-11-16":1669.6,"2030-12-16":1669.6,"2031-01-15":1669.6,"2031-02-14":1669.6,"2031-03-16":1669.6,"2031-04-15":1669.6,"2031-05-15":1669.6,"2031-06-14":1669.6,"2031-07-14":1669.6,"2031-08-13":1669.6,"2031-09-12":1669.6,"2031-10-12":1669.6,"2031-11-11":1669.6,"2031-12-11":1669.6,"2032-01-10":1669.6,"2032-02-09":1669.6,"2032-03-10":1669.6,"2032-04-09":1669.6,"2032-05-09":1669.6,"2032-06-08":1669.6,"2032-07-08":1669.6,"2027-02-05":1669.6,"2028-01-17":10444.72,"2028-02-17":10444.72},"atrasoReceber":844.0,"atrasoPagar":222473.15,"cartaoACair":{"2026-08-24":6979.0},"mediaSemana":{"0":0.0,"1":10490.07,"2":9339.37,"3":9619.09,"4":9135.48,"5":9062.68,"6":6725.08},"mix":{"cartao":0.4372,"avista":0.5041,"aprazo":0.0587},"formas":[["PIX",63341.5,"avista"],["CART�O PARCELADO 2 A 12",45206.0,"cartao"],["DINHEIRO",43537.18,"avista"],["CART�O DE DEBITO",40288.03,"cartao"],["CR�DITO A VISTA",16444.5,"cartao"],["FATURAMENTO 30 DIAS",11875.77,"aprazo"],["MULTIPLA",10659.0,"avista"],["CREDITO LOJA",1813.96,"aprazo"]],"vendaMix":233165.94,"diasMedia":60,"diasMix":30,"geradoEm":"24/08/2026 11:50"};
+const D = {"hoje":"2026-08-24","receber":{"2026-08-24":1700.0,"2026-09-10":500.0,"2026-09-09":1832.0,"2026-08-27":1179.0,"2026-08-31":317.0,"2026-08-25":318.0},"pagar":{"2026-08-29":9309.21,"2026-09-29":9507.33,"2026-08-31":17263.72,"2026-09-15":6986.38,"2026-08-28":3500.52,"2026-09-12":3500.5,"2026-09-27":2583.37,"2026-10-12":2655.87,"2026-10-27":2090.89,"2026-11-11":1681.53,"2026-09-13":5506.11,"2026-09-07":12454.57,"2026-09-22":6625.73,"2026-10-07":9494.2,"2026-10-22":1009.6,"2026-09-09":10527.45,"2026-09-24":5309.95,"2026-10-09":9560.79,"2026-10-24":1353.68,"2026-11-08":9353.68,"2026-11-23":1895.52,"2026-12-08":9353.66,"2026-08-25":11879.02,"2026-10-18":1947.73,"2026-09-08":24804.43,"2026-09-18":3655.95,"2026-09-28":4705.06,"2026-10-08":20710.71,"2026-09-23":12124.63,"2026-10-23":8649.7,"2026-09-11":4687.31,"2026-10-01":13934.38,"2026-10-21":4328.3,"2026-09-06":1285.78,"2026-09-21":6887.29,"2026-10-06":3545.57,"2026-11-05":1697.11,"2026-11-07":10183.57,"2026-09-30":1557.88,"2026-10-15":6042.81,"2026-10-30":2401.71,"2026-11-14":1557.85,"2026-11-22":1632.95,"2026-12-07":12472.54,"2026-10-14":6266.37,"2026-09-16":2677.25,"2026-11-27":843.84,"2026-09-04":1255.19,"2026-10-02":4881.94,"2026-12-15":1646.92,"2026-10-20":4650.71,"2026-11-17":13100.84,"2026-12-24":391.82,"2026-09-03":391.86,"2026-10-29":4534.69,"2026-11-26":391.86,"2027-01-14":550.51,"2026-08-27":2544.48,"2026-11-19":550.56,"2026-12-17":10995.28,"2026-11-04":464.42,"2027-02-26":369.9,"2026-11-06":6296.28,"2026-12-04":369.92,"2027-01-01":369.92,"2027-01-29":369.92,"2027-03-15":541.8,"2026-10-26":1041.84,"2026-12-21":2541.84,"2027-01-18":541.84,"2027-02-15":541.84,"2026-10-05":3510.39,"2026-10-19":1344.24,"2026-11-02":1344.27,"2026-09-01":3023.5,"2026-10-13":410.5,"2026-11-10":4481.84,"2026-11-03":2259.79,"2026-09-25":5317.87,"2026-11-20":3058.87,"2026-08-26":3551.49,"2026-09-10":4072.5,"2026-11-01":16136.26,"2026-12-02":13000.0,"2027-01-02":13000.0,"2026-09-20":4500.0,"2026-08-30":3007.45,"2026-09-14":3589.13,"2026-11-13":2508.08,"2027-01-06":2080.96,"2027-02-06":411.36,"2026-12-06":411.36,"2026-12-10":4072.5,"2026-10-25":210.0,"2026-11-25":710.0,"2026-12-25":710.0,"2026-09-02":4142.34,"2026-09-17":12360.04,"2026-10-16":1708.2,"2026-11-21":2500.0,"2026-12-22":2500.0,"2026-10-17":10444.72,"2027-01-17":10444.72,"2027-02-17":10444.72,"2027-03-17":10444.72,"2027-04-17":10444.72,"2027-05-17":10444.72,"2027-06-17":10444.72,"2027-07-17":10444.72,"2027-08-17":10444.72,"2027-09-17":10444.72,"2027-10-17":10444.72,"2027-11-17":10444.72,"2027-12-17":10444.72,"2026-11-16":856.0,"2027-05-07":4870.0,"2027-06-07":4870.0,"2027-07-07":4870.0,"2027-01-07":7670.0,"2027-02-08":4870.0,"2027-03-08":4870.0,"2027-04-07":4870.0,"2027-05-25":500.0,"2027-06-25":500.0,"2027-07-26":500.0,"2027-01-25":500.0,"2027-02-25":500.0,"2027-03-25":500.0,"2027-04-26":500.0,"2026-11-28":553.71,"2026-12-28":553.71,"2027-01-27":553.71,"2026-09-26":839.76,"2027-03-07":1669.6,"2027-04-06":1669.6,"2027-05-06":1669.6,"2027-06-05":1669.6,"2027-07-05":1669.6,"2027-08-04":1669.6,"2027-09-03":1669.6,"2027-10-03":1669.6,"2027-11-02":1669.6,"2027-12-02":1669.6,"2028-01-01":1669.6,"2028-01-31":1669.6,"2028-03-01":1669.6,"2028-03-31":1669.6,"2028-04-30":1669.6,"2028-05-30":1669.6,"2028-06-29":1669.6,"2028-07-29":1669.6,"2028-08-28":1669.6,"2028-09-27":1669.6,"2028-10-27":1669.6,"2028-11-26":1669.6,"2028-12-26":1669.6,"2029-01-25":1669.6,"2029-02-24":1669.6,"2029-03-26":1669.6,"2029-04-25":1669.6,"2029-05-25":1669.6,"2029-06-24":1669.6,"2029-07-24":1669.6,"2029-08-23":1669.6,"2029-09-22":1669.6,"2029-10-22":1669.6,"2029-11-21":1669.6,"2029-12-21":1669.6,"2030-01-20":1669.6,"2030-02-19":1669.6,"2030-03-21":1669.6,"2030-04-20":1669.6,"2030-05-20":1669.6,"2030-06-19":1669.6,"2030-07-19":1669.6,"2030-08-18":1669.6,"2030-09-17":1669.6,"2030-10-17":1669.6,"2030-11-16":1669.6,"2030-12-16":1669.6,"2031-01-15":1669.6,"2031-02-14":1669.6,"2031-03-16":1669.6,"2031-04-15":1669.6,"2031-05-15":1669.6,"2031-06-14":1669.6,"2031-07-14":1669.6,"2031-08-13":1669.6,"2031-09-12":1669.6,"2031-10-12":1669.6,"2031-11-11":1669.6,"2031-12-11":1669.6,"2032-01-10":1669.6,"2032-02-09":1669.6,"2032-03-10":1669.6,"2032-04-09":1669.6,"2032-05-09":1669.6,"2032-06-08":1669.6,"2032-07-08":1669.6,"2027-02-05":1669.6,"2028-01-17":10444.72,"2028-02-17":10444.72},"atrasoReceber":844.0,"atrasoPagar":222473.15,"cartaoACair":{"2026-08-24":6979.0,"2026-08-25":1856.0},"mediaSemana":{"0":0.0,"1":10147.5,"2":9339.37,"3":9619.09,"4":9135.48,"5":9062.68,"6":6725.08},"mix":{"cartao":0.4314,"especie":0.19,"digital":0.3234,"aprazo":0.0551},"formas":[["PIX",66524.51,"digital"],["CART�O PARCELADO 2 A 12",45891.0,"cartao"],["DINHEIRO",45719.18,"especie"],["CART�O DE DEBITO",40995.03,"cartao"],["CR�DITO A VISTA",16908.5,"cartao"],["FATURAMENTO 30 DIAS",11452.76,"aprazo"],["MULTIPLA",11268.0,"digital"],["CREDITO LOJA",1813.96,"aprazo"]],"vendaMix":240572.94,"diasMedia":60,"diasMix":30,"geradoEm":"24/08/2026 17:07"};
 const LS_SALDO = 'caixa_saldo_mcmoto';
 let DIAS = 30;
 
@@ -133,15 +137,18 @@ function setDias(n){
    Devolve as duas metades separadas, porque o cartao anda um dia a frente. */
 function previsaoDia(iso){
   const media = D.mediaSemana[String(gDia(iso))] || 0;
-  if(!media) return {cartao:0, avista:0};
-  return {cartao: media * (D.mix.cartao || 0), avista: media * (D.mix.avista || 0)};
+  if(!media) return {cartao:0, especie:0, digital:0};
+  return {cartao:  media * (D.mix.cartao  || 0),
+          especie: media * (D.mix.especie || 0),
+          digital: media * (D.mix.digital || 0)};
 }
 
 function serie(){
   const fim = somaDias(D.hoje, DIAS), dias = {};
   const usaPrev = document.getElementById('chk-prev').checked;
+  const usaEspecie = document.getElementById('chk-especie').checked;
   function reg(iso){
-    return dias[iso] || (dias[iso] = {cartao:0, prev:0, receber:0, sai:0});
+    return dias[iso] || (dias[iso] = {cartao:0, especie:0, digital:0, receber:0, sai:0});
   }
   // esqueleto: um registro por dia do horizonte
   for(let iso = D.hoje; iso <= fim; iso = somaDias(iso, 1)) reg(iso);
@@ -163,9 +170,11 @@ function serie(){
   if(usaPrev){
     for(let iso = somaDias(D.hoje, 1); iso <= fim; iso = somaDias(iso, 1)){
       const p = previsaoDia(iso);
-      reg(iso).prev += p.avista;
+      const r = reg(iso);
+      r.especie += p.especie;
+      r.digital += p.digital;
       const caixaCartao = diaUtilSeguinte(somaDias(iso, 1));
-      if(caixaCartao <= fim) reg(caixaCartao).prev += p.cartao;
+      if(caixaCartao <= fim) reg(caixaCartao).cartao += p.cartao;
     }
   }
   if(document.getElementById('chk-atraso').checked){
@@ -177,7 +186,8 @@ function serie(){
   return Object.keys(dias).sort().map(function(iso){
     const d = dias[iso];
     d.iso = iso;
-    d.entra = d.cartao + d.prev + d.receber;
+    d.especieUsada = usaEspecie ? d.especie : 0;
+    d.entra = d.cartao + d.especieUsada + d.digital + d.receber;
     d.liquido = d.entra - d.sai;
     saldo += d.liquido;
     d.saldo = saldo;
@@ -186,8 +196,9 @@ function serie(){
 }
 
 function renderMix(){
-  const rot = {cartao:'Cartão', avista:'À vista (dinheiro/PIX)', aprazo:'A prazo (vira título)'};
-  document.getElementById('mix').innerHTML = ['cartao','avista','aprazo'].map(function(k){
+  const rot = {cartao:'Cartão', especie:'Dinheiro em espécie', digital:'PIX / TED',
+               aprazo:'A prazo (vira título)'};
+  document.getElementById('mix').innerHTML = ['cartao','especie','digital','aprazo'].map(function(k){
     return '<div class="fatia ' + k + '">' + rot[k] +
       '<b>' + ((D.mix[k]||0)*100).toFixed(0) + '% · ' + fmt((D.mix[k]||0) * D.vendaMix) + '</b></div>';
   }).join('') + '<div class="fatia">Venda dos últimos ' + D.diasMix + ' dias<b>' + fmt(D.vendaMix) + '</b></div>';
@@ -196,6 +207,8 @@ function renderMix(){
 function renderKpis(linhas){
   const entra = linhas.reduce(function(s,d){ return s + d.entra; }, 0);
   const sai = linhas.reduce(function(s,d){ return s + d.sai; }, 0);
+  const esp = linhas.reduce(function(s,d){ return s + d.especie; }, 0);
+  const usaEspecie = document.getElementById('chk-especie').checked;
   const fim = linhas.length ? linhas[linhas.length-1].saldo : saldoInicial();
   const pior = linhas.reduce(function(m,d){ return d.saldo < m.saldo ? d : m; },
                              {saldo: saldoInicial(), iso: D.hoje});
@@ -203,6 +216,8 @@ function renderKpis(linhas){
     '<div class="card"><label>Saldo inicial (hoje)</label><div class="calc">' + fmt(saldoInicial()) + '</div></div>' +
     '<div class="card entra"><label>Entradas em ' + DIAS + ' dias</label><div class="calc">' + fmt(entra) + '</div></div>' +
     '<div class="card sai"><label>Saídas em ' + DIAS + ' dias</label><div class="calc">' + fmt(sai) + '</div></div>' +
+    '<div class="card"><label>Dinheiro em espécie' + (usaEspecie ? '' : ' (fora da conta)') +
+      '</label><div class="calc" style="color:' + (usaEspecie ? '#0a7a25' : '#94a3b8') + '">' + fmt(esp) + '</div></div>' +
     '<div class="card' + (fim<0?' neg':'') + '"><label>Saldo em ' + DIAS + ' dias</label><div class="calc">' + fmt(fim) + '</div></div>' +
     '<div class="card' + (pior.saldo<0?' neg':'') + '"><label>Pior dia (' + fmtData(pior.iso) + ')</label><div class="calc">' + fmt(pior.saldo) + '</div></div>';
 }
@@ -225,11 +240,11 @@ function renderGrafico(linhas){
 
 function renderTabela(linhas){
   document.querySelector('#tabela thead').innerHTML =
-    '<tr><th>Data</th><th>Cartão (D+1)</th><th>Venda prevista</th><th>A receber</th>' +
+    '<tr><th>Data</th><th>Cartão (D+1)</th><th>Espécie</th><th>PIX / TED</th><th>A receber</th>' +
     '<th>Entradas</th><th>Saídas</th><th>Líquido do dia</th><th>Saldo acumulado</th></tr>';
   const tbody = document.querySelector('#tabela tbody');
   if(!linhas.length){
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888">Nada previsto no período.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#888">Nada previsto no período.</td></tr>';
     return;
   }
   function cel(v, cls){
@@ -240,7 +255,11 @@ function renderTabela(linhas){
     const cls = (d.iso === D.hoje) ? 'hoje' : (gDia(d.iso) === 0 ? 'fds' : '');
     return '<tr class="' + cls + '"><td>' + fmtData(d.iso) +
       ' <span style="color:#94a3b8">' + diaSemana(d.iso) + '</span></td>' +
-      cel(d.cartao) + cel(d.prev, 'prev') + cel(d.receber) + cel(d.entra) + cel(d.sai, 'neg') +
+      cel(d.cartao) +
+      (d.especie && !d.especieUsada
+        ? '<td class="fora" title="fora da conta: filtro de espécie desmarcado">' + fmt(d.especie) + '</td>'
+        : cel(d.especieUsada, 'esp')) +
+      cel(d.digital, 'prev') + cel(d.receber) + cel(d.entra) + cel(d.sai, 'neg') +
       '<td' + (d.liquido<0?' class="neg"':'') + '>' +
       (d.liquido ? fmt(d.liquido) : '<span style="color:#cbd5e1">—</span>') + '</td>' +
       '<td' + (d.saldo<0?' class="neg"':'') + '><b>' + fmt(d.saldo) + '</b></td></tr>';
@@ -259,6 +278,10 @@ function renderAviso(){
     '• <b>' + fmt(parc) + '</b> dos últimos ' + D.diasMix + ' dias saiu em <b>cartão parcelado</b>. A regra em vigor joga ' +
       'todo cartão para D+1, o que só é verdade se a maquininha antecipar. Se não antecipa, esse dinheiro pinga em ' +
       'parcelas mensais e a projeção de curto prazo está otimista nesse pedaço.<br>' +
+    '• <b>Dinheiro em espécie</b> (' + ((D.mix.especie||0)*100).toFixed(0) + '% da venda, ' +
+      fmt((D.mix.especie||0) * D.vendaMix) + ' em ' + D.diasMix + ' dias) não cai na conta sozinho: fica na gaveta ' +
+      'até alguém depositar. Desmarque o filtro para ver só o dinheiro que estará no <b>banco</b> — é essa a conta ' +
+      'que vale quando o que está em jogo é honrar um boleto.<br>' +
     '• <b>Vencidos, fora da projeção:</b> ' + fmt(D.atrasoReceber) + ' a receber e ' + fmt(D.atrasoPagar) + ' a pagar. ' +
       'Data vencida não é previsão; marque <i>“jogar os vencidos para hoje”</i> para vê-los somados ao primeiro dia.';
 }
@@ -272,7 +295,8 @@ function renderizar(){
   renderAviso();
   document.getElementById('sub').textContent =
     'Gerado em ' + D.geradoEm + ' · posição de ' + fmtData(D.hoje) + ' · projeção de ' + DIAS + ' dias' +
-    (document.getElementById('chk-prev').checked ? ' · com venda prevista' : ' · só títulos');
+    (document.getElementById('chk-prev').checked ? ' · com venda prevista' : ' · só títulos') +
+    (document.getElementById('chk-especie').checked ? '' : ' · sem dinheiro em espécie');
 }
 
 document.getElementById('saldo-ini').addEventListener('change', function(){ setSaldoInicial(this.value); });
@@ -284,6 +308,8 @@ document.getElementById('nota').innerHTML =
   '<b>Cartão é D+1:</b> a venda no cartão de um dia entra no caixa no dia seguinte. Hoje esse número é real ' +
   '(veio da venda de ontem, por forma de pagamento); de amanhã em diante ele vem junto da previsão. ' +
   'Como banco não credita fim de semana, o cartão de sexta e o de sábado caem juntos na segunda.<br>' +
+  '<b>Espécie x PIX/TED:</b> as duas colunas são venda à vista, mas só a segunda nasce dentro da conta. ' +
+  'Com o filtro de espécie desmarcado, o valor continua visível na coluna, riscado, e sai da soma.<br>' +
   '<b>Domingo</b> aparece zerado porque a loja não abre — a média por dia da semana já cuida disso, e sábado ' +
   'entra com o peso menor que ele tem de verdade.';
 renderizar();
