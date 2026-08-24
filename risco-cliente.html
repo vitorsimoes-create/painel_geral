@@ -1,164 +1,282 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
+<html lang="pt-BR"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Risco de Inadimplência por Cliente</title>
+<title>Risco de Cliente — SEVEN</title>
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; background:#f2f4f7; margin:0; padding:20px; color:#222; }
-  h1 { background:#7c2d12; color:#fff; padding:14px 18px; border-radius:6px; font-size:18px; margin:0 0 6px; }
-  .sub { font-size:12px; color:#666; margin-bottom:16px; }
-  .metodologia { background:#fff7ed; border:1px solid #fed7aa; border-left:5px solid #ea580c; border-radius:6px; padding:12px 16px; font-size:12px; color:#7c2d12; margin-bottom:18px; line-height:1.6; }
-  .filtro-unidades { display:flex; align-items:center; gap:14px; background:#fff; border-radius:8px; padding:10px 16px; box-shadow:0 1px 3px rgba(0,0,0,.12); margin-bottom:18px; font-size:13px; flex-wrap:wrap; }
-  .filtro-unidades b { color:#7c2d12; }
-  .filtro-unidades label { display:flex; align-items:center; gap:5px; cursor:pointer; user-select:none; }
-  .filtro-unidades input[type=checkbox] { width:15px; height:15px; cursor:pointer; accent-color:#7c2d12; }
-  .cards { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
-  .card { background:#fff; border-radius:8px; padding:12px 16px; box-shadow:0 1px 3px rgba(0,0,0,.12); min-width:170px; }
+  * { box-sizing:border-box; }
+  body { font-family:Arial,Helvetica,sans-serif; background:#f2f4f7; margin:0; padding:20px; color:#222; }
+  h1 { background:#b45309; color:#fff; padding:14px 18px; border-radius:6px; font-size:18px; margin:0 0 6px; }
+  .sub { font-size:12px; color:#666; margin-bottom:14px; }
+  .como { background:#fff; border-radius:8px; padding:12px 16px; box-shadow:0 1px 3px rgba(0,0,0,.12);
+    font-size:12px; color:#444; line-height:1.7; margin-bottom:16px; }
+  .como b { color:#b45309; }
+  .barra { display:flex; align-items:center; gap:14px; background:#fff; border-radius:8px; padding:10px 16px;
+    box-shadow:0 1px 3px rgba(0,0,0,.12); margin-bottom:18px; font-size:13px; flex-wrap:wrap; }
+  .barra b { color:#b45309; }
+  .barra label { display:flex; align-items:center; gap:5px; cursor:pointer; user-select:none; }
+  .barra input[type=checkbox] { width:15px; height:15px; cursor:pointer; accent-color:#b45309; }
+  .sep { width:1px; height:22px; background:#e2e8f0; }
+  .cards { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+  .card { background:#fff; border-radius:8px; padding:12px 16px; box-shadow:0 1px 3px rgba(0,0,0,.12);
+    min-width:150px; flex:1; }
   .card label { display:block; font-size:11px; color:#666; margin-bottom:4px; }
-  .card .calc { font-weight:bold; font-size:20px; color:#1f4e78; }
-  .card.risco .calc { color:#c00000; }
-  table { width:100%; border-collapse: collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.12); margin-bottom:24px;}
-  th, td { padding:8px 10px; text-align:right; border-bottom:1px solid #eee; font-size:12px; white-space:nowrap; }
-  th { background:#7c2d12; color:#fff; font-size:10px; text-transform:uppercase; }
-  td:first-child, th:first-child { text-align:left; }
-  td:nth-child(2), th:nth-child(2) { text-align:left; }
-  tr.risco { background:#fef2f2; }
-  tr.risco td:first-child { border-left:4px solid #c00000; }
-  .tag-risco { display:inline-block; background:#fee2e2; color:#991b1b; font-size:10px; font-weight:bold; padding:2px 8px; border-radius:10px; }
-  .footer-note { font-size:11px; color:#888; margin-top:6px; }
-  .sem-risco { padding:20px; text-align:center; color:#0a7a25; background:#e6f4ea; border-radius:8px; font-weight:bold; }
-  .sem-dados { padding:20px; text-align:center; color:#888; background:#f2f4f7; border-radius:8px; }
-</style>
-</head>
-<body>
+  .card .calc { font-weight:bold; font-size:19px; color:#1f4e78; }
+  .card.critico .calc { color:#c00000; }
+  .card.alto .calc { color:#ea580c; }
+  .card.atencao .calc { color:#a15c00; }
+  table { width:100%; border-collapse:collapse; background:#fff; font-size:12px; }
+  th, td { padding:7px 10px; text-align:right; border-bottom:1px solid #eee; white-space:nowrap; }
+  th { background:#b45309; color:#fff; font-size:10px; text-transform:uppercase; position:sticky; top:0;
+    cursor:pointer; user-select:none; }
+  th:hover { background:#92400e; }
+  td:first-child, th:first-child { text-align:left; white-space:normal; }
+  .tabela-wrap { background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.12);
+    overflow:hidden; margin-bottom:18px; max-height:620px; overflow-y:auto; }
+  .faixa { display:inline-block; font-size:10px; font-weight:bold; padding:2px 8px; border-radius:10px; }
+  .faixa.critico { background:#fee2e2; color:#991b1b; }
+  .faixa.alto    { background:#ffedd5; color:#9a3412; }
+  .faixa.atencao { background:#fef3c7; color:#92400e; }
+  .cod { color:#94a3b8; font-size:10px; }
+  .porques { color:#475569; font-size:11px; white-space:normal; }
+  .porques i { font-style:normal; background:#f1f5f9; border-radius:4px; padding:1px 6px;
+    margin-right:4px; display:inline-block; margin-bottom:2px; }
+  .porques i.forte { background:#fee2e2; color:#991b1b; }
+  .aviso { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px 16px;
+    font-size:12px; color:#78350f; margin-bottom:18px; line-height:1.7; }
+  .aviso b { color:#92400e; }
+  .sem-dados { padding:24px; text-align:center; color:#888; background:#fff; border-radius:8px; }
+  .footer-note { font-size:11px; color:#888; margin-top:10px; line-height:1.7; }
+</style></head><body>
+<h1>⚠️ Risco de Cliente — análise preventiva</h1>
+<div class="sub" id="sub"></div>
 
-<h1>⚠️ Risco de Inadimplência por Cliente</h1>
-<div class="sub" id="gerado-em"></div>
-
-<div class="metodologia">
-  <b>Como funciona:</b> reconstruímos o saldo devedor (títulos a receber em aberto) de cada cliente dia a dia, da segunda-feira desta semana até hoje.
-  Calculamos o crescimento percentual do saldo devedor de um dia para o outro, e tiramos a média desses crescimentos ao longo da semana.
-  Clientes cuja média de crescimento diário do saldo devedor ultrapassa <b>20%</b> são destacados abaixo como possível risco de inadimplência —
-  o saldo está subindo rápido demais em relação ao padrão normal, merecendo atenção antes que o atraso se torne um problema maior.
-  A "Média compra semanal (3m)" é só contexto: mostra o porte de compras do cliente nas últimas 13 semanas.
-  Use o filtro de unidade de negócio abaixo para recalcular tudo isso considerando só as unidades selecionadas.
+<div class="como">
+  <b>Para que serve:</b> apontar o cliente que ainda está pagando mas mudou de comportamento, a tempo de
+  segurar o limite antes do prejuízo. Não é lista de cobrança.<br>
+  <b>Como o risco é medido</b> — quatro sinais somam um score de 0 a 100:
+  <b>uso do limite</b> (até 35), <b>piora em relação ao próprio cliente</b> (até 30),
+  <b>parou de comprar e continua devendo</b> (até 25) e <b>limite já cortado pela loja</b> (até 10),
+  com a <b>exposição</b> agravando o total (até 10).
+  A comparação é sempre contra o histórico do próprio cliente: nesta operação atrasar alguns dias é rotina,
+  então o que importa é a mudança, não o atraso em si.
 </div>
 
-<div class="filtro-unidades" id="filtro-unidades">
+<div class="barra">
   <b>Unidade de negócio:</b>
+  <div id="filtro-unidades" style="display:flex; gap:12px; flex-wrap:wrap"></div>
+  <div class="sep"></div>
+  <b>Mostrar:</b>
+  <label><input type="checkbox" class="chk-faixa" value="critico" checked> Crítico</label>
+  <label><input type="checkbox" class="chk-faixa" value="alto" checked> Alto</label>
+  <label><input type="checkbox" class="chk-faixa" value="atencao" checked> Atenção</label>
 </div>
 
 <div class="cards" id="kpis"></div>
-
-<div id="tabela-container"></div>
+<div class="aviso" id="aviso"></div>
+<div class="tabela-wrap"><table id="tabela"><thead></thead><tbody></tbody></table></div>
+<div class="footer-note" id="nota"></div>
 
 <script>
-const DADOS = {"dias": ["2026-08-24"], "unidadesDisponiveis": [3, 4, 5], "clientes": [], "limiar": 0.2, "saldoMinimoBase": 50.0, "geradoEm": "24/08/2026 09:58"};
+const D = {"hoje":"2026-08-24","clientes":{"162":{"3":{"saldo":2662.0,"vencido":2662.0,"atraso":791,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3070875":{"5":{"saldo":2881.41,"vencido":0.0,"atraso":0,"limite":7000.0,"cortado":0,"diasRec":56.0,"nRec":18,"diasAnt":17.0,"nAnt":30,"ultima":"2026-08-20","nCompras":28,"span":342}},"199":{"3":{"saldo":20.0,"vencido":20.0,"atraso":838,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2026-07-30","nCompras":8,"span":273},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":9.0,"nAnt":3,"ultima":null,"nCompras":0,"span":0},"5":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"31013":{"4":{"saldo":3032.05,"vencido":3032.05,"atraso":313,"limite":6400.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":14.0,"nAnt":3,"ultima":"2025-10-03","nCompras":2,"span":29}},"3594":{"5":{"saldo":2877.09,"vencido":2877.09,"atraso":150,"limite":6000.0,"cortado":0,"diasRec":261.0,"nRec":2,"diasAnt":194.0,"nAnt":19,"ultima":"2026-07-07","nCompras":18,"span":312},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"9090093":{"4":{"saldo":1444.82,"vencido":1444.82,"atraso":94,"limite":5000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":69.0,"nAnt":5,"ultima":"2026-04-24","nCompras":6,"span":147}},"707051":{"4":{"saldo":397.62,"vencido":397.62,"atraso":279,"limite":1000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":12.0,"nAnt":2,"ultima":"2025-11-06","nCompras":20,"span":69}},"32557":{"4":{"saldo":12821.63,"vencido":12821.63,"atraso":284,"limite":7000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":130.0,"nAnt":9,"ultima":"2025-11-14","nCompras":8,"span":77},"5":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"577094":{"5":{"saldo":16376.16,"vencido":16376.16,"atraso":166,"limite":3000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":330.0,"nAnt":47,"ultima":"2026-07-28","nCompras":24,"span":323}},"3516":{"4":{"saldo":302.93,"vencido":302.93,"atraso":73,"limite":2000.0,"cortado":0,"diasRec":12.0,"nRec":1,"diasAnt":68.0,"nAnt":7,"ultima":"2026-03-20","nCompras":3,"span":133}},"306591":{"5":{"saldo":324.74,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":8.0,"nRec":3,"diasAnt":8.0,"nAnt":9,"ultima":"2026-08-21","nCompras":14,"span":318}},"4098":{"5":{"saldo":686.04,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":50.0,"nRec":11,"diasAnt":31.0,"nAnt":4,"ultima":"2026-08-17","nCompras":100,"span":353}},"3323":{"4":{"saldo":36289.23,"vencido":3941.11,"atraso":12,"limite":35000.0,"cortado":0,"diasRec":670.0,"nRec":105,"diasAnt":77.0,"nAnt":166,"ultima":"2026-08-21","nCompras":95,"span":361}},"3615":{"4":{"saldo":2550.04,"vencido":2550.04,"atraso":124,"limite":2000.0,"cortado":0,"diasRec":19.0,"nRec":1,"diasAnt":532.0,"nAnt":43,"ultima":"2026-04-10","nCompras":15,"span":226}},"807069":{"4":{"saldo":1608.34,"vencido":1608.34,"atraso":255,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":186.0,"nAnt":10,"ultima":"2025-11-14","nCompras":5,"span":50}},"3079":{"4":{"saldo":8768.7,"vencido":0.0,"atraso":0,"limite":40000.0,"cortado":0,"diasRec":63.0,"nRec":13,"diasAnt":-590.0,"nAnt":39,"ultima":"2026-07-23","nCompras":172,"span":332}},"3007":{"5":{"saldo":1988.91,"vencido":0.0,"atraso":0,"limite":10000.0,"cortado":0,"diasRec":-38.0,"nRec":13,"diasAnt":-159.0,"nAnt":26,"ultima":"2026-08-20","nCompras":46,"span":358},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"304584":{"4":{"saldo":366.48,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":-83.0,"nRec":3,"diasAnt":1.0,"nAnt":1,"ultima":"2026-07-13","nCompras":2,"span":182}},"3305":{"5":{"saldo":4809.57,"vencido":301.45,"atraso":3,"limite":10000.0,"cortado":0,"diasRec":22.0,"nRec":17,"diasAnt":20.0,"nAnt":30,"ultima":"2026-08-21","nCompras":71,"span":354},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3679":{"5":{"saldo":6267.02,"vencido":702.29,"atraso":3,"limite":20000.0,"cortado":0,"diasRec":54.0,"nRec":15,"diasAnt":37.0,"nAnt":8,"ultima":"2026-08-21","nCompras":28,"span":361},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"33308554":{"4":{"saldo":4357.06,"vencido":1513.05,"atraso":24,"limite":0.0,"cortado":0,"diasRec":52.0,"nRec":6,"diasAnt":0.0,"nAnt":0,"ultima":"2026-07-17","nCompras":7,"span":65}},"3378":{"4":{"saldo":722.8,"vencido":0.0,"atraso":0,"limite":10000.0,"cortado":0,"diasRec":2.0,"nRec":4,"diasAnt":-80.0,"nAnt":18,"ultima":"2026-08-21","nCompras":62,"span":361}},"3462":{"5":{"saldo":3638.38,"vencido":572.8,"atraso":2,"limite":1000.0,"cortado":0,"diasRec":7.0,"nRec":3,"diasAnt":7.0,"nAnt":4,"ultima":"2026-08-10","nCompras":12,"span":347},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3524":{"4":{"saldo":1797.51,"vencido":0.0,"atraso":0,"limite":8000.0,"cortado":0,"diasRec":-50.0,"nRec":10,"diasAnt":-112.0,"nAnt":23,"ultima":"2026-08-17","nCompras":158,"span":356}},"1511518":{"5":{"saldo":3796.0,"vencido":0.0,"atraso":0,"limite":20000.0,"cortado":0,"diasRec":-110.0,"nRec":34,"diasAnt":-274.0,"nAnt":52,"ultima":"2026-07-31","nCompras":40,"span":340}},"3693":{"5":{"saldo":34678.43,"vencido":3396.57,"atraso":10,"limite":35000.0,"cortado":1,"diasRec":400.0,"nRec":93,"diasAnt":1268.0,"nAnt":254,"ultima":"2026-08-21","nCompras":99,"span":360},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3581":{"4":{"saldo":10421.01,"vencido":8214.36,"atraso":94,"limite":10000.0,"cortado":0,"diasRec":109.0,"nRec":7,"diasAnt":311.0,"nAnt":21,"ultima":"2026-06-02","nCompras":10,"span":265}},"3192":{"4":{"saldo":790.76,"vencido":790.76,"atraso":94,"limite":6000.0,"cortado":0,"diasRec":74.0,"nRec":4,"diasAnt":166.0,"nAnt":11,"ultima":"2026-04-24","nCompras":6,"span":218}},"3406":{"4":{"saldo":17646.38,"vencido":3312.17,"atraso":62,"limite":10000.0,"cortado":0,"diasRec":75.0,"nRec":18,"diasAnt":89.0,"nAnt":64,"ultima":"2026-06-11","nCompras":25,"span":281},"5":{"saldo":909.46,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":5.0,"nRec":2,"diasAnt":0.0,"nAnt":0,"ultima":"2026-06-11","nCompras":1,"span":0}},"307297":{"5":{"saldo":1022.52,"vencido":0.0,"atraso":0,"limite":5000.0,"cortado":0,"diasRec":2.0,"nRec":12,"diasAnt":-2.0,"nAnt":17,"ultima":"2026-08-18","nCompras":48,"span":357}},"33308206":{"4":{"saldo":5913.3,"vencido":5327.66,"atraso":77,"limite":5000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2026-06-17","nCompras":7,"span":37}},"3070991":{"5":{"saldo":3020.01,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":8.0,"nRec":2,"diasAnt":41.0,"nAnt":6,"ultima":"2026-08-13","nCompras":12,"span":303}},"33308974":{"5":{"saldo":1970.97,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":1.0,"nRec":1,"diasAnt":0.0,"nAnt":0,"ultima":"2026-07-07","nCompras":1,"span":0}},"306323":{"4":{"saldo":2140.7,"vencido":2140.7,"atraso":119,"limite":2500.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":281.0,"nAnt":39,"ultima":"2026-04-02","nCompras":47,"span":220}},"303781":{"5":{"saldo":2994.93,"vencido":2994.93,"atraso":300,"limite":7000.0,"cortado":0,"diasRec":322.0,"nRec":1,"diasAnt":14.0,"nAnt":1,"ultima":"2026-06-26","nCompras":36,"span":305}},"305440":{"4":{"saldo":309.71,"vencido":309.71,"atraso":68,"limite":2000.0,"cortado":0,"diasRec":67.0,"nRec":4,"diasAnt":98.0,"nAnt":9,"ultima":"2026-08-20","nCompras":143,"span":358}},"303629":{"4":{"saldo":1336.04,"vencido":0.0,"atraso":0,"limite":5000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":14.0,"nAnt":9,"ultima":"2026-08-04","nCompras":13,"span":335}},"383098":{"4":{"saldo":3239.73,"vencido":572.1,"atraso":3,"limite":3400.0,"cortado":0,"diasRec":84.0,"nRec":3,"diasAnt":58.0,"nAnt":12,"ultima":"2026-07-27","nCompras":7,"span":320}},"33308643":{"4":{"saldo":930.04,"vencido":300.75,"atraso":3,"limite":0.0,"cortado":0,"diasRec":7.0,"nRec":4,"diasAnt":0.0,"nAnt":0,"ultima":"2026-08-14","nCompras":6,"span":79}},"3558":{"4":{"saldo":1189.41,"vencido":1189.41,"atraso":256,"limite":2000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2025-10-30","nCompras":1,"span":0}},"3049":{"4":{"saldo":1915.8,"vencido":1293.14,"atraso":21,"limite":20000.0,"cortado":0,"diasRec":86.0,"nRec":13,"diasAnt":153.0,"nAnt":23,"ultima":"2026-07-09","nCompras":26,"span":317}},"3579":{"5":{"saldo":3761.86,"vencido":806.32,"atraso":3,"limite":3500.0,"cortado":1,"diasRec":209.0,"nRec":19,"diasAnt":340.0,"nAnt":33,"ultima":"2026-08-14","nCompras":31,"span":333},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3626":{"5":{"saldo":4993.18,"vencido":0.0,"atraso":0,"limite":20000.0,"cortado":0,"diasRec":70.0,"nRec":28,"diasAnt":135.0,"nAnt":49,"ultima":"2026-08-07","nCompras":35,"span":343},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"302595":{"5":{"saldo":805.84,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":6.0,"nRec":1,"diasAnt":32.0,"nAnt":6,"ultima":"2026-07-28","nCompras":5,"span":301}},"3683":{"5":{"saldo":8254.91,"vencido":0.0,"atraso":0,"limite":5000.0,"cortado":0,"diasRec":76.0,"nRec":21,"diasAnt":148.0,"nAnt":33,"ultima":"2026-08-21","nCompras":37,"span":345},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"2070911":{"5":{"saldo":8177.05,"vencido":1590.39,"atraso":4,"limite":20000.0,"cortado":0,"diasRec":276.0,"nRec":39,"diasAnt":291.0,"nAnt":72,"ultima":"2026-08-21","nCompras":151,"span":359}},"33308849":{"5":{"saldo":687.4,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":1.0,"nRec":1,"diasAnt":0.0,"nAnt":0,"ultima":"2026-06-26","nCompras":1,"span":0},"4":{"saldo":2820.15,"vencido":625.92,"atraso":3,"limite":0.0,"cortado":0,"diasRec":5.0,"nRec":1,"diasAnt":0.0,"nAnt":0,"ultima":"2026-08-12","nCompras":2,"span":47}},"3451":{"5":{"saldo":4371.99,"vencido":0.0,"atraso":0,"limite":10000.0,"cortado":0,"diasRec":40.0,"nRec":18,"diasAnt":83.0,"nAnt":43,"ultima":"2026-08-21","nCompras":47,"span":354},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3386":{"5":{"saldo":3518.24,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":42.0,"nRec":6,"diasAnt":68.0,"nAnt":8,"ultima":"2026-07-31","nCompras":6,"span":248},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3347":{"4":{"saldo":362.29,"vencido":362.29,"atraso":5,"limite":1600.0,"cortado":0,"diasRec":84.0,"nRec":2,"diasAnt":59.0,"nAnt":20,"ultima":"2026-07-22","nCompras":36,"span":329}},"3393":{"5":{"saldo":2340.65,"vencido":336.66,"atraso":3,"limite":20000.0,"cortado":0,"diasRec":35.0,"nRec":10,"diasAnt":74.0,"nAnt":30,"ultima":"2026-08-18","nCompras":45,"span":354},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3605":{"5":{"saldo":1357.84,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":1,"diasAnt":2.0,"nAnt":2,"ultima":"2026-07-31","nCompras":2,"span":151},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"378095":{"5":{"saldo":1409.87,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":101.0,"nRec":10,"diasAnt":258.0,"nAnt":27,"ultima":"2026-08-04","nCompras":22,"span":335}},"3070946":{"5":{"saldo":2857.26,"vencido":691.48,"atraso":10,"limite":5000.0,"cortado":0,"diasRec":124.0,"nRec":11,"diasAnt":259.0,"nAnt":20,"ultima":"2026-08-18","nCompras":13,"span":314}},"3592":{"5":{"saldo":3079.81,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":-2.0,"nRec":2,"diasAnt":0.0,"nAnt":0,"ultima":"2026-08-21","nCompras":6,"span":276},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3177":{"5":{"saldo":3484.51,"vencido":0.0,"atraso":0,"limite":7000.0,"cortado":0,"diasRec":98.0,"nRec":16,"diasAnt":382.0,"nAnt":66,"ultima":"2026-08-21","nCompras":62,"span":353},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3130":{"5":{"saldo":8125.62,"vencido":0.0,"atraso":0,"limite":30000.0,"cortado":0,"diasRec":98.0,"nRec":49,"diasAnt":222.0,"nAnt":122,"ultima":"2026-08-21","nCompras":50,"span":357},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3143":{"5":{"saldo":1207.66,"vencido":0.0,"atraso":0,"limite":20000.0,"cortado":0,"diasRec":19.0,"nRec":5,"diasAnt":4.0,"nAnt":1,"ultima":"2026-07-23","nCompras":3,"span":104},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3284":{"5":{"saldo":9275.72,"vencido":0.0,"atraso":0,"limite":8000.0,"cortado":0,"diasRec":104.0,"nRec":23,"diasAnt":214.0,"nAnt":60,"ultima":"2026-08-21","nCompras":65,"span":361},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"2222115":{"5":{"saldo":10469.9,"vencido":0.0,"atraso":0,"limite":7000.0,"cortado":0,"diasRec":101.0,"nRec":31,"diasAnt":232.0,"nAnt":63,"ultima":"2026-08-14","nCompras":29,"span":343}},"31393":{"5":{"saldo":748.58,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":2.0,"nRec":2,"diasAnt":0.0,"nAnt":0,"ultima":"2026-06-22","nCompras":1,"span":0},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3385":{"5":{"saldo":338.57,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":4.0,"nAnt":4,"ultima":"2026-08-21","nCompras":39,"span":361},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3388":{"5":{"saldo":565.19,"vencido":0.0,"atraso":0,"limite":5000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":3.0,"nAnt":2,"ultima":"2026-07-31","nCompras":2,"span":158},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"307037":{"4":{"saldo":1588.51,"vencido":529.61,"atraso":4,"limite":4000.0,"cortado":0,"diasRec":34.0,"nRec":3,"diasAnt":21.0,"nAnt":6,"ultima":"2026-07-23","nCompras":4,"span":288}},"3591":{"4":{"saldo":1495.67,"vencido":375.65,"atraso":4,"limite":3000.0,"cortado":0,"diasRec":-17.0,"nRec":9,"diasAnt":5.0,"nAnt":26,"ultima":"2026-08-18","nCompras":55,"span":356}},"312094":{"5":{"saldo":500.38,"vencido":500.38,"atraso":4,"limite":2000.0,"cortado":0,"diasRec":19.0,"nRec":5,"diasAnt":28.0,"nAnt":12,"ultima":"2026-07-27","nCompras":20,"span":278}},"3476":{"5":{"saldo":4627.88,"vencido":0.0,"atraso":0,"limite":20000.0,"cortado":0,"diasRec":48.0,"nRec":23,"diasAnt":119.0,"nAnt":53,"ultima":"2026-08-21","nCompras":52,"span":357},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"31039":{"4":{"saldo":315.54,"vencido":315.54,"atraso":69,"limite":1000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2026-05-19","nCompras":51,"span":253},"5":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"33308117":{"5":{"saldo":1604.93,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":4.0,"nRec":2,"diasAnt":0.0,"nAnt":0,"ultima":"2026-08-20","nCompras":17,"span":171}},"3508":{"4":{"saldo":464.1,"vencido":0.0,"atraso":0,"limite":3500.0,"cortado":0,"diasRec":78.0,"nRec":10,"diasAnt":90.0,"nAnt":13,"ultima":"2026-08-06","nCompras":13,"span":338}},"3140":{"5":{"saldo":4732.44,"vencido":436.93,"atraso":2,"limite":5000.0,"cortado":0,"diasRec":35.0,"nRec":14,"diasAnt":35.0,"nAnt":36,"ultima":"2026-08-19","nCompras":21,"span":355},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3211":{"4":{"saldo":479.82,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":6.0,"nAnt":7,"ultima":"2026-08-06","nCompras":5,"span":310}},"3595":{"4":{"saldo":2119.45,"vencido":0.0,"atraso":0,"limite":4000.0,"cortado":0,"diasRec":9.0,"nRec":5,"diasAnt":18.0,"nAnt":10,"ultima":"2026-07-27","nCompras":5,"span":292},"5":{"saldo":1260.9,"vencido":315.21,"atraso":3,"limite":4000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2026-07-24","nCompras":1,"span":0}},"304030":{"4":{"saldo":3671.22,"vencido":662.4,"atraso":40,"limite":5000.0,"cortado":0,"diasRec":5.0,"nRec":5,"diasAnt":-43.0,"nAnt":3,"ultima":"2026-07-07","nCompras":4,"span":216}},"3037":{"4":{"saldo":3887.24,"vencido":0.0,"atraso":0,"limite":10000.0,"cortado":0,"diasRec":24.0,"nRec":4,"diasAnt":77.0,"nAnt":10,"ultima":"2026-07-03","nCompras":4,"span":287}},"4085":{"5":{"saldo":1055.88,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":1,"diasRec":7.0,"nRec":3,"diasAnt":13.0,"nAnt":13,"ultima":"2026-08-19","nCompras":32,"span":350}},"3500":{"4":{"saldo":1629.84,"vencido":1629.84,"atraso":112,"limite":1500.0,"cortado":0,"diasRec":111.0,"nRec":1,"diasAnt":64.0,"nAnt":18,"ultima":"2026-04-06","nCompras":19,"span":206}},"3674":{"4":{"saldo":1194.22,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":3.0,"nRec":4,"diasAnt":-12.0,"nAnt":7,"ultima":"2026-07-03","nCompras":4,"span":256}},"33308082":{"5":{"saldo":2952.33,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":6.0,"nRec":3,"diasAnt":4.0,"nAnt":3,"ultima":"2026-08-05","nCompras":3,"span":163}},"3428":{"4":{"saldo":301.78,"vencido":0.0,"atraso":0,"limite":10000.0,"cortado":0,"diasRec":5.0,"nRec":5,"diasAnt":42.0,"nAnt":20,"ultima":"2026-08-05","nCompras":51,"span":344}},"3536":{"5":{"saldo":1543.38,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":20.0,"nRec":3,"diasAnt":128.0,"nAnt":14,"ultima":"2026-07-14","nCompras":4,"span":273},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3384":{"5":{"saldo":839.98,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":1.0,"nRec":1,"diasAnt":2.0,"nAnt":9,"ultima":"2026-07-14","nCompras":3,"span":225},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3634":{"4":{"saldo":606.44,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":6.0,"nRec":4,"diasAnt":53.0,"nAnt":7,"ultima":"2026-07-06","nCompras":3,"span":311}},"3676":{"5":{"saldo":1411.34,"vencido":0.0,"atraso":0,"limite":10000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":29.0,"nAnt":10,"ultima":"2026-08-07","nCompras":8,"span":336},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"306314":{"4":{"saldo":1227.0,"vencido":312.86,"atraso":28,"limite":0.0,"cortado":0,"diasRec":99.0,"nRec":9,"diasAnt":13.0,"nAnt":4,"ultima":"2026-07-14","nCompras":13,"span":281}},"3472":{"5":{"saldo":329.36,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":8.0,"nRec":1,"diasAnt":18.0,"nAnt":5,"ultima":"2026-08-20","nCompras":88,"span":359},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"4094":{"5":{"saldo":1057.22,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":11.0,"nRec":9,"diasAnt":125.0,"nAnt":37,"ultima":"2026-08-17","nCompras":37,"span":357}},"3287":{"4":{"saldo":1390.33,"vencido":0.0,"atraso":0,"limite":5000.0,"cortado":0,"diasRec":31.0,"nRec":13,"diasAnt":29.0,"nAnt":19,"ultima":"2026-08-04","nCompras":20,"span":285},"5":{"saldo":333.27,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":2.0,"nRec":2,"diasAnt":0.0,"nAnt":0,"ultima":"2026-06-15","nCompras":1,"span":0}},"3266":{"5":{"saldo":371.09,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":3.0,"nAnt":2,"ultima":"2026-08-14","nCompras":19,"span":351},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3155":{"5":{"saldo":536.39,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":1.0,"nRec":2,"diasAnt":3.0,"nAnt":3,"ultima":"2026-06-03","nCompras":2,"span":98},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3007016":{"4":{"saldo":352.42,"vencido":352.42,"atraso":4,"limite":3000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":119.0,"nAnt":11,"ultima":"2026-07-23","nCompras":6,"span":314}},"3076":{"5":{"saldo":798.68,"vencido":0.0,"atraso":0,"limite":7000.0,"cortado":0,"diasRec":41.0,"nRec":13,"diasAnt":46.0,"nAnt":24,"ultima":"2026-08-14","nCompras":37,"span":350},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"32300":{"5":{"saldo":1076.94,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":1.0,"nRec":1,"diasAnt":0.0,"nAnt":0,"ultima":"2026-07-20","nCompras":1,"span":0},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":5000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3582":{"5":{"saldo":306.94,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":1.0,"nRec":1,"diasAnt":0.0,"nAnt":0,"ultima":"2026-08-06","nCompras":3,"span":43},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"309099":{"4":{"saldo":1490.36,"vencido":0.0,"atraso":0,"limite":5000.0,"cortado":0,"diasRec":135.0,"nRec":6,"diasAnt":72.0,"nAnt":6,"ultima":"2026-08-14","nCompras":10,"span":288}},"308107":{"5":{"saldo":1932.39,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":1.0,"nRec":2,"diasAnt":0.0,"nAnt":0,"ultima":"2026-06-16","nCompras":1,"span":0},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":4000.0,"cortado":0,"diasRec":0.0,"nRec":1,"diasAnt":8.0,"nAnt":8,"ultima":"2026-02-05","nCompras":2,"span":121}},"304566":{"4":{"saldo":312.09,"vencido":312.09,"atraso":48,"limite":1500.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":29.0,"nAnt":4,"ultima":"2026-06-09","nCompras":3,"span":274}},"3367":{"5":{"saldo":320.85,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":1,"diasRec":47.0,"nRec":4,"diasAnt":39.0,"nAnt":7,"ultima":"2026-08-14","nCompras":12,"span":346},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"33308634":{"5":{"saldo":2810.34,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":8.0,"nRec":2,"diasAnt":0.0,"nAnt":0,"ultima":"2026-06-09","nCompras":1,"span":0}},"3376":{"5":{"saldo":664.94,"vencido":0.0,"atraso":0,"limite":20000.0,"cortado":0,"diasRec":0.0,"nRec":1,"diasAnt":9.0,"nAnt":9,"ultima":"2026-07-14","nCompras":4,"span":237},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"31351":{"4":{"saldo":1093.38,"vencido":0.0,"atraso":0,"limite":3500.0,"cortado":0,"diasRec":-21.0,"nRec":4,"diasAnt":-3.0,"nAnt":6,"ultima":"2026-06-10","nCompras":3,"span":265},"5":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"306608":{"4":{"saldo":1263.26,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":6.0,"nRec":1,"diasAnt":8.0,"nAnt":3,"ultima":"2026-07-15","nCompras":2,"span":218}},"33307519":{"5":{"saldo":600.0,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":-52.0,"nRec":5,"diasAnt":-13.0,"nAnt":4,"ultima":"2026-08-18","nCompras":114,"span":265}},"3234":{"5":{"saldo":1058.66,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":6.0,"nRec":3,"diasAnt":19.0,"nAnt":8,"ultima":"2026-08-06","nCompras":16,"span":328},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"3181":{"5":{"saldo":1893.65,"vencido":0.0,"atraso":0,"limite":5000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":13.0,"nAnt":7,"ultima":"2026-08-21","nCompras":64,"span":358},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"305609":{"4":{"saldo":425.35,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":-28.0,"nAnt":1,"ultima":"2026-07-29","nCompras":1,"span":0}},"33309198":{"4":{"saldo":1149.9,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2026-07-30","nCompras":1,"span":0}},"33308581":{"4":{"saldo":743.84,"vencido":0.0,"atraso":0,"limite":3000.0,"cortado":0,"diasRec":3.0,"nRec":4,"diasAnt":0.0,"nAnt":0,"ultima":"2026-07-06","nCompras":2,"span":48}},"3014":{"4":{"saldo":726.21,"vencido":0.0,"atraso":0,"limite":4000.0,"cortado":0,"diasRec":11.0,"nRec":2,"diasAnt":33.0,"nAnt":7,"ultima":"2026-07-07","nCompras":3,"span":257},"5":{"saldo":1140.8,"vencido":380.23,"atraso":3,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2026-07-07","nCompras":1,"span":0}},"303638":{"5":{"saldo":2194.28,"vencido":0.0,"atraso":0,"limite":5000.0,"cortado":0,"diasRec":36.0,"nRec":4,"diasAnt":112.0,"nAnt":20,"ultima":"2026-08-14","nCompras":12,"span":347}},"28":{"4":{"saldo":21.0,"vencido":21.0,"atraso":34,"limite":0.0,"cortado":0,"diasRec":1.0,"nRec":1,"diasAnt":0.0,"nAnt":0,"ultima":"2026-07-24","nCompras":1,"span":0},"3":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"33308723":{"4":{"saldo":2970.84,"vencido":990.28,"atraso":21,"limite":10000.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2026-08-19","nCompras":24,"span":77}},"33307412":{"4":{"saldo":3016.67,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":32.0,"nRec":5,"diasAnt":45.0,"nAnt":25,"ultima":"2026-08-11","nCompras":13,"span":277}},"3285":{"5":{"saldo":499.0,"vencido":0.0,"atraso":0,"limite":10000.0,"cortado":0,"diasRec":6.0,"nRec":4,"diasAnt":6.0,"nAnt":12,"ultima":"2026-08-13","nCompras":5,"span":260},"4":{"saldo":0.0,"vencido":0.0,"atraso":0,"limite":2500.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":null,"nCompras":0,"span":0}},"4059":{"5":{"saldo":1920.03,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2026-08-14","nCompras":1,"span":0}},"3085":{"4":{"saldo":606.9,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":1.0,"nRec":2,"diasAnt":14.0,"nAnt":6,"ultima":"2026-08-17","nCompras":11,"span":336}},"306421":{"5":{"saldo":343.68,"vencido":0.0,"atraso":0,"limite":10000.0,"cortado":0,"diasRec":40.0,"nRec":7,"diasAnt":15.0,"nAnt":6,"ultima":"2026-08-14","nCompras":23,"span":353}},"33307109":{"4":{"saldo":808.9,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":167.0,"nRec":16,"diasAnt":524.0,"nAnt":122,"ultima":"2026-08-19","nCompras":54,"span":335}},"337004":{"4":{"saldo":514.0,"vencido":0.0,"atraso":0,"limite":0.0,"cortado":0,"diasRec":0.0,"nRec":0,"diasAnt":0.0,"nAnt":0,"ultima":"2026-08-21","nCompras":24,"span":360}},"3534":{"4":{"saldo":363.0,"vencido":0.0,"atraso":0,"limite":2000.0,"cortado":0,"diasRec":-1.0,"nRec":1,"diasAnt":13.0,"nAnt":3,"ultima":"2026-08-21","nCompras":10,"span":318}}},"nomes":{"28":"VITOR DOS SANTOS SIMOES","162":"TERRABEL EMPREENDIMENTOS LTDA","199":"F7 BRETAS DISTRIBUIDORA LTDA","3007":"ALEXANDRE MAGNO DUARTE COSTA","3014":"ALTAIR DE MORAES","3037":"ARISIO CABRAL DO COUTO","3049":"BAIM MOTOS LTDA","3076":"CARLOS MARQUES DE CARVALHO","3079":"CASTELO MOTORS COMERCIO DE MOTOCICLETAS LTDA","3085":"ADEMIR BOHRER 65.666.481","3130":"AD ILDO MARQUES OLIVEIRA 05305933609","3140":"ADONIAS FRANCO DA SILVA 02454982650","3143":"ADRIEL FONTES DAMASCENO","3155":"GLOSIA ALVES DRUMOND TORRES","3177":"IGOR IURI PEREIRA","3181":"IPAMOTOS LTDA","3192":"DIM MOTOS EIRELI","3211":"EDILENA MARIA REZENDE LEITE","3234":"ELYSSON GIL DUARTE GUALBERTO 08342880605","3266":"JEFERSON DOUGLAS PINHO ALVES 15321095639","3284":"KLINGER MARTINS CASTRO","3285":"KLINGER SOUZA LAGE","3287":"LABIRINTO MOTOPEÇAS LTDA ME","3305":"ENZO MOTOS LTDA","3323":"JOSE HILTON SANTOS PEDREIRA 35988289951","3347":"FABRICIO EDNALDO DE OLIVEIRA 71559116668","3367":"FREDERICO ARAUJO COMERCIO E SERVICOS LTDA","3376":"GABRIEL VAZ DE OLIVEIRA","3378":"GARDENIO RODRIGUES PEREIRA 06607863620","3384":"GERALDO MAGELA GONCALVES CPF 57575169849","3385":"GERALDO PEREIRA DA SILVA 38744481691","3386":"GERALDO RODRIGUES GONCALVES","3388":"GERSON MARTINS PERDIGAO","3393":"GILMAR TEIXEIRA DA SILVA 06090063630","3406":"MATEUS DE JESUS PIRES","3428":"MONICA GONCALVES GUIMARAES- FURIA","3451":"MOTOS BALTAZAR LTDA","3462":"NERY E COSTA PECAS PARA MOTOCICLETAS LTDA","3472":"OPCAO MOTOPECAS LTDA","3476":"PANORAMA DUAS RODAS COMERCIO DE MOTO PECAS LTDA","3500":"RONILSON FIRMINO SALGUEIRO","3508":"SABRINA MIRANDA SOARES AMORIM","3516":"SEBASTIAO ALVES PEREIRA 03111600696","3524":"SHEKINAH MOTOS PEÇAS E OFICINA LTDA","3534":"REBIMBOCA COMERCIO DE PEÇAS LTDA-TÁSSIO","3536":"REINALDO FERNANDES CORDEIRO 00481016643","3558":"LUAN VICTOR RIBEIRO 14104780685","3579":"M E V MOTOPECAS LTDA","3581":"FELLIPE CUNHA FERREIRA 65.380.323","3582":"MADSON EVANGELISTA SOUZA 07662435679","3591":"MARCELO RAMOS 03208299605","3592":"MARCELO RIBEIRO CASTRO","3594":"MARCIO ANTONIO CASSIANO","3595":"MARCIO JOSE DA SILVA","3605":"MARCOS LOURENCO DE SOUZA 85301914634","3615":"MARIO MOTOS COMERCIO E MANUTENCAO LTDA","3626":"VANIA MACHADO DE SOUSA 05569731601","3634":"VILMAR PEREIRA COSTA JUNIOR","3674":"SPD MOTOPECAS LTDA","3676":"TALES FERNANDO MARTINS TORRES 12475641690","3679":"MOTOPECAS GUERRA LTDA","3683":"THALLES AQUILA SOUZA BERBERT","3693":"TUSCHTLER & TUSCHTLER COMERCIO DE PECAS E ACESSORI","4059":"GUILHERME ADRIANO DE FIGUEIREDO","4085":"FERNANDES E FERREIRA MOTO PECAS LTDA","4094":"ALAN DE SOUZA ARAUJO","4098":"JOSE BATISTA CANDEIAS 49.703.090","31013":"ADRIANINHO MOTOS OFICINA E PECAS LTDA","31039":"LARISSA SILVESTRE BARROSO- 52.238.601","31351":"EDILSON DOS SANTOS REIS 11643308610","31393":"NIVALDO ALVES PEREIRA","32300":"LEONARDO COLODINO FERREIRA -49.763.471","32557":"MARIANA CRISTINA E SILVA FONSECA -51.513.277","302595":"VILMAR RIBEIRO DE SOUZA","303629":"NATAN DA SILVA PINTO","303638":"SEBASTIAO CABRAL DE ALMEIDA 53.604.953","303781":"SAMUEL JOSE MENDOZA OVALLES 53.765.831","304030":"RAFAEL DO NASCIMENTO SILVA","304566":"LUCAS INACIO MARTINS 50.042.320","304584":"MARCELO ALVES SILVA 54.686.576","305440":"MARCUS VINICIUS LIMA MAGALHAES 55.318.129","305609":"SETAMOTOS COMERCIO E SERVICOS LTDA","306314":"WILSON JOSE FRIAS PACHECO 55.636.190","306323":"DIONISIO EDUARDO DE FREITAS 56.052.075","306421":"SILVEIRA E CHAVES MOTOPECAS LTDA","306591":"IPATINGA MOTO PECAS LTDA","306608":"IPAMINONDAS FELIPE DE LIMA FILHO 58.985.143","307037":"NATANAEL MARTINS OLIVEIRA","307297":"RAFAEL TOMAZ DA SILVA MELO","308107":"LEANDRO LUIZ FILHO -60.631.931","309099":"FELIPE AUGUSTO DE SOUZA SANTOS- 60.133.051","312094":"EDVALDO DOMINGUES VASCONCELOS 10830140646","337004":"ALTERNATIVA AUTO MOTO PECAS LTDA","378095":"JOSE LUIZ DOS SANTOS","383098":"DJW MOTOS LTDA","577094":"RENATO RIBEIRO DE FREITAS 62.449.001","707051":"VICTOR EMANOEL DE SOUZA MAIA 61.202.067","807069":"CLAUDIO LUIZ DE OLIVEIRA 59.526.807","1511518":"ELIEL COELHO DE CARVALHO JUNIOR - DONALD PECAS","2070911":"ABRAAO OLIVEIRA FERNANDES 59.809.436","2222115":"WILLER RODRIGUES PIMENTA","3007016":"LARISSA ARAUJO SILVA 55.994.991","3070875":"CLAUDINEI DE SOUZA 60.366.298","3070946":"OCATOM MOTOS LTDA","3070991":"DIEGO FONTES DE OLIVEIRA 54.415.752","9090093":"MATEUS FILIPE DE DEUS GERVASIO 50.486.401","33307109":"GUSTAVO HUDSON DE OLIVEIRA ROCHA","33307412":"PRO DREAM COMERCIO E MANUTENCAO DE PECAS LTDA","33307519":"EVANDRO CALHEIROS NETO 63.723.060","33308082":"CASA MOACIR LAGE LTDA","33308117":"KAWAN GABRIEL COSTA CANDEIAS 65.225.972","33308206":"ISABELLA THAIS ROSA DE ABREU 62.094.210","33308554":"KENIA GONCALVES PEREIRA- 64.843.431","33308581":"CLEZERO RODRIGUES DOS SANTOS","33308634":"JOSIANE PEREIRA DA COSTA SOUZA 10462353621","33308643":"MULTI SHOPPING FABRICACAO E VENDA DE ACESSORIOS LT","33308723":"CASTELO MOTOS LTDA","33308849":"VALDENIO FERREIRA DUTRA 55.473.077","33308974":"TAINARA FERRAZ DE OLIVEIRA 53.249.023","33309198":"BRASVILA COMERCIO IMPORTACAO E EXPORTACAO LTDA"},"unidades":[3,4,5],"diasCobranca":60,"mesesHist":12,"mesesRecente":3,"geradoEm":"24/08/2026 17:36"};
+let ordem = {campo:'score', desc:true};
 
-function fmt(n){ return 'R$ ' + Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
-function fmtPct(n){ return (n>=0?'+':'') + (n*100).toFixed(1) + '%'; }
+function fmt(n){ return 'R$ ' + Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtData(iso){ return iso ? iso.split('-').reverse().join('/') : '—'; }
+function dias(a, b){ return Math.round((new Date(b+'T12:00:00') - new Date(a+'T12:00:00')) / 86400000); }
 
-// Monta os checkboxes de filtro de unidade (todas marcadas por padrão)
-const filtroDiv = document.getElementById('filtro-unidades');
-DADOS.unidadesDisponiveis.forEach(u => {
-  const id = 'un-' + u;
-  const label = document.createElement('label');
-  label.innerHTML = '<input type="checkbox" class="filtro-unidade" value="' + u + '" id="' + id + '" checked> Unidade ' + u;
-  filtroDiv.appendChild(label);
-});
-filtroDiv.addEventListener('change', renderizar);
-
-function unidadesSelecionadas(){
-  return Array.from(document.querySelectorAll('.filtro-unidade:checked')).map(el => el.value);
+function unidades(){
+  return Array.from(document.querySelectorAll('.filtro-unidade:checked')).map(function(el){ return el.value; });
+}
+function montaFiltro(){
+  const div = document.getElementById('filtro-unidades');
+  D.unidades.forEach(function(u){
+    const l = document.createElement('label');
+    l.innerHTML = '<input type="checkbox" class="filtro-unidade" value="' + u + '" checked> Unidade ' + u;
+    div.appendChild(l);
+  });
 }
 
-// Recalcula saldo dia-a-dia, crescimento médio e risco de um cliente considerando
-// apenas as unidades selecionadas no filtro (mesma lógica de gerar_risco_cliente.py)
-function calcularStats(cliente, unidades){
-  const nDias = DADOS.dias.length;
-  const saldos = new Array(nDias).fill(0);
-  let temDados = false;
-  unidades.forEach(u => {
-    const arr = cliente.unidades[u];
-    if (arr) {
-      temDados = true;
-      arr.forEach((v, i) => { saldos[i] += v; });
-    }
+/* Junta as unidades marcadas num retrato unico do cliente. Somas e contagens
+   vem cruas do gerador justamente para poder recombinar aqui sem perder media. */
+function retrato(cli){
+  const uns = unidades();
+  const c = D.clientes[cli];
+  const t = {saldo:0, vencido:0, atraso:0, limite:0, cortado:0,
+             diasRec:0, nRec:0, diasAnt:0, nAnt:0, ultima:null, nCompras:0, span:0};
+  let tem = false;
+  uns.forEach(function(u){
+    const r = c[u];
+    if(!r) return;
+    tem = true;
+    t.saldo += r.saldo; t.vencido += r.vencido;
+    if(r.atraso > t.atraso) t.atraso = r.atraso;
+    t.limite += r.limite;
+    if(r.cortado) t.cortado = 1;
+    t.diasRec += r.diasRec; t.nRec += r.nRec;
+    t.diasAnt += r.diasAnt; t.nAnt += r.nAnt;
+    t.nCompras += r.nCompras;
+    if(r.span > t.span) t.span = r.span;
+    if(r.ultima && (!t.ultima || r.ultima > t.ultima)) t.ultima = r.ultima;
   });
-  if (!temDados) return null;
+  if(!tem || t.saldo <= 0) return null;
+  t.uso = t.limite > 0 ? t.saldo / t.limite : null;
+  t.atrasoRec = t.nRec > 0 ? t.diasRec / t.nRec : null;
+  t.atrasoAnt = t.nAnt > 0 ? t.diasAnt / t.nAnt : null;
+  /* Piora so vale com base minima dos dois lados: 1 titulo nao faz media. */
+  t.piora = (t.atrasoRec !== null && t.atrasoAnt !== null && t.nRec >= 2 && t.nAnt >= 2)
+            ? t.atrasoRec - t.atrasoAnt : null;
+  t.cadencia = (t.nCompras >= 3 && t.span > 0) ? t.span / t.nCompras : null;
+  t.semComprar = t.ultima ? dias(t.ultima, D.hoje) : null;
+  return t;
+}
 
-  const crescimentos = [];
-  for (let i = 1; i < nDias; i++) {
-    const base = saldos[i - 1];
-    if (base > DADOS.saldoMinimoBase) {
-      crescimentos.push((saldos[i] - base) / base);
+/* Score preventivo. Cada bloco devolve pontos e o motivo em texto, para a
+   tabela poder mostrar POR QUE aquele cliente esta ali — score sem explicacao
+   ninguem usa para tomar decisao. */
+function score(t){
+  let s = 0;
+  const porques = [];
+
+  if(t.uso !== null){
+    if(t.uso > 1){ s += 35; porques.push(['forte', 'estourou o limite (' + Math.round(t.uso*100) + '%)']); }
+    else if(t.uso >= 0.8){ s += 25; porques.push(['forte', 'usou ' + Math.round(t.uso*100) + '% do limite']); }
+    else if(t.uso >= 0.5){ s += 10; porques.push(['', 'usou ' + Math.round(t.uso*100) + '% do limite']); }
+  }else{
+    porques.push(['', 'sem limite cadastrado']);
+  }
+
+  if(t.piora !== null){
+    const p = t.piora;
+    if(p > 15){ s += 30; porques.push(['forte', 'atraso subiu ' + Math.round(p) + ' dias']); }
+    else if(p > 10){ s += 22; porques.push(['forte', 'atraso subiu ' + Math.round(p) + ' dias']); }
+    else if(p > 5){ s += 15; porques.push(['', 'atraso subiu ' + Math.round(p) + ' dias']); }
+    else if(p > 2){ s += 7; porques.push(['', 'atraso subiu ' + Math.round(p) + ' dias']); }
+  }
+
+  if(t.cadencia !== null && t.semComprar !== null){
+    if(t.semComprar > Math.max(3 * t.cadencia, 45)){
+      s += 25; porques.push(['forte', 'sumiu há ' + t.semComprar + ' dias (comprava a cada ' + Math.round(t.cadencia) + ')']);
+    }else if(t.semComprar > Math.max(2 * t.cadencia, 30)){
+      s += 12; porques.push(['', 'comprando menos: ' + t.semComprar + ' dias parado (cadência ' + Math.round(t.cadencia) + ')']);
     }
   }
-  if (crescimentos.length === 0) return null;
 
-  const crescimentoMedio = crescimentos.reduce((a, b) => a + b, 0) / crescimentos.length;
-  const mediaCompraSemanal = unidades.reduce((s, u) => s + (cliente.mediaCompraSemanalPorUnidade[u] || 0), 0);
+  if(t.cortado){ s += 10; porques.push(['', 'a loja já cortou o limite dele']); }
 
-  return {
-    codigo: cliente.codigo,
-    nome: cliente.nome,
-    saldos,
-    saldoAtual: saldos[nDias - 1],
-    crescimentoMedio,
-    mediaCompraSemanal,
-    risco: crescimentoMedio > DADOS.limiar,
-  };
+  if(t.saldo >= 10000){ s += 10; porques.push(['', 'exposição alta']); }
+  else if(t.saldo >= 5000){ s += 6; }
+  else if(t.saldo >= 2000){ s += 3; }
+
+  return {score: Math.min(s, 100), porques: porques};
+}
+
+function faixaDe(s){ return s >= 60 ? 'critico' : (s >= 40 ? 'alto' : (s >= 25 ? 'atencao' : null)); }
+
+/* Separa o universo em: preventivo (o ranking) e cobranca (ja passou do ponto). */
+function analisar(){
+  const preventivo = [], cobranca = [];
+  Object.keys(D.clientes).forEach(function(cli){
+    const t = retrato(cli);
+    if(!t) return;
+    t.cli = cli;
+    t.nome = D.nomes[cli] || ('Cliente ' + cli);
+    if(t.atraso > D.diasCobranca){ cobranca.push(t); return; }
+    const r = score(t);
+    t.score = r.score; t.porques = r.porques; t.faixa = faixaDe(r.score);
+    if(t.faixa) preventivo.push(t);
+  });
+  return {preventivo: preventivo, cobranca: cobranca};
+}
+
+function renderKpis(a){
+  const cont = {critico:0, alto:0, atencao:0};
+  let expost = 0;
+  a.preventivo.forEach(function(t){ cont[t.faixa]++; expost += t.saldo; });
+  document.getElementById('kpis').innerHTML =
+    '<div class="card critico"><label>Crítico (60+)</label><div class="calc">' + cont.critico + '</div></div>' +
+    '<div class="card alto"><label>Alto (40-59)</label><div class="calc">' + cont.alto + '</div></div>' +
+    '<div class="card atencao"><label>Atenção (25-39)</label><div class="calc">' + cont.atencao + '</div></div>' +
+    '<div class="card"><label>Exposição sinalizada</label><div class="calc">' + fmt(expost) + '</div></div>';
+}
+
+function renderAviso(a){
+  const totalCob = a.cobranca.reduce(function(s,t){ return s + t.vencido; }, 0);
+  const semLimite = a.preventivo.filter(function(t){ return t.uso === null; }).length;
+  document.getElementById('aviso').innerHTML =
+    '• <b>' + a.cobranca.length + ' clientes já passaram do ponto de prevenção</b> (atraso acima de ' +
+      D.diasCobranca + ' dias), somando <b>' + fmt(totalCob) + '</b> vencido. Eles ficam fora do ranking porque ' +
+      'aqui a pergunta é "quem vai virar problema", e esses já viraram — o caminho deles é cobrança.' +
+    (semLimite ? '<br>• <b>' + semLimite + ' dos clientes sinalizados não têm limite de crédito cadastrado.</b> ' +
+      'Sem limite, o sinal mais forte do modelo não funciona para eles — vale cadastrar.' : '');
+}
+
+function renderTabela(a){
+  const faixas = Array.from(document.querySelectorAll('.chk-faixa:checked')).map(function(e){ return e.value; });
+  const lista = a.preventivo.filter(function(t){ return faixas.indexOf(t.faixa) >= 0; });
+  const cols = [['nome','Cliente'],['score','Score'],['saldo','Saldo devedor'],['uso','Uso do limite'],
+                ['limite','Limite'],['atrasoRec','Atraso recente'],['piora','Piora'],
+                ['semComprar','Dias sem comprar'],['porques','Por que está aqui']];
+  document.querySelector('#tabela thead').innerHTML = '<tr>' + cols.map(function(c){
+    return '<th onclick="ordenar(\'' + c[0] + '\')">' + c[1] +
+      (ordem.campo === c[0] ? (ordem.desc ? ' ▼' : ' ▲') : '') + '</th>';
+  }).join('') + '</tr>';
+
+  lista.sort(function(x, y){
+    const a1 = x[ordem.campo], b1 = y[ordem.campo];
+    if(ordem.campo === 'nome') return ordem.desc ? String(b1).localeCompare(a1) : String(a1).localeCompare(b1);
+    const va = (a1 === null || a1 === undefined) ? -1e9 : a1;
+    const vb = (b1 === null || b1 === undefined) ? -1e9 : b1;
+    return ordem.desc ? vb - va : va - vb;
+  });
+
+  const tbody = document.querySelector('#tabela tbody');
+  if(!lista.length){
+    tbody.innerHTML = '<tr><td colspan="9" class="sem-dados">Nenhum cliente nas faixas marcadas.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(function(t){
+    return '<tr><td><b>' + t.nome + '</b> <span class="cod">#' + t.cli + '</span></td>' +
+      '<td><span class="faixa ' + t.faixa + '">' + t.score + '</span></td>' +
+      '<td>' + fmt(t.saldo) + '</td>' +
+      '<td>' + (t.uso === null ? '—' : Math.round(t.uso*100) + '%') + '</td>' +
+      '<td>' + (t.limite > 0 ? fmt(t.limite) : '—') + '</td>' +
+      '<td>' + (t.atrasoRec === null ? '—' : t.atrasoRec.toFixed(1) + ' d') + '</td>' +
+      '<td>' + (t.piora === null ? '—' : (t.piora > 0 ? '+' : '') + t.piora.toFixed(1) + ' d') + '</td>' +
+      '<td>' + (t.semComprar === null ? '—' : t.semComprar) + '</td>' +
+      '<td class="porques">' + t.porques.map(function(p){
+        return '<i class="' + p[0] + '">' + p[1] + '</i>';
+      }).join('') + '</td></tr>';
+  }).join('');
+}
+
+function ordenar(campo){
+  if(ordem.campo === campo) ordem.desc = !ordem.desc;
+  else ordem = {campo: campo, desc: true};
+  renderizar();
 }
 
 function renderizar(){
-  const unidades = unidadesSelecionadas();
-
-  document.getElementById('gerado-em').textContent = 'Gerado em ' + DADOS.geradoEm + ' · Semana analisada: ' + DADOS.dias[0].split('-').reverse().join('/') + ' a ' + DADOS.dias[DADOS.dias.length-1].split('-').reverse().join('/') + ' · Unidade(s): ' + (unidades.length ? unidades.join(', ') : '(nenhuma selecionada)');
-
-  const cont = document.getElementById('tabela-container');
-  const kpis = document.getElementById('kpis');
-
-  if (unidades.length === 0) {
-    kpis.innerHTML = '';
-    cont.innerHTML = '<div class="sem-dados">Selecione ao menos uma unidade de negócio para ver a análise.</div>';
-    return;
-  }
-
-  const linhas = DADOS.clientes
-    .map(c => calcularStats(c, unidades))
-    .filter(l => l !== null)
-    .sort((a, b) => b.crescimentoMedio - a.crescimentoMedio);
-
-  const emRisco = linhas.filter(l => l.risco);
-  kpis.innerHTML =
-    '<div class="card risco"><label>Clientes em risco</label><div class="calc">' + emRisco.length + '</div></div>' +
-    '<div class="card"><label>Clientes analisados</label><div class="calc">' + linhas.length + '</div></div>' +
-    '<div class="card risco"><label>Saldo devedor em risco</label><div class="calc">' + fmt(emRisco.reduce((s,c)=>s+c.saldoAtual,0)) + '</div></div>';
-
-  if (emRisco.length === 0) {
-    cont.innerHTML = '<div class="sem-risco">✅ Nenhum cliente com crescimento de saldo devedor acima de 20% esta semana (unidade(s) ' + unidades.join(', ') + ').</div>';
-    return;
-  }
-
-  let rows = '';
-  linhas.forEach(c => {
-    const saldosTxt = c.saldos.map(s => fmt(s)).join(' → ');
-    rows += '<tr class="' + (c.risco ? 'risco' : '') + '">' +
-      '<td>' + (c.risco ? '<span class="tag-risco">⚠️ RISCO</span> ' : '') + '</td>' +
-      '<td>' + c.nome + ' (#' + c.codigo + ')</td>' +
-      '<td>' + fmt(c.saldoAtual) + '</td>' +
-      '<td style="' + (c.crescimentoMedio > 0.20 ? 'color:#c00000;font-weight:bold' : '') + '">' + fmtPct(c.crescimentoMedio) + '</td>' +
-      '<td title="' + saldosTxt + '">' + saldosTxt + '</td>' +
-      '<td>' + fmt(c.mediaCompraSemanal) + '</td>' +
-    '</tr>';
-  });
-  cont.innerHTML = '<table><thead><tr><th></th><th>Cliente</th><th>Saldo devedor atual</th><th>Cresc. médio diário (semana)</th><th>Evolução do saldo (seg → hoje)</th><th>Média compra semanal (3m)</th></tr></thead><tbody>' + rows + '</tbody></table>' +
-    '<div class="footer-note">Mostrando todos os ' + linhas.length + ' clientes com saldo devedor analisável na semana para a(s) unidade(s) selecionada(s), ordenados pelo maior crescimento. Os destacados em vermelho ultrapassaram o limite de 20%.</div>';
+  const a = analisar();
+  renderKpis(a);
+  renderAviso(a);
+  renderTabela(a);
+  document.getElementById('sub').textContent =
+    'Gerado em ' + D.geradoEm + ' · posição de ' + fmtData(D.hoje) +
+    ' · unidade(s) ' + (unidades().join(', ') || '—') +
+    ' · histórico de ' + D.mesesHist + ' meses, "recente" = últimos ' + D.mesesRecente;
 }
 
+montaFiltro();
+document.getElementById('filtro-unidades').addEventListener('change', renderizar);
+Array.prototype.forEach.call(document.querySelectorAll('.chk-faixa'), function(c){
+  c.addEventListener('change', renderizar);
+});
+document.getElementById('nota').innerHTML =
+  '<b>De onde vem cada número:</b> saldo devedor e atraso são calculados título a título ' +
+  '(TREC_ABERTO/TREC_BAIXADO), nunca dos campos consolidados do ERP — o saldo devedor gravado lá está ' +
+  'desatualizado em 3x e o atraso médio diverge do real. O limite vem do cadastro por cliente e unidade. ' +
+  'Cartão e cobrança em carteira ficam fora, pela mesma regra do Contas a Receber.<br>' +
+  '<b>Clique no cabeçalho</b> para reordenar. As empresas do grupo e o CONSUMIDOR FINAL não entram: ' +
+  'aparecem no cadastro como cliente, com limite irreal, e não são risco de crédito.';
 renderizar();
-</script>
-</body>
-</html>
+</script></body></html>
