@@ -4091,7 +4091,7 @@ function calcularAnalise(fonte){
     // mercadoria que chegou há pouco não conta como dinheiro parado
     if(dias>0 && it.ue && it.ue>=corte){ ignoradosRecentes++; valorIgnorado+=excValor; return; }
     const g=porForn[forn]||(porForn[forn]={fornecedor:forn,itens:[],qtd:0,valor:0});
-    g.itens.push({c:it.c,u:it.u,d:it.d,cf:it.cf,pico,estoque,ideal,excQtd,custo,excValor,ue:it.ue});
+    g.itens.push({c:it.c,u:it.u,d:it.d,cf:it.cf,pico,estoque,ideal,excQtd,custo,excValor,ue:it.ue,preco:it.pv||0});
     g.qtd+=excQtd; g.valor+=excValor;
     totalValor+=excValor; totalItens++;
   });
@@ -4178,7 +4178,9 @@ function renderAnalise(fonte){
           '<th style="padding:6px 8px;text-align:left">Cód. Fabricante</th>'+
           '<th class="num" style="padding:6px 8px">Pico</th><th class="num" style="padding:6px 8px">Estoque</th>'+
           '<th class="num" style="padding:6px 8px">Ideal (pico×'+r.fator+')</th><th class="num" style="padding:6px 8px">Excesso</th>'+
-          '<th class="num" style="padding:6px 8px">Custo</th><th class="num" style="padding:6px 8px">Valor parado</th>'+
+          '<th class="num" style="padding:6px 8px">Custo</th>'+
+          '<th class="num" style="padding:6px 8px" title="Preço de venda de tabela">Preço</th>'+
+          '<th class="num" style="padding:6px 8px">Valor parado</th>'+
           '<th class="num" style="padding:6px 8px" title="Data da última entrada da mercadoria no estoque">Última entrada</th>'+
         '</tr></thead><tbody>'+
         g.itens.map(i=>'<tr>'+
@@ -4191,6 +4193,7 @@ function renderAnalise(fonte){
           '<td class="num" style="padding:5px 8px;color:#64748b">'+i.ideal+'</td>'+
           '<td class="num" style="padding:5px 8px;color:#dc2626;font-weight:700">'+i.excQtd+'</td>'+
           '<td class="num" style="padding:5px 8px">'+fmt(i.custo)+'</td>'+
+          '<td class="num" style="padding:5px 8px">'+(i.preco?fmt(i.preco):'—')+'</td>'+
           '<td class="num" style="padding:5px 8px;color:#dc2626;font-weight:700">'+fmt(i.excValor)+'</td>'+
           ultimaEntradaCel(i.ue)+
         '</tr>').join('')+
@@ -4274,13 +4277,13 @@ function exportarAnaliseItens(fonte){
   csv+='Regra:;(pico x '+r.fator+') - estoque; negativo = excesso\n';
   csv+='Ignorados:;itens que entraram no estoque nos ultimos '+r.dias+' dias ('+r.ignoradosRecentes+' itens, R$ '+r.valorIgnorado.toFixed(2).replace('.',',')+')\n';
   csv+='Data:;'+new Date().toLocaleDateString('pt-BR')+'\n\n';
-  csv+='Fornecedor;Codigo;'+(cfg.temUnidade?'Unidade;':'')+'Descricao;Cod. Fabricante;Pico mensal;Estoque;Ideal (pico x '+r.fator+');Qtd excedente;Custo unit. (R$);Valor parado (R$);Ultima entrada;Dias desde a entrada\n';
+  csv+='Fornecedor;Codigo;'+(cfg.temUnidade?'Unidade;':'')+'Descricao;Cod. Fabricante;Pico mensal;Estoque;Ideal (pico x '+r.fator+');Qtd excedente;Custo unit. (R$);Preco venda (R$);Valor parado (R$);Ultima entrada;Dias desde a entrada\n';
   r.lista.forEach(g=>{
     g.itens.forEach(i=>{
       const ent=ultimaEntradaInfo(i.ue);
       csv+='"'+String(g.fornecedor).replace(/"/g,'""')+'";'+i.c+';'+(cfg.temUnidade?i.u+';':'')+
         '"'+String(i.d||'').replace(/"/g,'""')+'";"'+String(i.cf||'').replace(/"/g,'""')+'";'+i.pico+';'+i.estoque+';'+i.ideal+';'+
-        i.excQtd+';'+i.custo.toFixed(2).replace('.',',')+';'+i.excValor.toFixed(2).replace('.',',')+';'+
+        i.excQtd+';'+i.custo.toFixed(2).replace('.',',')+';'+(i.preco||0).toFixed(2).replace('.',',')+';'+i.excValor.toFixed(2).replace('.',',')+';'+
         (ent?ent.data.toLocaleDateString('pt-BR'):'')+';'+(ent?ent.dias:'')+'\n';
     });
   });
