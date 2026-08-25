@@ -729,7 +729,7 @@
 <div id="app-tab-inativar" class="main hidden">
   <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
     <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">🚫 INATIVAR — o que não vale mais a pena ter em estoque</h2><div style="font-size:12px;color:#64748b;margin-bottom:14px">Só item que <strong>já está com estoque excedente</strong> (estoque − pico × fator, a mesma conta da Análise de Fornecedor). Dois motivos, em blocos separados: <strong>margem baixa</strong>, quando o markup de tabela (preço ÷ custo − 1) fica abaixo do limite; e <strong>sem giro</strong>, quando não houve venda nenhuma em 12 meses. Estes itens aparecem marcados no Montar Pedido para não serem comprados de novo.</div>
-    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos meses de venda a loja pode manter antes de sobrar">Excedente acima de (× pico)</label><input type="number" id="in-fator" value="3" min="1" step="1" onchange="salvarInatParam('mc')" style="width:120px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Markup de tabela abaixo deste valor entra na lista">Markup mínimo (%)</label><input type="number" id="in-mkp" value="30" min="0" step="1" onchange="salvarInatParam('mc')" style="width:120px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Ordenar por</label><select id="in-ordem" onchange="setInatOrdem(this.value)" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"><option value="valor">Maior valor parado</option><option value="qtd">Maior excesso</option><option value="mkp">Menor markup</option></select></div><div style="flex:1;min-width:180px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar</label><input type="text" id="in-busca" oninput="renderInativar('mc')" placeholder="descrição, código, fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div><button class="btn btn-outline" onclick="exportarInativar('mc')">⬇ Excel</button></div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos meses de venda a loja pode manter antes de sobrar">Excedente acima de (× pico)</label><input type="number" id="in-fator" value="3" min="1" step="1" onchange="salvarInatParam('mc')" style="width:120px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Markup de tabela abaixo deste valor entra na lista">Markup mínimo (%)</label><input type="number" id="in-mkp" value="30" min="0" step="1" onchange="salvarInatParam('mc')" style="width:120px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Mercadoria que entrou no estoque dentro deste prazo não entra na lista: ainda não teve tempo de girar">Ignorar chegadas até (dias)</label><input type="number" id="in-dias" value="90" min="0" step="1" onchange="salvarInatParam('mc')" style="width:130px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Ordenar por</label><select id="in-ordem" onchange="setInatOrdem(this.value)" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"><option value="valor">Maior valor parado</option><option value="qtd">Maior excesso</option><option value="mkp">Menor markup</option></select></div><div style="flex:1;min-width:180px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar</label><input type="text" id="in-busca" oninput="renderInativar('mc')" placeholder="descrição, código, fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div><button class="btn btn-outline" onclick="exportarInativar('mc')">⬇ Excel</button></div>
   </div>
   <div class="stats" id="in-kpis" style="margin-bottom:16px"></div>
   <div id="in-tabela"></div>
@@ -1070,7 +1070,7 @@
   <div id="app-tab-inativar-seven" class="main hidden" style="padding:0">
     <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
       <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">🚫 INATIVAR — o que não vale mais a pena ter em estoque</h2><div style="font-size:12px;color:#64748b;margin-bottom:14px">Só item que <strong>já está com estoque excedente</strong> (estoque − pico × fator, a mesma conta da Análise de Fornecedor). Dois motivos, em blocos separados: <strong>margem baixa</strong>, quando o markup de tabela (preço ÷ custo − 1) fica abaixo do limite; e <strong>sem giro</strong>, quando não houve venda nenhuma em 12 meses. Estes itens aparecem marcados no Montar Pedido para não serem comprados de novo.</div>
-      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos meses de venda a loja pode manter antes de sobrar">Excedente acima de (× pico)</label><input type="number" id="ins-fator" value="3" min="1" step="1" onchange="salvarInatParam('seven')" style="width:120px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Markup de tabela abaixo deste valor entra na lista">Markup mínimo (%)</label><input type="number" id="ins-mkp" value="30" min="0" step="1" onchange="salvarInatParam('seven')" style="width:120px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Unidade</label><select id="ins-unidade" onchange="renderInativar('seven')" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></select></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Ordenar por</label><select id="ins-ordem" onchange="setInatOrdem(this.value)" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"><option value="valor">Maior valor parado</option><option value="qtd">Maior excesso</option><option value="mkp">Menor markup</option></select></div><div style="flex:1;min-width:180px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar</label><input type="text" id="ins-busca" oninput="renderInativar('seven')" placeholder="descrição, código, fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div><button class="btn btn-outline" onclick="exportarInativar('seven')">⬇ Excel</button></div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Quantos meses de venda a loja pode manter antes de sobrar">Excedente acima de (× pico)</label><input type="number" id="ins-fator" value="3" min="1" step="1" onchange="salvarInatParam('seven')" style="width:120px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Markup de tabela abaixo deste valor entra na lista">Markup mínimo (%)</label><input type="number" id="ins-mkp" value="30" min="0" step="1" onchange="salvarInatParam('seven')" style="width:120px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Mercadoria que entrou no estoque dentro deste prazo não entra na lista: ainda não teve tempo de girar">Ignorar chegadas até (dias)</label><input type="number" id="ins-dias" value="90" min="0" step="1" onchange="salvarInatParam('seven')" style="width:130px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Unidade</label><select id="ins-unidade" onchange="renderInativar('seven')" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></select></div><div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Ordenar por</label><select id="ins-ordem" onchange="setInatOrdem(this.value)" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"><option value="valor">Maior valor parado</option><option value="qtd">Maior excesso</option><option value="mkp">Menor markup</option></select></div><div style="flex:1;min-width:180px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar</label><input type="text" id="ins-busca" oninput="renderInativar('seven')" placeholder="descrição, código, fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div><button class="btn btn-outline" onclick="exportarInativar('seven')">⬇ Excel</button></div>
     </div>
     <div class="stats" id="ins-kpis" style="margin-bottom:16px"></div>
     <div id="ins-tabela"></div>
@@ -1290,9 +1290,11 @@ function init(){
   if(trF) trF.value=localStorage.getItem(LS_TR_FATOR)||3;
   if(trC) trC.value=localStorage.getItem(LS_TR_COBERTURA)||2;
   ['in','ins'].forEach(px=>{
-    const a=document.getElementById(px+'-fator'), b=document.getElementById(px+'-mkp');
+    const a=document.getElementById(px+'-fator'), b=document.getElementById(px+'-mkp'),
+          c=document.getElementById(px+'-dias');
     if(a) a.value=localStorage.getItem(LS_INAT_FATOR)||3;
     if(b) b.value=localStorage.getItem(LS_INAT_MKP)||30;
+    if(c) c.value=localStorage.getItem(LS_INAT_DIAS)||90;
   });
   // acesso recebido por link: confirma para a pessoa que já pode entrar
   if(_cfgImportada){
@@ -3876,7 +3878,7 @@ function comprasPorFornecedor(fonte, meses){
    RESSALVA da SEVEN: onde o ERP nao tem custo, o painel estima em 60% do preco (campo ce).
    Nesses o markup da 66,7% por construcao e nao diz nada — ficam fora do bloco de margem
    (e caem no de sem giro se for o caso). Sao 8.566 itens. */
-const LS_INAT_FATOR='inativar_fator', LS_INAT_MKP='inativar_mkp';
+const LS_INAT_FATOR='inativar_fator', LS_INAT_MKP='inativar_mkp', LS_INAT_DIAS='inativar_dias';
 const INATIVAR_FONTES={
   mc:{px:'in', titulo:'MC MOTO', temUnidade:false, dados:()=>RAW_DATA},
   seven:{px:'ins', titulo:'RHS-SEVEN', temUnidade:true,
@@ -3901,7 +3903,9 @@ function calcularInativar(fonte){
   const fator=Math.max(1,agNum(cfg.px+'-fator',3));
   const limite=Math.max(0,agNum(cfg.px+'-mkp',30));
   const busca=((document.getElementById(cfg.px+'-busca')||{}).value||'').trim().toUpperCase();
-  const margem=[], semGiro=[]; let semPreco=0;
+  const dias=Math.max(0,agNum(cfg.px+'-dias',90));
+  const corte=corteEntradaRecente(dias);
+  const margem=[], semGiro=[]; let semPreco=0, recentes=0, vlRecentes=0;
   cfg.dados().forEach(it=>{
     const estoque=Math.max(0,it.e||0), pico=it.k||0, custo=it.p||0;
     const excesso=Math.round(estoque-pico*fator);
@@ -3910,10 +3914,22 @@ function calcularInativar(fonte){
     const linha={c:it.c,u:it.u,d:it.d,cf:it.cf,f:fornecedorAnalise(it,fonte),estoque,pico,
                  custo:custoMkp,preco:it.pv||0,excesso,valor:excesso*custoMkp,
                  parado:paradoDe(it),ce:!!it.ce};
-    if(pico<=0){ linha.motivo='sem giro'; semGiro.push(linha); return; }
-    const mkp=markupDe(it);
-    if(mkp===null){ semPreco++; return; }
-    if(mkp<limite){ linha.motivo='margem baixa'; linha.mkp=mkp; margem.push(linha); }
+    /* Em qual bloco este item cairia? Preciso saber ANTES de descartar por chegada recente,
+       senao o contador de ignorados inflaria com item que nunca apareceria na lista de
+       qualquer forma (margem boa e girando). */
+    let bloco=null;
+    if(pico<=0){ bloco=semGiro; linha.motivo='sem giro'; }
+    else{
+      const mkp=markupDe(it);
+      if(mkp===null){ semPreco++; return; }
+      if(mkp<limite){ bloco=margem; linha.motivo='margem baixa'; linha.mkp=mkp; }
+    }
+    if(!bloco) return;
+    /* Mercadoria que acabou de chegar nao teve tempo de girar: acusar encalhe ou margem
+       ruim nela e injusto, o item nem comecou a vender (decisao do usuario 25/08/2026,
+       mesma regra da Analise de Fornecedor). */
+    if(dias>0 && it.ue && it.ue>=corte){ recentes++; vlRecentes+=linha.valor; return; }
+    bloco.push(linha);
   });
   const ordem={valor:(a,b)=>b.valor-a.valor, qtd:(a,b)=>b.excesso-a.excesso,
                mkp:(a,b)=>(a.mkp==null?999:a.mkp)-(b.mkp==null?999:b.mkp)};
@@ -3925,7 +3941,8 @@ function calcularInativar(fonte){
   const tot=L=>L.reduce((a,i)=>a+i.valor,0);
   return {margem:filtra(margem), semGiro:filtra(semGiro),
           nMargem:margem.length, nSemGiro:semGiro.length,
-          vlMargem:tot(margem), vlSemGiro:tot(semGiro), semPreco, fator, limite};
+          vlMargem:tot(margem), vlSemGiro:tot(semGiro), semPreco, fator, limite,
+          dias, recentes, vlRecentes};
 }
 
 /* Chave rapida para o Montar Pedido perguntar "este item e candidato a inativar?".
@@ -4011,8 +4028,15 @@ function renderInativar(fonte){
     titulo('#9a3412','\ud83d\udd78 Sem giro \u2014 '+r.nSemGiro.toLocaleString('pt-BR')+' itens',
       'Excedente e nenhuma venda nos \u00faltimos 12 meses. N\u00e3o d\u00e1 para medir markup: o problema \u00e9 n\u00e3o vender.')+
     tabela(r.semGiro,'giro')+
+    (r.recentes?'<div style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:8px;'+
+      'padding:9px 14px;font-size:12px;margin-top:14px">\ud83d\udce6 <strong>'+r.recentes.toLocaleString('pt-BR')+
+      '</strong> iten'+(r.recentes===1?'':'s')+' com excedente '+(r.recentes===1?'ficou':'ficaram')+
+      ' de fora ('+fmt(r.vlRecentes)+'): '+(r.recentes===1?'chegou':'chegaram')+
+      ' no estoque nos \u00faltimos '+r.dias+' dias e ainda n\u00e3o '+(r.recentes===1?'teve':'tiveram')+
+      ' tempo de girar.</div>':'')+
     (r.semPreco?'<div style="font-size:11px;color:#94a3b8;margin-top:12px">'+r.semPreco.toLocaleString('pt-BR')+
-      ' itens com excedente ficaram fora do bloco de margem por n\u00e3o ter pre\u00e7o ou custo confi\u00e1vel no ERP'+
+      ' iten'+(r.semPreco===1?'':'s')+' com excedente '+(r.semPreco===1?'ficou':'ficaram')+
+      ' fora do bloco de margem por n\u00e3o ter pre\u00e7o ou custo confi\u00e1vel no ERP'+
       (fonte==='seven'?' (na SEVEN, inclui o custo estimado em 60% do pre\u00e7o, que daria sempre 66,7%)':'')+'.</div>':'');
 }
 function setInatOrdem(v){ _inatOrdem=v; renderInativar(_inatFonteAtual()); }
@@ -4024,10 +4048,13 @@ function salvarInatParam(fonte){
   const cfg=INATIVAR_FONTES[fonte];
   localStorage.setItem(LS_INAT_FATOR,String(agNum(cfg.px+'-fator',3)));
   localStorage.setItem(LS_INAT_MKP,String(agNum(cfg.px+'-mkp',30)));
+  localStorage.setItem(LS_INAT_DIAS,String(agNum(cfg.px+'-dias',90)));
   ['in','ins'].forEach(px=>{
-    const a=document.getElementById(px+'-fator'), b=document.getElementById(px+'-mkp');
+    const a=document.getElementById(px+'-fator'), b=document.getElementById(px+'-mkp'),
+          c=document.getElementById(px+'-dias');
     if(a) a.value=localStorage.getItem(LS_INAT_FATOR)||3;
     if(b) b.value=localStorage.getItem(LS_INAT_MKP)||30;
+    if(c) c.value=localStorage.getItem(LS_INAT_DIAS)||90;
   });
   limparCacheInativar();
   renderInativar(fonte);
@@ -4046,6 +4073,7 @@ function exportarInativar(fonte){
   let csv='\ufeffINATIVAR - '+cfg.titulo+'\n';
   csv+='Excedente;estoque - pico x '+r.fator+'\n';
   csv+='Margem baixa;markup de tabela abaixo de '+r.limite+'%\n';
+  csv+='Ignorados;'+r.recentes+' itens que entraram no estoque nos ultimos '+r.dias+' dias\n';
   csv+='Data:;'+new Date().toLocaleDateString('pt-BR')+'\n\n';
   csv+='Motivo;Codigo;'+(cfg.temUnidade?'Unidade;':'')+'Descricao;Cod. Fabricante;Fornecedor;Estoque;Pico;Excesso;Custo;Preco;Markup %;Parado;Valor parado\n';
   r.margem.concat(r.semGiro).forEach(i=>{
