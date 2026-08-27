@@ -691,7 +691,7 @@
         <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px" title="Janela para somar o valor comprado de cada fornecedor, pelas notas de entrada">Comprado nos últimos (meses)</label>
           <input type="number" id="af-meses-compra" value="12" min="1" max="24" step="1" onchange="renderAnalise('mc')" style="width:130px;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></div>
       <div style="flex:1;min-width:200px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar fornecedor</label>
-        <input type="text" id="af-busca" oninput="renderAnalise('mc')" placeholder="nome do fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
+        <input type="text" id="af-busca" oninput="renderAnalise('mc')" placeholder="fornecedor, item, código ou referência..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
       <label style="font-size:12px;color:#475569;display:flex;align-items:center;gap:6px;padding-bottom:9px;cursor:pointer" title="Itens que o cadastro deixou no fornecedor padrão ou na F7 Bretas aparecem no fornecedor real, descoberto pela nota de entrada ou pela marca">
         <input type="checkbox" id="af-forn-real" checked onchange="setUsarFornRealMc(this.checked,'mc')"> corrigir fornecedor padrão</label>
       <button class="btn btn-outline" onclick="exportarAnaliseResumo('mc')">⬇ Excel (resumo)</button>
@@ -997,7 +997,7 @@
         <div><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Unidade</label>
           <select id="afs-unidade" onchange="renderAnalise('seven')" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none"></select></div>
         <div style="flex:1;min-width:200px"><label style="font-size:11px;color:#64748b;display:block;margin-bottom:4px">Buscar fornecedor</label>
-          <input type="text" id="afs-busca" oninput="renderAnalise('seven')" placeholder="nome do fornecedor..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
+          <input type="text" id="afs-busca" oninput="renderAnalise('seven')" placeholder="fornecedor, item, código ou referência..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
         <label style="font-size:12px;color:#475569;display:flex;align-items:center;gap:6px;padding-bottom:9px;cursor:pointer" title="Itens que o cadastro deixou na F7 Bretas aparecem no fornecedor real, descoberto pelo cadastro de outra unidade, pela nota de entrada ou pela marca">
           <input type="checkbox" id="afs-forn-real" checked onchange="setUsarFornRealMc(this.checked,'seven')"> corrigir fornecedor padrão</label>
         <button class="btn btn-outline" onclick="exportarAnaliseResumo('seven')">⬇ Excel (resumo)</button>
@@ -4084,6 +4084,18 @@ function exportarInativar(fonte){
   baixarArquivo(csv,'text/csv;charset=utf-8','inativar_'+cfg.px+'_'+new Date().toLocaleDateString('pt-BR').split('/').join('-')+'.csv');
 }
 
+/* A busca da Analise procura no fornecedor E no item: descricao, codigo do produto,
+   codigo do fabricante e referencia. Codigo casa por igualdade (digitar "353" nao pode
+   trazer todo item cujo codigo contenha 353); o resto casa por trecho. */
+function itemCasaBusca(i, termo){
+  if(!termo) return false;
+  if((i.d||'').toUpperCase().includes(termo)) return true;
+  if(String(i.c)===termo) return true;
+  if((i.cf||'').toUpperCase().includes(termo)) return true;
+  if((i.r||'').toUpperCase().includes(termo)) return true;
+  return false;
+}
+
 function calcularAnalise(fonte){
   const cfg=ANALISE_FONTES[fonte];
   const fatorEl=document.getElementById(cfg.px+'-fator');
@@ -4119,7 +4131,7 @@ function calcularAnalise(fonte){
     // mercadoria que chegou há pouco não conta como dinheiro parado
     if(dias>0 && it.ue && it.ue>=corte){ ignoradosRecentes++; valorIgnorado+=excValor; return; }
     const g=porForn[forn]||(porForn[forn]={fornecedor:forn,itens:[],qtd:0,valor:0});
-    g.itens.push({c:it.c,u:it.u,d:it.d,cf:it.cf,pico,estoque,ideal,excQtd,custo,excValor,ue:it.ue,preco:it.pv||0});
+    g.itens.push({c:it.c,u:it.u,d:it.d,cf:it.cf,r:it.r,pico,estoque,ideal,excQtd,custo,excValor,ue:it.ue,preco:it.pv||0});
     g.qtd+=excQtd; g.valor+=excValor;
     totalValor+=excValor; totalItens++;
   });
@@ -4138,8 +4150,17 @@ function calcularAnalise(fonte){
     g.compradoUltimo=cp&&cp.ultimo?cp.ultimo:'';
   });
   const totalGeral=totalValor, fornecedoresTotal=lista.length;
-  if(busca) lista=lista.filter(g=>g.fornecedor.toUpperCase().includes(busca));
-  return {lista,totalValor,totalItens,fator,totalGeral,fornecedoresTotal,dias,ignoradosRecentes,valorIgnorado,totalEstoque,corrigidos,mesesCompra};
+  let achouItem=0;
+  if(busca){
+    lista=lista.filter(g=>{
+      g.porFornecedor=g.fornecedor.toUpperCase().includes(busca);
+      g.itensBusca=g.itens.filter(i=>itemCasaBusca(i,busca));
+      if(g.itensBusca.length) achouItem++;
+      return g.porFornecedor||g.itensBusca.length;
+    });
+  }
+  return {lista,totalValor,totalItens,fator,totalGeral,fornecedoresTotal,dias,ignoradosRecentes,
+          valorIgnorado,totalEstoque,corrigidos,mesesCompra,busca,achouItem};
 }
 
 function renderAnalise(fonte){
@@ -4194,7 +4215,12 @@ function renderAnalise(fonte){
   const maior=Math.max(...r.lista.map(g=>g.valor),1);
   const linhas=r.lista.map(g=>{
     const pct=r.totalGeral?g.valor/r.totalGeral*100:0;
-    const aberto=(_analiseAberto[fonte]===g.fornecedor);
+    /* casou pelo item: abre sozinho e mostra so o que casou. Se o texto bateu no nome do
+       fornecedor, o comportamento e o de sempre — a lista inteira dele. */
+    const porItem=!!(r.busca && !g.porFornecedor && g.itensBusca && g.itensBusca.length);
+    const aberto=(_analiseAberto[fonte]===g.fornecedor)||(porItem&&r.achouItem<=15);
+    const itensMostrados=(porItem||(r.busca&&g.itensBusca&&g.itensBusca.length&&_analiseAberto[fonte]===g.fornecedor))
+      ? g.itensBusca : g.itens;
     let detalhe='';
     if(aberto){
       const cabUn=cfg.temUnidade?'<th class="num">Un.</th>':'';
@@ -4211,7 +4237,7 @@ function renderAnalise(fonte){
           '<th class="num" style="padding:6px 8px">Valor parado</th>'+
           '<th class="num" style="padding:6px 8px" title="Data da última entrada da mercadoria no estoque">Última entrada</th>'+
         '</tr></thead><tbody>'+
-        g.itens.map(i=>'<tr>'+
+        itensMostrados.map(i=>'<tr>'+
           '<td style="padding:5px 8px;color:#94a3b8;font-size:11px">'+i.c+'</td>'+
           (cfg.temUnidade?'<td class="num" style="padding:5px 8px;font-weight:700;color:#0369a1">'+i.u+'</td>':'')+
           '<td style="padding:5px 8px">'+escHtml(i.d||'')+'</td>'+
@@ -4225,11 +4251,18 @@ function renderAnalise(fonte){
           '<td class="num" style="padding:5px 8px;color:#dc2626;font-weight:700">'+fmt(i.excValor)+'</td>'+
           ultimaEntradaCel(i.ue)+
         '</tr>').join('')+
-        '</tbody></table></div></td></tr>';
+        '</tbody></table></div>'+
+        (itensMostrados!==g.itens
+          ? '<div style="padding:0 14px 10px;font-size:11px;color:#94a3b8">Mostrando '+
+            itensMostrados.length+' de '+g.itens.length+' itens em excesso deste fornecedor \u2014 '+
+            'os que casaram com a busca.</div>'
+          : '')+
+        '</td></tr>';
     }
     return '<tr onclick="toggleAnaliseForn(\''+fonte+'\',this.dataset.f)" data-f="'+escHtml(g.fornecedor)+'" style="cursor:pointer;border-bottom:1px solid #f1f5f9">'+
       '<td style="padding:9px 12px;font-weight:600">'+(aberto?'▼ ':'▶ ')+escHtml(g.fornecedor)+'</td>'+
-      '<td class="num" style="padding:9px 12px">'+g.itens.length+'</td>'+
+      '<td class="num" style="padding:9px 12px">'+g.itens.length+
+        (porItem?'<div style="font-size:10px;color:#0369a1;font-weight:700">'+g.itensBusca.length+' na busca</div>':'')+'</td>'+
       '<td class="num" style="padding:9px 12px">'+Math.round(g.qtd).toLocaleString('pt-BR')+'</td>'+
       '<td class="num" style="padding:9px 12px;color:#dc2626;font-weight:700">'+fmt(g.valor)+'</td>'+
       '<td class="num" style="padding:9px 12px">'+fmt(g.estoqueValor)+
