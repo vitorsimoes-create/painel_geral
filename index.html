@@ -422,6 +422,7 @@
               <th class="num">Custo</th>
               <th class="num">Estoque</th>
               <th class="num" title="Pico de vendas mensal">Pico</th>
+              <th class="num" id="th-pico-mult" title="Pico multiplicado pelo horizonte escolhido em &quot;Comprar para&quot;">Pico × 1</th>
               <th class="num">Sugestão</th>
               <th>Comprar?</th>
               <th title="Há quanto tempo o item está em estoque sem vender">Parado</th>
@@ -874,6 +875,7 @@
                 <th class="num">Custo</th>
                 <th class="num">Estoque</th>
                 <th class="num" title="Pico de vendas mensal">Pico</th>
+                <th class="num" id="th-pico-mult-seven" title="Pico multiplicado pelo horizonte escolhido em &quot;Comprar para&quot;">Pico × 1</th>
                 <th class="num" title="Sugestão de compra (pico − estoque) — editável">Sugestão</th>
                 <th title="Há quanto tempo o item está em estoque sem vender">Parado</th>
                 <th title="Item com estoque excedente e margem baixa ou sem giro — candidato a inativar, para não comprar de novo">Inativar</th>
@@ -1369,7 +1371,7 @@ function sincronizarPedidoMc(){
     const base=porCod[cod], it=pedido[cod];
     if(!base) return;
     it.s=base.s; it.k=base.k; it.e=base.e;
-    const q=base.s>0?base.s:1;
+    const q=base.s>0?base.s:0;
     if(it.qtyAuto!=null && it.qty===it.qtyAuto){ it.qty=q; it.qtyAuto=q; }
   });
 }
@@ -1553,6 +1555,10 @@ function paradoBadge(item){
 
 function render(){
   limparCacheInativar();
+  {  // o cabecalho da coluna acompanha o "Comprar para"
+    const th=document.getElementById('th-pico-mult');
+    if(th) th.textContent='Pico \u00d7 '+mesesCompraMc;
+  }
   filtered=filterData();
   const f=getFilters();
   const terms=f.busca?f.busca.split(/\s+/).filter(Boolean):[];
@@ -1567,7 +1573,7 @@ function render(){
 
   const tbody=document.getElementById('tbl-body');
   if(pageItems.length===0){
-    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:30px;color:#94a3b8">Nenhum item encontrado</td></tr>';
+    tbody.innerHTML='<tr><td colspan="14" style="text-align:center;padding:30px;color:#94a3b8">Nenhum item encontrado</td></tr>';
   }else{
     tbody.innerHTML=pageItems.map(item=>{
       const inPedido=pedido[item.c];
@@ -1599,6 +1605,7 @@ function render(){
         <td class="num">${fmt(item.p)}</td>
         <td class="num ${item.e<0?'neg':item.e===0?'':'pos'}">${item.e}</td>
         <td class="num" style="color:#7c3aed;font-weight:600" title="Pico de vendas">${item.k||0}</td>
+        <td class="num" style="color:#5b21b6;font-weight:700" title="${item.k||0} x ${mesesCompraMc} ${mesesCompraMc===1?'m\u00eas':'meses'}">${(item.k||0)*mesesCompraMc}</td>
         <td class="num">${sugBadge}</td>
         <td>${comprarBadge}</td>
         <td>${paradoBadge(item)}</td>
@@ -1630,7 +1637,7 @@ function toggleItem(codigo){
   if(!item) return;
   if(pedido[codigo]){delete pedido[codigo];}
   /* qtyAuto guarda a quantidade que NOS preenchemos — ver sincronizarPedidoMc(). */
-  else{const q=item.s>0?item.s:1; pedido[codigo]={...item,qty:q,qtyAuto:q};}
+  else{const q=item.s>0?item.s:0; pedido[codigo]={...item,qty:q,qtyAuto:q};}
   render();
 }
 
@@ -1745,7 +1752,7 @@ function exportarPedido(){
       <td class="num" style="color:#7c3aed;font-weight:600">${i.k||0}</td>
       <td class="num">${i.s}</td>
       <td>${comprarBadge}</td>
-      <td class="qty"><input type="number" min="1" value="${i.qty}" onchange="editarQtyModal(${i.c},this.value)" style="width:56px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px;font-size:13px;font-weight:700"></td>
+      <td class="qty"><input type="number" min="0" value="${i.qty}" onchange="editarQtyModal(${i.c},this.value)" style="width:56px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px;font-size:13px;font-weight:700"></td>
       <td class="num">${fmt(i.p)}</td>
       <td class="total" id="modal-total-${i.c}">${fmt(i.p*i.qty)}</td>
     </tr>`;
@@ -5525,7 +5532,7 @@ function renderCotacaoSelecionados(){
       <td style="padding:6px 10px;color:#94a3b8;font-size:11px">${i.c}</td>
       <td style="padding:6px 10px">${escHtml(i.d)}</td>
       <td style="padding:6px 10px;color:#94a3b8;font-size:11px">${escHtml(i.cf||'—')}</td>
-      <td style="padding:6px 10px;text-align:center"><input type="number" min="1" value="${i.qty}" onchange="cotacaoSelecionados[${i.c}].qty=Math.max(1,parseInt(this.value)||1)" style="width:60px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px"></td>
+      <td style="padding:6px 10px;text-align:center"><input type="number" min="0" value="${i.qty}" onchange="cotacaoSelecionados[${i.c}].qty=Math.max(1,parseInt(this.value)||1)" style="width:60px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px"></td>
       <td style="padding:6px 10px;text-align:right"><button class="btn btn-danger" onclick="toggleCotacaoItem(${i.c});renderCotacaoTab()">✕</button></td>
     </tr>`).join('')}</tbody>
   </table>`;
@@ -5896,7 +5903,7 @@ function sincronizarPedidoSeven(){
     const base=SEVEN_BY_KEY[key], it=pedidoSeven[key];
     if(!base) return;
     it.s=base.s; it.k=base.k; it.e=base.e;
-    const sug=sugestaoSeven(base), q=sug>0?sug:1;
+    const sug=sugestaoSeven(base), q=sug>0?sug:0;
     if(it.qtyAuto!=null && it.qty===it.qtyAuto){ it.qty=q; it.qtyAuto=q; }
   });
 }
@@ -6100,6 +6107,10 @@ function filterDataSeven(){
 
 function renderSeven(){
   limparCacheInativar();
+  {
+    const th=document.getElementById('th-pico-mult-seven');
+    if(th) th.textContent='Pico \u00d7 '+mesesCompraSeven;
+  }
   filteredSeven=filterDataSeven();
   const f=getFiltersSeven();
   const terms=f.busca?f.busca.split(/\s+/).filter(Boolean):[];
@@ -6114,7 +6125,7 @@ function renderSeven(){
 
   const tbody=document.getElementById('tbl-body-seven');
   if(pageItems.length===0){
-    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:30px;color:#94a3b8">Nenhum item encontrado</td></tr>';
+    tbody.innerHTML='<tr><td colspan="14" style="text-align:center;padding:30px;color:#94a3b8">Nenhum item encontrado</td></tr>';
   }else{
     tbody.innerHTML=pageItems.map(item=>{
       const key=skey(item);
@@ -6136,6 +6147,7 @@ function renderSeven(){
         <td class="num">${fmt(item.p)}</td>
         <td class="num ${item.e<0?'neg':item.e===0?'':'pos'}">${fmtEstoqueSeven(item.e)}</td>
         <td class="num" style="color:#7c3aed;font-weight:600" title="Pico de vendas">${item.k||0}</td>
+        <td class="num" style="color:#5b21b6;font-weight:700" title="${item.k||0} x ${mesesCompraSeven} ${mesesCompraSeven===1?'m\u00eas':'meses'}">${(item.k||0)*mesesCompraSeven}</td>
         <td class="num" onclick="event.stopPropagation()"><input type="number" value="${sug}" onchange="setSugestaoSeven('${key}',this.value)" title="${editado?'sugestão editada manualmente':'padrão: pico − estoque'}" style="width:56px;text-align:center;border:1px solid ${editado?'#7c3aed':'#e2e8f0'};border-radius:4px;padding:3px;font-size:13px;font-weight:700;color:${editado?'#7c3aed':'#1a1a2e'}"></td>
         <td>${paradoBadge(item)}</td>
         <td>${inativarBadge(item,'seven')}</td>
@@ -6167,7 +6179,7 @@ function toggleItemSeven(key){
   /* qtyAuto guarda a quantidade que NOS preenchemos. E o que permite, ao trocar o
      horizonte de compra, atualizar so quem ainda esta na sugestao e nao mexer em
      quantidade que o usuario digitou. */
-  else{const sug=sugestaoSeven(item), q=sug>0?sug:1; pedidoSeven[key]={...item,qty:q,qtyAuto:q};}
+  else{const sug=sugestaoSeven(item), q=sug>0?sug:0; pedidoSeven[key]={...item,qty:q,qtyAuto:q};}
   renderSeven();
 }
 
@@ -6179,7 +6191,7 @@ function adicionarTodosSeven(){
   }
   filteredSeven.forEach(item=>{
     const key=skey(item);
-    if(!pedidoSeven[key]){const sug=sugestaoSeven(item), q=sug>0?sug:1; pedidoSeven[key]={...item,qty:q,qtyAuto:q};}
+    if(!pedidoSeven[key]){const sug=sugestaoSeven(item), q=sug>0?sug:0; pedidoSeven[key]={...item,qty:q,qtyAuto:q};}
   });
   renderSeven();
 }
@@ -6289,7 +6301,7 @@ function exportarPedidoSeven(){
       <td class="num" style="color:${i.e<0?'#ef4444':i.e===0?'#94a3b8':'#059669'};font-weight:600">${fmtEstoqueSeven(i.e)}</td>
       <td class="num" style="color:#7c3aed;font-weight:600">${i.k||0}</td>
       <td class="num" style="color:${sug<0?'#ef4444':sug>0?'#059669':'#94a3b8'};font-weight:700" title="pico − estoque">${sug}</td>
-      <td class="qty"><input type="number" min="1" value="${i.qty}" onchange="editarQtyModalSeven('${key}',this.value)" style="width:56px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px;font-size:13px;font-weight:700"></td>
+      <td class="qty"><input type="number" min="0" value="${i.qty}" onchange="editarQtyModalSeven('${key}',this.value)" style="width:56px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px;font-size:13px;font-weight:700"></td>
       <td class="num">${fmt(i.p)}</td>
       <td class="total">${fmt(i.p*i.qty)}</td>
     </tr>`;
@@ -6667,7 +6679,7 @@ function renderCotacaoSelecionadosSeven(){
       <td style="padding:6px 10px;font-weight:700;color:#0369a1;font-size:11px">${i.u}</td>
       <td style="padding:6px 10px">${escHtml(i.d)}</td>
       <td style="padding:6px 10px;color:#94a3b8;font-size:11px">${escHtml(i.cf||'—')}</td>
-      <td style="padding:6px 10px;text-align:center"><input type="number" min="1" value="${i.qty}" onchange="cotacaoSelecionadosSeven['${key}'].qty=Math.max(1,parseInt(this.value)||1)" style="width:60px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px"></td>
+      <td style="padding:6px 10px;text-align:center"><input type="number" min="0" value="${i.qty}" onchange="cotacaoSelecionadosSeven['${key}'].qty=Math.max(1,parseInt(this.value)||1)" style="width:60px;text-align:center;border:1px solid #e2e8f0;border-radius:4px;padding:3px"></td>
       <td style="padding:6px 10px;text-align:right"><button class="btn btn-danger" onclick="toggleCotacaoItemSeven('${key}');renderCotacaoTabSeven()">✕</button></td>
     </tr>`;}).join('')}</tbody>
   </table>`;
