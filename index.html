@@ -873,6 +873,8 @@
       <button class="btn btn-outline" onclick="limparFiltrosSeven()">↺ Limpar</button>
     </div>
 
+    <div id="aviso-sug-editada-seven" hidden style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:8px 12px;background:#f5f3ff;border:1px solid #ddd6fe;border-left:3px solid #7c3aed;border-radius:6px;font-size:12px;color:#5b21b6"></div>
+
     <div class="stats" id="stats-bar-seven">
       <div class="stat blue"><div class="val" id="stat-total-seven">0</div><div class="lbl">Itens filtrados</div></div>
       <div class="stat"><div class="val" id="stat-fornecedores-seven">0</div><div class="lbl">Fornecedores</div></div>
@@ -5967,10 +5969,43 @@ let sugestaoOverrideSeven={};
 try{ sugestaoOverrideSeven=JSON.parse(localStorage.getItem(LS_SUG_SEVEN)||'{}'); }catch(e){ sugestaoOverrideSeven={}; }
 function sugestaoSeven(item){ const k=skey(item); return (k in sugestaoOverrideSeven) ? sugestaoOverrideSeven[k] : (item.s||0); }
 function setSugestaoSeven(key,val){
-  const n=Math.round(parseFloat(String(val).replace(',','.'))||0);
-  sugestaoOverrideSeven[key]=n;
+  const txt=String(val).trim();
+  const base=SEVEN_BY_KEY[key];
+  const calc=base?(base.s||0):0;
+  // campo vazio, ou o proprio numero do calculo: nao e edicao, e volta ao automatico.
+  // Sem isso nao existia jeito de desfazer — o numero digitado ficava no localStorage
+  // para sempre passando por cima do calculo, mesmo depois de o estoque e o pico mudarem.
+  if(txt===''){ delete sugestaoOverrideSeven[key]; }
+  else{
+    const n=Math.round(parseFloat(txt.replace(',','.'))||0);
+    if(n===calc) delete sugestaoOverrideSeven[key];
+    else sugestaoOverrideSeven[key]=n;
+  }
   localStorage.setItem(LS_SUG_SEVEN, JSON.stringify(sugestaoOverrideSeven));
+  sincronizarPedidoSeven();
   renderSeven();
+}
+/* Quantas sugestoes estao com numero digitado a mao, e como largar todas de uma vez. */
+function contarSugestoesEditadasSeven(){ return Object.keys(sugestaoOverrideSeven).length; }
+function limparSugestoesEditadasSeven(){
+  const n=contarSugestoesEditadasSeven();
+  if(!n) return;
+  if(!confirm('Voltar '+n+' sugest'+(n===1?'ão':'ões')+' editada'+(n===1?'':'s')+' à mão para o cálculo (pico × meses − estoque)?')) return;
+  sugestaoOverrideSeven={};
+  localStorage.setItem(LS_SUG_SEVEN,'{}');
+  sincronizarPedidoSeven();
+  renderSeven();
+}
+function atualizarAvisoSugestaoSeven(){
+  const el=document.getElementById('aviso-sug-editada-seven');
+  if(!el) return;
+  const n=contarSugestoesEditadasSeven();
+  if(!n){ el.hidden=true; return; }
+  el.hidden=false;
+  el.innerHTML='<span>\u270f\ufe0f <strong>'+n+'</strong> sugest'+(n===1?'ão':'ões')+
+    ' com número digitado à mão — <strong>o cálculo não vale para el'+(n===1?'a':'as')+'</strong>.</span>'+
+    '<button class="btn btn-outline" style="padding:3px 10px;font-size:12px" '+
+    'onclick="limparSugestoesEditadasSeven()">Voltar ao cálculo</button>';
 }
 
 /* ---------- Horizonte de compra (SEVEN) ----------
@@ -6264,7 +6299,7 @@ function renderSeven(){
         <td class="num ${item.e<0?'neg':item.e===0?'':'pos'}">${fmtEstoqueSeven(item.e)}</td>
         <td class="num" style="color:#7c3aed;font-weight:600" title="Pico de vendas">${item.k||0}</td>
         <td class="num" style="color:#5b21b6;font-weight:700" title="${item.k||0} x ${mesesCompraSeven} ${mesesCompraSeven===1?'m\u00eas':'meses'}">${(item.k||0)*mesesCompraSeven}</td>
-        <td class="num" onclick="event.stopPropagation()"><input type="number" value="${sug}" onchange="setSugestaoSeven('${key}',this.value)" title="${editado?'sugestão editada manualmente':'padrão: pico − estoque'}" style="width:56px;text-align:center;border:1px solid ${editado?'#7c3aed':'#e2e8f0'};border-radius:4px;padding:3px;font-size:13px;font-weight:700;color:${editado?'#7c3aed':'#1a1a2e'}"></td>
+        <td class="num" onclick="event.stopPropagation()"><input type="number" value="${sug}" onchange="setSugestaoSeven('${key}',this.value)" title="${editado?'digitada à mão. O cálculo daria '+(item.s||0)+' (pico '+(item.k||0)+' \u00d7 '+mesesCompraSeven+' \u2212 estoque '+fmtEstoqueSeven(item.e)+'). Apague o campo para voltar ao cálculo.':'cálculo: pico \u00d7 '+mesesCompraSeven+' \u2212 estoque'}" style="width:56px;text-align:center;border:1px solid ${editado?'#7c3aed':'#e2e8f0'};border-radius:4px;padding:3px;font-size:13px;font-weight:700;color:${editado?'#7c3aed':'#1a1a2e'}"></td>
         <td>${paradoBadge(item)}</td>
         <td>${inativarBadge(item,'seven')}</td>
         <td>${addBtn}</td>
@@ -6274,6 +6309,7 @@ function renderSeven(){
 
   renderPaginationSeven(filteredSeven.length);
   renderPedidoSeven();
+  atualizarAvisoSugestaoSeven();
 }
 
 function renderPaginationSeven(total){
