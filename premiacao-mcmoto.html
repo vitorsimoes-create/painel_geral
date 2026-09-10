@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premiação — MC MOTO</title>
+<style>
+ *{box-sizing:border-box;margin:0;padding:0}
+ body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:#0d1117;color:#e6edf3;
+      padding:18px;font-size:13px}
+ .topo{background:linear-gradient(135deg,#111827,#1f2937);border:2px solid #f0b429;
+       border-radius:12px;padding:16px 20px;text-align:center;margin-bottom:14px}
+ .topo h1{font-size:22px;letter-spacing:.5px;color:#fff;font-weight:800}
+ .topo h1 b{color:#f0b429}
+ .topo .lema{font-size:11px;color:#9aa4b2;margin-top:5px;text-transform:uppercase;letter-spacing:1px}
+ .barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#161b22;
+        border:1px solid #30363d;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px}
+ .barra b{color:#f0b429}
+ select,input{background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:6px;
+              padding:5px 8px;font-size:12px;font-family:inherit}
+ input[type=number]{width:92px;text-align:right}
+ .btn{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;
+      padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+ .btn:hover{border-color:#f0b429}
+ .aviso{background:#241d0d;border:1px solid #b8860b;color:#f0d68a;border-radius:10px;
+        padding:11px 14px;margin-bottom:14px;font-size:12px;line-height:1.6}
+ .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;margin-bottom:14px}
+ .kpi{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px 14px}
+ .kpi label{display:block;font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+ .kpi .v{font-size:20px;font-weight:800;color:#fff}
+ .kpi .s{font-size:11px;color:#8b949e;margin-top:2px}
+ .kpi.ok{border-color:#238636}.kpi.ok .v{color:#3fb950}
+ .premios{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:14px}
+ .pr{border-radius:12px;padding:14px;border:2px solid}
+ .pr h3{font-size:14px;margin-bottom:4px}
+ .pr .cond{font-size:11px;color:#9aa4b2;min-height:34px;line-height:1.5}
+ .pr .eq{border-radius:8px;padding:9px;text-align:center;margin:10px 0 8px;font-weight:800;font-size:22px;color:#fff}
+ .pr .status{margin-top:6px;text-align:center;font-size:11px;font-weight:700;border-radius:6px;padding:5px}
+ .ind{border-color:#238636;background:#0f2417}.ind .eq{background:#1a7f37}
+ .loj{border-color:#1f6feb;background:#0d1b2e}.loj .eq{background:#1f6feb}
+ .cx{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px;margin-bottom:14px}
+ .cx h2{font-size:12px;color:#f0b429;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+ .regra{font-size:11.5px;color:#c9d1d9;line-height:1.6;margin-bottom:7px;padding-left:18px;position:relative}
+ .regra:before{content:'✓';position:absolute;left:0;color:#3fb950;font-weight:800}
+ table{width:100%;border-collapse:collapse;font-size:12px}
+ th,td{padding:6px 9px;text-align:right;white-space:nowrap;border-bottom:1px solid #21262d}
+ thead th{position:sticky;top:0;background:#1f2937;color:#f0b429;font-size:10px;
+          text-transform:uppercase;letter-spacing:.5px;z-index:2}
+ td:first-child,th:first-child{text-align:left}
+ .tw{overflow:auto;border:1px solid #30363d;border-radius:8px}
+ tr.tot td{background:#1c2128;font-weight:800;border-top:2px solid #30363d}
+ tr.fora td{color:#6e7681}
+ .ok{color:#3fb950;font-weight:700}.nao{color:#f85149}.aten{color:#d29922;font-weight:700}
+ .barra-prog{height:6px;background:#21262d;border-radius:4px;overflow:hidden;margin-top:3px;min-width:70px}
+ .barra-prog i{display:block;height:100%;border-radius:4px}
+ .nota{font-size:11px;color:#6e7681;margin-top:12px;line-height:1.7}
+</style></head><body>
+
+<div class="topo">
+  <h1>🏆 PROGRAMA DE PREMIAÇÃO — <b>MC MOTO</b></h1>
+  <div class="lema">Sua meta, a meta da loja. As duas contam.</div>
+</div>
+
+<div class="barra">
+  <b>Mês:</b><select id="mes" onchange="render()"></select>
+  <span style="width:1px;height:20px;background:#30363d"></span>
+  <b>Prêmio individual:</b><input type="number" id="p-ind" step="50" onchange="salvar()">
+  <b>Prêmio da loja:</b><input type="number" id="p-loja" step="50" onchange="salvar()">
+  <button class="btn" onclick="padrao()">Voltar ao padrão</button>
+  <span style="flex:1"></span>
+  <span id="ger" style="font-size:11px;color:#6e7681"></span>
+</div>
+
+<div id="aviso-metas"></div>
+<div class="kpis" id="kpis"></div>
+<div class="premios" id="premios"></div>
+
+<div class="cx">
+  <h2>Acompanhamento do mês — por vendedor</h2>
+  <div class="tw"><table id="tbl">
+    <thead><tr>
+      <th>Vendedor</th><th>Meta</th><th>Realizado</th><th>% da meta</th><th>Falta</th>
+      <th>No ritmo fecha em</th><th>Individual</th><th>Loja</th><th>Total</th>
+    </tr></thead><tbody id="body"></tbody></table></div>
+</div>
+
+<div class="cx">
+  <h2>Regras</h2>
+  <div id="regras"></div>
+</div>
+
+<div class="nota" id="nota"></div>
+
+<script>
+const D={"meses":["2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07","2026-08","2026-09"],"vendedores":["RAFAEL","GILMAR","JHONATA","ANGELA","IAGO","VITOR","DINO","KAIO","DIOGO","VENDEDOR 1","MERCADO LIVRE","SHOPEE"],"dados":[["2025-08",3,10625.0,6440.77,91],["2025-08",6,9032.5,5334.96,138],["2025-08",8,900.0,675.72,7],["2025-08",1,36571.0,22740.99,419],["2025-08",4,21096.34,13498.58,285],["2025-08",2,24019.11,15153.66,332],["2025-08",7,2105.0,1536.91,12],["2025-08",0,54542.18,33108.72,446],["2025-08",5,33959.79,21300.0,375],["2025-09",3,38791.4,23335.25,389],["2025-09",6,8813.0,5188.91,177],["2025-09",8,3805.24,2595.07,22],["2025-09",1,45267.22,28185.58,579],["2025-09",4,31998.1,19853.53,368],["2025-09",2,24299.56,15222.21,334],["2025-09",7,442.0,266.94,8],["2025-09",0,38624.25,22793.41,344],["2025-09",9,926.25,203.97,3],["2025-09",5,45279.15,28551.5,583],["2025-10",3,54486.5,32333.88,440],["2025-10",6,10095.5,6063.84,202],["2025-10",8,1086.0,755.17,9],["2025-10",1,57062.14,35256.17,750],["2025-10",4,49221.86,31223.51,572],["2025-10",2,46913.38,29922.37,591],["2025-10",0,35920.0,20973.14,414],["2025-10",9,462.0,281.91,5],["2025-10",5,835.0,544.73,14],["2025-11",3,36179.77,22427.55,309],["2025-11",6,8759.5,5733.54,148],["2025-11",8,616.97,447.01,6],["2025-11",1,38195.25,22973.93,436],["2025-11",4,21361.82,13380.42,296],["2025-11",2,28975.79,18729.45,381],["2025-11",7,84.5,45.48,5],["2025-11",0,50633.31,30456.3,495],["2025-11",9,692.18,248.1,2],["2025-11",5,45395.0,29549.18,480],["2025-12",3,45745.0,28713.62,372],["2025-12",6,4047.5,2421.9,72],["2025-12",8,2193.5,1476.71,16],["2025-12",1,46483.93,28810.32,540],["2025-12",4,32295.08,20398.63,427],["2025-12",2,39127.97,24877.67,465],["2025-12",7,29.0,12.11,3],["2025-12",0,59873.2,35937.14,593],["2025-12",9,2077.32,0.0,2],["2025-12",5,33310.31,21396.49,374],["2026-01",3,40621.03,25678.07,376],["2026-01",6,11953.0,7259.05,212],["2026-01",8,7425.11,6029.82,11],["2026-01",1,15820.0,9940.08,168],["2026-01",4,50060.78,31148.28,561],["2026-01",2,50371.63,31725.16,697],["2026-01",0,74876.6,45831.46,723],["2026-01",9,75.0,43.38,3],["2026-01",5,371.0,234.7,3],["2026-02",3,39865.0,24134.95,357],["2026-02",6,18890.96,11689.09,275],["2026-02",8,491.59,367.22,4],["2026-02",1,42411.23,26438.76,501],["2026-02",4,9729.57,6236.73,129],["2026-02",2,34076.61,21464.95,441],["2026-02",0,56431.3,34213.85,522],["2026-02",5,39216.41,26289.3,379],["2026-03",3,35647.5,22378.52,361],["2026-03",6,8820.0,5377.13,157],["2026-03",8,1148.43,783.33,9],["2026-03",1,52154.53,31856.88,575],["2026-03",4,25562.74,15766.14,343],["2026-03",2,25151.0,15776.29,375],["2026-03",7,32.0,17.94,1],["2026-03",0,54154.0,31987.01,584],["2026-03",9,464.26,0.0,2],["2026-03",5,58913.94,36660.78,705],["2026-04",3,46959.5,29434.38,338],["2026-04",6,10624.28,6544.04,185],["2026-04",8,766.0,552.53,7],["2026-04",1,44402.05,27436.87,540],["2026-04",4,27580.0,17204.4,366],["2026-04",2,42291.63,26962.22,502],["2026-04",0,54973.0,32158.96,575],["2026-04",5,52595.71,33342.28,521],["2026-05",3,14558.0,8849.53,119],["2026-05",6,10329.0,6145.9,179],["2026-05",8,983.17,660.18,10],["2026-05",1,61494.94,38579.94,617],["2026-05",4,49998.94,30899.49,586],["2026-05",2,61272.73,38601.21,690],["2026-05",7,185.0,115.39,2],["2026-05",0,64011.41,37877.4,680],["2026-05",9,1315.61,0.0,1],["2026-05",5,1208.0,846.65,17],["2026-06",3,38689.5,23146.75,370],["2026-06",6,8686.5,5356.88,139],["2026-06",8,865.0,562.95,7],["2026-06",1,46656.16,28244.01,598],["2026-06",4,36321.74,22537.44,399],["2026-06",2,39260.09,24615.29,527],["2026-06",0,51196.64,29944.84,536],["2026-06",9,15.0,8.99,1],["2026-06",5,57.0,27.42,3],["2026-07",3,44087.5,27568.69,386],["2026-07",6,10205.0,6073.92,170],["2026-07",8,1984.24,1698.37,7],["2026-07",1,50225.07,31189.18,622],["2026-07",4,23194.77,14082.75,257],["2026-07",2,58530.49,37427.25,690],["2026-07",10,1419.23,1099.87,1],["2026-07",0,54018.01,32094.1,594],["2026-07",11,70.48,58.12,2],["2026-07",9,120.86,41.05,3],["2026-07",5,120.0,76.86,2],["2026-08",3,46968.05,29305.48,420],["2026-08",6,9809.0,6094.7,135],["2026-08",8,1770.5,1261.99,7],["2026-08",1,48667.33,29889.02,597],["2026-08",2,47396.96,30052.09,562],["2026-08",7,26123.8,15936.68,400],["2026-08",10,233.48,141.65,1],["2026-08",0,56299.0,32615.39,581],["2026-08",11,111.13,138.51,8],["2026-08",9,65.0,40.54,1],["2026-09",3,15878.0,9772.35,162],["2026-09",6,5551.0,3355.98,82],["2026-09",8,528.0,438.3,2],["2026-09",1,18418.4,11196.45,198],["2026-09",2,15311.98,9546.33,166],["2026-09",7,3075.5,1900.15,34],["2026-09",0,17107.0,10139.92,197],["2026-09",11,38.41,41.84,2]],"dias":{"2025-08":18,"2025-09":26,"2025-10":27,"2025-11":25,"2025-12":26,"2026-01":26,"2026-02":24,"2026-03":26,"2026-04":25,"2026-05":26,"2026-06":25,"2026-07":27,"2026-08":26,"2026-09":9},"mesCorrente":"2026-09","hoje":"2026-09-10","geradoEm":"10/09/2026 15:55","metas":{"RAFAEL":85000.0,"JHONATA":85000.0,"GILMAR":70000.0,"ANGELA":60000.0,"IAGO":60000.0},"metasEm":"2026-09-10"};
+const LS='premiacao_mcmoto_params';
+const PADRAO={ind:600, loja:400};
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const fmt=n=>'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0=n=>'R$ '+Math.round(Number(n||0)).toLocaleString('pt-BR');
+const rot=m=>{const p=m.split('-');return MES[+p[1]-1]+'/'+p[0].slice(2)};
+const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+/* localStorage pode simplesmente NAO existir: navegador com dados de site bloqueados,
+   modo restrito, ou a pagina aberta fora do painel. Sem guarda, a leitura estoura e a tela
+   inteira fica em branco — com guarda, ela cai para as metas publicadas e segue. */
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+function par(){
+  let p={};
+  try{ p=JSON.parse(lsGet(LS)||'{}'); }catch(e){ p={}; }
+  return Object.assign({}, PADRAO, p);
+}
+function salvar(){
+  const p={};
+  [['ind','p-ind'],['loja','p-loja']].forEach(function(x){
+    const v=parseFloat(document.getElementById(x[1]).value);
+    if(!isNaN(v)&&v>=0) p[x[0]]=v;
+  });
+  lsSet(LS, JSON.stringify(p));
+  render();
+}
+function padrao(){ lsDel(LS); render(); }
+
+/* A META vem do PAINEL MENSAL, da mesma chave que a tela de la grava. Painel e mapa sao
+   a mesma origem no GitHub Pages, entao a leitura e direta — nao ha meta em duplicidade. */
+function metaDe(vendedor){
+  const v=lsGet('mapa_meta_'+vendedor+'_vendas');
+  const n=(v===null||v==='')?null:parseFloat(v);
+  if(n && n>0) return n;                       // o que voce digitou vence
+  const pub=(D.metas||{})[vendedor];           // senao, a meta publicada no painel
+  return (pub && pub>0) ? pub : null;
+}
+function metaPublicada(){ return Object.keys(D.metas||{}).length; }
+
+function render(){
+  const p=par();
+  document.getElementById('p-ind').value=p.ind;
+  document.getElementById('p-loja').value=p.loja;
+
+  const sel=document.getElementById('mes');
+  if(!sel.options.length){
+    sel.innerHTML=D.meses.slice().reverse().map(function(m){
+      return '<option value="'+m+'">'+rot(m)+'</option>'}).join('');
+  }
+  const ym=sel.value||D.meses[D.meses.length-1];
+  const corrente=(ym===D.mesCorrente);
+  document.getElementById('ger').textContent='Gerado em '+D.geradoEm+' · banco mc_moto';
+
+  // realizado do mes, por vendedor
+  const real={};
+  D.dados.forEach(function(r){ if(r[0]===ym) real[D.vendedores[r[1]]]={v:r[2], c:r[3], ped:r[4]}; });
+
+  /* Participa quem TEM META cadastrada. Resolve sozinho o caso de MERCADO LIVRE, SHOPEE e
+     VENDEDOR 1, que sao canais e nao pessoas: sem meta, ficam fora do programa. */
+  const linhas=D.vendedores.map(function(v){
+    const m=metaDe(v), r=real[v]||{v:0,c:0,ped:0};
+    return {nome:v, meta:m, venda:r.v, custo:r.c, participa:(m!==null)};
+  }).filter(function(x){ return x.participa || x.venda>0; })
+    .sort(function(a,b){ return (b.participa-a.participa) || (b.venda-a.venda); });
+
+  const time=linhas.filter(function(x){ return x.participa; });
+  const semMeta=linhas.filter(function(x){ return !x.participa && x.venda>0; });
+
+  // ritmo: dias com faturamento ja decorridos contra a media dos meses fechados
+  const diasMes=D.dias[ym]||0;
+  const fechados=D.meses.filter(function(m){ return m!==D.mesCorrente; });
+  const diasTipico=fechados.length
+    ? Math.round(fechados.reduce(function(s,m){ return s+(D.dias[m]||0); },0)/fechados.length) : diasMes;
+  const diasTotal=corrente ? Math.max(diasMes, diasTipico) : diasMes;
+  const proj=function(x){ return (corrente && diasMes>0) ? x.venda/diasMes*diasTotal : x.venda; };
+
+  const metaLoja=time.reduce(function(s,x){ return s+x.meta; },0);
+  const vendaLoja=time.reduce(function(s,x){ return s+x.venda; },0);
+  const lojaOk=metaLoja>0 && vendaLoja>=metaLoja;
+  const bateram=time.filter(function(x){ return x.venda>=x.meta; });
+  const custo=bateram.length*p.ind + (lojaOk?time.length*p.loja:0);
+  const teto=time.length*(p.ind+p.loja);
+
+  // ---------- aviso quando nao ha meta cadastrada neste navegador ----------
+  document.getElementById('aviso-metas').innerHTML = time.length
+    ? (semMeta.length
+        ? '<div class="aviso">⚠️ <b>'+semMeta.length+' vendedor(es) sem meta cadastrada</b> ficam fora do programa: '+
+          semMeta.map(function(x){return esc(x.nome)}).join(', ')+
+          '. Cadastre a meta no <b>Painel Mensal</b> para incluir, ou ignore se não for vendedor de balcão.</div>'
+        : '')
+    : '<div class="aviso">⚠️ <b>Nenhuma meta cadastrada.</b> As metas são as do <b>Painel Mensal</b>. '+
+      'Cadastre lá as metas de vendas e volte aqui — ou publique-as no painel pelo botão '+
+      '<b>⚙️ Exportar parâmetros</b>, para valerem para todos.</div>';
+
+  // ---------- KPIs ----------
+  const falta=metaLoja-vendaLoja;
+  document.getElementById('kpis').innerHTML=
+    '<div class="kpi"><label>Meta da loja</label><div class="v">'+fmt0(metaLoja)+'</div>'+
+      '<div class="s">soma das metas de '+time.length+' vendedor'+(time.length===1?'':'es')+'</div></div>'+
+    '<div class="kpi'+(lojaOk?' ok':'')+'"><label>Faturamento do mês</label><div class="v">'+fmt0(vendaLoja)+'</div>'+
+      '<div class="s">'+(lojaOk?'meta batida':(metaLoja?'faltam '+fmt0(falta):'sem meta cadastrada'))+'</div></div>'+
+    '<div class="kpi'+(bateram.length?' ok':'')+'"><label>Bateram a própria meta</label>'+
+      '<div class="v">'+bateram.length+' / '+time.length+'</div>'+
+      '<div class="s">'+fmt0(bateram.length*p.ind)+' em prêmio individual</div></div>'+
+    '<div class="kpi"><label>Custo do programa</label><div class="v">'+fmt0(custo)+'</div>'+
+      '<div class="s">de '+fmt0(teto)+' possíveis'+(corrente?' · mês em andamento':'')+'</div></div>'+
+    '<div class="kpi"><label>Por vendedor</label><div class="v">'+fmt0(time.length?custo/time.length:0)+'</div>'+
+      '<div class="s">média de quem participa</div></div>';
+
+  // ---------- cartoes ----------
+  document.getElementById('premios').innerHTML=
+    '<div class="pr ind"><h3>👤 Produção individual</h3>'+
+      '<div class="cond">Bateu a <b>sua meta de vendas</b> do mês, do Painel Mensal. Não depende dos outros.</div>'+
+      '<div class="eq">'+fmt0(p.ind)+'</div>'+
+      '<div class="status" style="background:'+(bateram.length?'#1a7f37':'#21262d')+';color:'+(bateram.length?'#fff':'#8b949e')+'">'+
+        bateram.length+' de '+time.length+' garantiram</div></div>'+
+    '<div class="pr loj"><h3>🏪 Produção da loja</h3>'+
+      '<div class="cond">A loja bateu a <b>meta geral</b> ('+fmt0(metaLoja)+', soma das metas). Sai para todos ou para ninguém.</div>'+
+      '<div class="eq">'+fmt0(p.loja)+'</div>'+
+      '<div class="status" style="background:'+(lojaOk?'#1f6feb':'#21262d')+';color:'+(lojaOk?'#fff':'#8b949e')+'">'+
+        (lojaOk?'BATIDA · '+fmt0(time.length*p.loja)+' para o time'
+               :(metaLoja?'faltam '+fmt0(falta):'sem meta'))+'</div></div>';
+
+  // ---------- tabela ----------
+  document.getElementById('body').innerHTML=linhas.map(function(x){
+    if(!x.participa){
+      return '<tr class="fora"><td>'+esc(x.nome)+'</td><td colspan="4">sem meta cadastrada — fora do programa</td>'+
+        '<td>—</td><td>—</td><td>—</td><td>—</td></tr>';
+    }
+    const pct=x.meta?x.venda/x.meta*100:0;
+    const bateu=x.venda>=x.meta;
+    const pj=proj(x);
+    const cor=bateu?'#3fb950':(pct>=85?'#d29922':'#f85149');
+    const ganhoI=bateu?p.ind:0, ganhoL=lojaOk?p.loja:0;
+    return '<tr><td>'+esc(x.nome)+'</td>'+
+      '<td>'+fmt0(x.meta)+'</td>'+
+      '<td class="'+(bateu?'ok':'')+'">'+fmt(x.venda)+'</td>'+
+      '<td><b style="color:'+cor+'">'+pct.toFixed(1).replace('.',',')+'%</b>'+
+        '<div class="barra-prog"><i style="width:'+Math.min(100,pct).toFixed(0)+'%;background:'+cor+'"></i></div></td>'+
+      '<td>'+(bateu?'<span class="ok">✔</span>':fmt(x.meta-x.venda))+'</td>'+
+      '<td'+(corrente?'':' style="color:#6e7681"')+'>'+(corrente
+          ? fmt0(pj)+' <span style="font-size:10px;color:'+(pj>=x.meta?'#3fb950':'#f85149')+'">'+
+            (pj>=x.meta?'bate':'não bate')+'</span>'
+          : '—')+'</td>'+
+      '<td>'+(bateu?'<span class="ok">'+fmt0(p.ind)+'</span>':'—')+'</td>'+
+      '<td>'+(lojaOk?'<span class="ok">'+fmt0(p.loja)+'</span>':'—')+'</td>'+
+      '<td><b>'+(ganhoI+ganhoL?fmt0(ganhoI+ganhoL):'—')+'</b></td></tr>';
+  }).join('') || '<tr><td colspan="9" style="text-align:center;color:#6e7681;padding:20px">Sem vendas neste mês.</td></tr>';
+
+  if(time.length){
+    const pctL=metaLoja?vendaLoja/metaLoja*100:0;
+    document.getElementById('body').insertAdjacentHTML('beforeend',
+      '<tr class="tot"><td>LOJA</td><td>'+fmt0(metaLoja)+'</td><td>'+fmt(vendaLoja)+'</td>'+
+      '<td style="color:'+(lojaOk?'#3fb950':'#f85149')+'">'+pctL.toFixed(1).replace('.',',')+'%</td>'+
+      '<td>'+(lojaOk?'<span class="ok">✔</span>':fmt(falta))+'</td>'+
+      '<td>'+(corrente?fmt0(time.reduce(function(s,x){return s+proj(x)},0)):'—')+'</td>'+
+      '<td>'+fmt0(bateram.length*p.ind)+'</td>'+
+      '<td>'+fmt0(lojaOk?time.length*p.loja:0)+'</td>'+
+      '<td><b>'+fmt0(custo)+'</b></td></tr>');
+  }
+
+  // ---------- regras ----------
+  document.getElementById('regras').innerHTML=
+    '<div class="regra"><b>'+fmt0(p.ind)+'</b> — bateu a sua meta de vendas do mês. Individual: não depende do resto do time.</div>'+
+    '<div class="regra"><b>'+fmt0(p.loja)+'</b> — a loja bateu a meta geral, que é a <b>soma das metas individuais</b> ('+fmt0(metaLoja)+'). Sai para todos ou para ninguém.</div>'+
+    '<div class="regra">Teto de <b>'+fmt0(p.ind+p.loja)+'</b> por vendedor no mês, quando as duas condições acontecem.</div>'+
+    '<div class="regra">Não há piso de margem: o prêmio é por faturamento.</div>'+
+    '<div class="regra">A meta é a do <b>Painel Mensal</b> — quem não tem meta cadastrada não participa nem entra no rateio.</div>';
+
+  document.getElementById('nota').innerHTML=
+    'Venda <b>líquida de devolução</b>, não canceladas — a mesma base do Painel Mensal e da aba Vendas Históricas. '+
+    '<b>No ritmo fecha em</b> projeta o mês pelos dias que já tiveram faturamento contra os '+diasTotal+' dias típicos do mês; '+
+    'em mês fechado a coluna não se aplica. '+
+    'A <b>meta</b> é a do Painel Mensal: vale a que estiver neste navegador e, quando não houver, a <b>publicada no painel</b> '+
+    '(hoje '+metaPublicada()+' vendedores publicados, atualizados em '+(D.metasEm||'—')+'). Mudar a meta no Painel Mensal muda esta tela na hora. '+
+    'Os valores dos prêmios ficam salvos neste navegador; publique-os junto com as metas para valerem para todos.';
+}
+render();
+</script>
+</body>
+</html>
