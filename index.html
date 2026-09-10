@@ -214,6 +214,7 @@
       <button id="btn-gerenciar-users" class="btn btn-outline hidden" style="font-size:11px;padding:5px 10px" onclick="abrirGestaoUsuarios()">👥 Usuários</button>
       <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="sairUsuario()">Sair</button>
     </span>
+    <button id="btn-parametros" class="btn btn-outline hidden" style="font-size:11px;padding:5px 10px" onclick="exportarParametros()" title="Copia tudo o que foi digitado à mão no painel, para publicar">⚙️ Exportar parâmetros</button>
     <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="pedirAtualizacao()">🔄 Pedir atualização</button>
   </div>
 </div>
@@ -2046,6 +2047,62 @@ function editarQtyModal(codigo,val){
 
 function fecharModal(){document.getElementById('modal-exp').classList.add('hidden');}
 
+/* ------------------------------------------------------------------ parametros
+   Tudo o que e DIGITADO A MAO no painel (metas, feriados, aliquotas, classificacao de
+   fornecedor, lancamentos do relatorio...) hoje mora no localStorage do navegador de quem
+   digitou. Consequencia: o vendedor abre a Premiacao no celular e nao ve meta nenhuma, e
+   o que foi pago num mes fechado muda se a meta for reeditada depois.
+   Este botao junta TUDO num texto so, uma vez por mes, para publicar em
+   parametros-painel.json — dai todas as telas passam a ler o mesmo valor.
+   O que NAO entra: preferencia de tela (aba aberta, ordem de coluna, filtro salvo),
+   pedidos salvos e cotacoes, que sao de cada um. */
+const PARAMS_PREFIXOS = ['mapa_meta_'];
+const PARAMS_CHAVES = [
+  // MC MOTO — painel mensal e projecao
+  'mapa_feriados', 'mapa_descontoPct',
+  // MC MOTO — recebimentos / meta de compra
+  'mc_moto_metas_mensais', 'mc_moto_recebimentos', 'mc_moto_forn_nao_mercadoria',
+  // SEVEN — unidades
+  'mapa_uni_desconto', 'mapa_uni_diasDec', 'mapa_uni_diasTot',
+  'seven_metas_mensais', 'seven_recebimentos', 'seven_forn_nao_mercadoria',
+  // Relatorio Gerencial das duas empresas
+  'rel_manual_mcmoto', 'rel_aliq_mcmoto', 'rel_baldes_mcmoto', 'rel_split_mcmoto', 'rel_compct_mcmoto',
+  'rel_manual_seven', 'rel_aliq_seven', 'rel_baldes_seven', 'rel_split_seven', 'rel_compct_seven',
+  // Premiacao e dashboard
+  'premiacao_seven_params', 'premiacao_mcmoto_params',
+  'dash_meta_seven', 'dash_giro_ideal', 'dash_deducoes', 'dash_centros_fixo',
+  // Agenda de compras / transferencia / inativacao
+  'agenda_cobertura_meses', 'agenda_prazo_dias',
+  'transf_cobertura', 'transf_fator',
+  'inativar_dias', 'inativar_fator', 'inativar_mkp',
+];
+
+function coletarParametros(){
+  const out = {};
+  for (let i=0; i<localStorage.length; i++){
+    const k = localStorage.key(i);
+    if (!k) continue;
+    if (PARAMS_CHAVES.indexOf(k) >= 0 || PARAMS_PREFIXOS.some(p => k.indexOf(p) === 0)){
+      out[k] = localStorage.getItem(k);
+    }
+  }
+  return out;
+}
+
+function exportarParametros(){
+  const p = coletarParametros();
+  const metas = Object.keys(p).filter(k => k.indexOf('mapa_meta_') === 0).length;
+  const txt = JSON.stringify({
+    geradoEm: new Date().toLocaleString('pt-BR'),
+    origem: (typeof usuarioAtual === 'function' && usuarioAtual() ? usuarioAtual().nome : ''),
+    parametros: p,
+  }, null, 1);
+  const resumo = Object.keys(p).length + ' parâmetros (' + metas + ' metas de vendedor).';
+  navigator.clipboard.writeText(txt).then(
+    function(){ alert('Copiado: ' + resumo + ' Cole no chat para publicar no painel.'); },
+    function(){ prompt('Copie o texto (' + resumo + '):', txt); });
+}
+
 function pedirAtualizacao(){
   const msg='Atualize o painel de pedidos (index.html) com os dados mais recentes de estoque, vendas e preços do banco de dados.';
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -2465,6 +2522,7 @@ function aplicarPermissoes(){
     badge.classList.remove('hidden');
     document.getElementById('user-nome').textContent=u.nome+(u.master?' (master)':'');
     document.getElementById('btn-gerenciar-users').classList.toggle('hidden', !u.master);
+    document.getElementById('btn-parametros').classList.toggle('hidden', !u.master);
   }
   irParaPrimeiraAbaPermitida();
 }
