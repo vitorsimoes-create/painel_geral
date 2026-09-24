@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Novidades do Painel</title>
+<style>
+  * { box-sizing:border-box; }
+  body { font-family:Arial,Helvetica,sans-serif; background:#f2f4f7; margin:0; padding:20px 16px; color:#222; }
+  .wrap { max-width:820px; margin:0 auto; }
+  h1 { background:#1f4e78; color:#fff; padding:14px 18px; border-radius:6px; font-size:18px; margin:0 0 6px; }
+  .sub { font-size:12px; color:#666; margin-bottom:18px; }
+  .edicao { background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.12); padding:16px 18px; margin-bottom:18px; }
+  .edicao h2 { font-size:15px; margin:0 0 4px; color:#1f4e78; }
+  .edicao .periodo { font-size:12px; color:#666; margin-bottom:12px; }
+  .resumo { font-size:13px; line-height:1.6; margin:0 0 12px; }
+  .item { border-left:3px solid #cbd5e1; padding:6px 0 6px 12px; margin:10px 0; }
+  .item.novo { border-color:#15803d; }
+  .item.melhoria { border-color:#1f4e78; }
+  .item.correcao { border-color:#b45309; }
+  .item.aviso { border-color:#c00000; }
+  .item .tit { font-size:13px; font-weight:bold; }
+  .item .onde { font-size:11px; color:#64748b; margin:2px 0 4px; }
+  .item p { font-size:13px; line-height:1.55; margin:0; color:#333; }
+  .tag { display:inline-block; font-size:10px; font-weight:bold; padding:2px 8px; border-radius:10px; margin-right:6px; vertical-align:1px; }
+  .tag.novo { background:#dcfce7; color:#166534; }
+  .tag.melhoria { background:#dbeafe; color:#1e3a8a; }
+  .tag.correcao { background:#ffedd5; color:#9a3412; }
+  .tag.aviso { background:#fee2e2; color:#991b1b; }
+  .vazio { font-size:13px; color:#666; }
+  @media (prefers-color-scheme: dark) {
+    body { background:#0f172a; color:#e2e8f0; }
+    .edicao { background:#1e293b; box-shadow:none; }
+    .edicao h2 { color:#93c5fd; }
+    .item p { color:#cbd5e1; }
+    .sub, .edicao .periodo, .item .onde, .vazio { color:#94a3b8; }
+  }
+</style>
+</head><body><div class="wrap">
+<h1>Novidades do Painel — MC MOTO e SEVEN</h1>
+<div class="sub">Resumo semanal do que mudou no painel. A edição mais recente fica no topo.</div>
+<div id="edicoes"></div>
+</div>
+<script>
+// Uma edição por semana, a mais recente PRIMEIRO. A rotina semanal acrescenta no topo.
+// tipo: novo | melhoria | correcao | aviso
+const EDICOES = [
+  {
+    semana: "18/09 a 24/09/2026",
+    publicado: "24/09/2026",
+    resumo: "Semana focada na Análise de Fornecedor, que ganhou filtros e uma visão por grupo de mercadoria, e em Vendas Diárias, que agora abre por vendedor. Houve também uma interrupção nos dados da MC MOTO entre 22 e 24/09, causada pela atualização do sistema (ERP), já resolvida.",
+    itens: [
+      { tipo: "novo", titulo: "Análise de Fornecedor: nova visão \"Por grupo e subgrupo\"",
+        onde: "Compras › Análise de Fornecedor (MC MOTO e SEVEN)",
+        texto: "O excesso de estoque agora pode ser visto somado por grupo de mercadoria. Clique em um grupo para abrir os subgrupos. Na MC MOTO, os itens cadastrados como DIVERSOS passaram a ser classificados pela descrição do produto, e esses itens aparecem marcados como classificação deduzida. O excesso que antes aparecia quase todo como \"DIVERSOS\" agora mostra onde está de verdade: MOTOR 27,5%, BOUTIQUE 21,8% e PARTES DE RODA 10,9%. O cadastro do ERP não foi alterado." },
+      { tipo: "novo", titulo: "Análise de Fornecedor: filtros de grupo e subgrupo",
+        onde: "Compras › Análise de Fornecedor (MC MOTO e SEVEN)",
+        texto: "Escolha um grupo e, se quiser, um subgrupo de mercadoria. O filtro vale para a aba toda: a tabela, o estoque por fornecedor e os totais do topo passam a mostrar só aquele recorte." },
+      { tipo: "novo", titulo: "Vendas Diárias: filtro por vendedor",
+        onde: "Vendas › Vendas Diárias (MC MOTO e SEVEN)",
+        texto: "Agora dá para ver o dia de um ou mais vendedores, marcando os botões com os nomes. Sem ninguém marcado, os números são os mesmos de antes. Na SEVEN, a seleção de vendedores é a mesma da aba Gráficos: se você escolher alguém em uma aba, a escolha vale também na outra." },
+      { tipo: "aviso", titulo: "Dados da MC MOTO desatualizados de 22/09 à tarde até 24/09",
+        onde: "Todas as abas da MC MOTO que usam vendas e produtos",
+        texto: "A atualização de versão do ERP em 22/09 impediu a cópia de vendas e produtos para o banco do painel. Em 23/09 essas abas da MC MOTO ficaram com os números de 22/09. Contas a Receber, Recebimentos e tudo da SEVEN foram atualizados normalmente. A cópia voltou a funcionar em 24/09 à tarde e o painel já está em dia. O painel também passou a interromper a atualização quando vier sem dados, para que as abas não fiquem zeradas." },
+      { tipo: "aviso", titulo: "Painel sem atualização de 19 a 21/09",
+        onde: "Painel inteiro",
+        texto: "A atualização automática não rodou nesses três dias. Os números voltaram a ser atualizados em 22/09." }
+    ]
+  }
+];
+
+const ROTULO = { novo:"NOVO", melhoria:"MELHORIA", correcao:"CORREÇÃO", aviso:"AVISO" };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+document.getElementById("edicoes").innerHTML = EDICOES.length ? EDICOES.map(e => `
+  <div class="edicao">
+    <h2>Semana de ${esc(e.semana)}</h2>
+    <div class="periodo">Publicado em ${esc(e.publicado)}</div>
+    <p class="resumo">${esc(e.resumo)}</p>
+    ${e.itens.length ? e.itens.map(i => `
+      <div class="item ${i.tipo}">
+        <div class="tit"><span class="tag ${i.tipo}">${ROTULO[i.tipo]||""}</span>${esc(i.titulo)}</div>
+        <div class="onde">${esc(i.onde)}</div>
+        <p>${esc(i.texto)}</p>
+      </div>`).join("") : '<div class="vazio">Nenhuma mudança visível no painel nesta semana; só a atualização diária dos números.</div>'}
+  </div>`).join("") : '<div class="vazio">Nenhuma edição ainda.</div>';
+</script>
+</body></html>
