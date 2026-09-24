@@ -729,10 +729,15 @@
       <button class="btn btn-outline" onclick="exportarAnaliseItens('mc')">⬇ Excel (itens)</button>
     </div>
   </div>
+  <div style="display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid #e2e8f0;padding-bottom:2px">
+    <button id="af-vista-forn" class="app-tab active" onclick="setAnaliseVista('mc','forn')">🏭 Por fornecedor</button>
+    <button id="af-vista-grupo" class="app-tab" onclick="setAnaliseVista('mc','grupo')">🗂️ Por grupo e subgrupo</button>
+  </div>
   <div class="stats" id="af-kpis" style="margin-bottom:16px"></div>
   <div id="af-nota-forn-real" style="display:none;background:#f5f3ff;border:1px solid #ddd6fe;color:#5b21b6;border-radius:8px;padding:9px 14px;font-size:12px;margin-bottom:12px"></div>
   <div id="af-nota-recentes" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:8px;padding:9px 14px;font-size:12px;margin-bottom:12px"></div>
   <div id="af-tabela"></div>
+  <div id="af-tabela-grupo" style="display:none"></div>
 </div>
 
 <div id="app-tab-agenda" class="main hidden">
@@ -1051,10 +1056,15 @@
         <button class="btn btn-outline" onclick="exportarAnaliseItens('seven')">⬇ Excel (itens)</button>
       </div>
     </div>
-    <div class="stats" id="afs-kpis" style="margin-bottom:16px"></div>
+    <div style="display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid #e2e8f0;padding-bottom:2px">
+    <button id="afs-vista-forn" class="app-tab active" onclick="setAnaliseVista('seven','forn')">🏭 Por fornecedor</button>
+    <button id="afs-vista-grupo" class="app-tab" onclick="setAnaliseVista('seven','grupo')">🗂️ Por grupo e subgrupo</button>
+  </div>
+  <div class="stats" id="afs-kpis" style="margin-bottom:16px"></div>
     <div id="afs-nota-forn-real" style="display:none;background:#f5f3ff;border:1px solid #ddd6fe;color:#5b21b6;border-radius:8px;padding:9px 14px;font-size:12px;margin-bottom:12px"></div>
     <div id="afs-nota-recentes" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:8px;padding:9px 14px;font-size:12px;margin-bottom:12px"></div>
     <div id="afs-tabela"></div>
+  <div id="afs-tabela-grupo" style="display:none"></div>
   </div>
 
   <div id="app-tab-agenda-seven" class="main hidden" style="padding:0">
@@ -1222,6 +1232,50 @@ const GRUPO_RULES = [
   {g:'QUIMICOS', k:['ADITIVO RADIADOR','CERA POLID','DESCARBONIZ','DESENGRIPANTE','GRAXA','FLUIDO FREIO','LUBRIF','OLEO MOTOR','SILICONE','TINTA SPRAY']},
   // MIUDEZAS
   {g:'MIUDEZAS', k:['ANEL VEDACAO BOIA','ARRUELA','PRESILHA','PRISIONEIRO','TRAVA COROA','TRAVA PINHAO','TUCHO','PORCA','PARAFUSO BUJAO','PARAFUSO C/','PARAFUSO ESTRIBO','PARAFUSO FIXAC','PARAFUSO PHIL','PARAFUSO DISCO']},
+  // --- Segunda passada (24/09/2026): so alcanca o que as regras acima deixaram passar.
+  // Levantada em cima dos 12.651 itens que o cadastro da MC deixou em DIVERSOS.
+  // Quatro decisoes foram do usuario, porque o cadastro nao resolvia:
+  // TAMPA TANQUE -> ACESSORIOS, CORREIA -> PARTES DE RODA, COXIM DE BANCO -> MIUDEZAS,
+  // VELOCIMETRO -> ELETRICA mas a ENGRENAGEM dele -> PARTES DE RODA.
+  {g:'PARTES', k:['ENG VELOCIMETRO','ENGRENAGEM VELOCIMETRO','CORREIA TRANSM','CORREIA DENTADA',
+    'CORREIA TRACAO','GUIA CORR','PROT. CORRENTE','PROT CORRENTE','CORR COM','COR COM','RAIO ',
+    'CUBO DE','BUCHA CUBO','ESTICADOR CORR','TRAVA CATRACA']},
+  {g:'FREIO', k:['VARETA FREIO','DISCO DE FREIO','REPARO DE FREIO','SUPORTE PASTILHA']},
+  {g:'MOTOR', k:['JUNCAO','PISTON CARBUR','DIAFRAGMA CARB','GUIA VAL','EIXO SELETOR','FILTRO DE',
+    'DISCO DE EMBREAGEM','EIXO DO COMANDO','EIXO PEDAL PART','REPARO CARBUR','TAMPA CARBUR']},
+  {g:'ELETRICA', k:['VELOCIMETRO','RELE ','REG RET','REGULADOR','PAINEL','SENSOR','SOQUETE',
+    'TERMINAL BATERIA']},
+  {g:'SUSPENSAO', k:['TUBO EXT','TUBO INT','EIXO DA BALANCA','MOLA AMORT','RETENTOR BENGALA']},
+  {g:'CABOS', k:['CABO DE ']},
+  {g:'PLASTICO', k:['PARAL ','PARAL. ','PROT MAO','PROTETOR DE MAO','PROT. MAO','TAMPA LATERAL']},
+  {g:'METAL', k:['PROT CAREN','PROT. CAREN','MESA DIRECAO','SUP FAROL','SUP PEDALE','SUPORTE BAU',
+    'PEDALEIRA','ESTRIBO']},
+  {g:'ACESSORIOS', k:['TAMPA TANQUE','JG FAIXA','JG FX','JOGO FAIXA','FAIXA REFRETIVA',
+    'FAIXA REFLETIVA','PROT TANQUE','PROT. TANQUE']},
+  {g:'BOUTIQUE', k:['CAP. ','BONE','VISEIRA','BOLSA HIDRATACAO','CINTA ABDOMINAL','CONJ.ASW',
+    'CONJ ASW','PROTETOR PEITORAL','OCULOS','MOCHILA']},
+  {g:'MIUDEZAS', k:['COXIM FIXACAO BANCO','COXIM BANCO','ANEL POLEGADA','ANEL VEDACAO','ANEL TAMPA',
+    'ANEL ORING','O-RING','ABRACADEIRA']},
+  // --- Terceira passada: o que sobrou da segunda e ainda tinha descricao util.
+  // Mais especifico primeiro, porque getGrupo para na primeira regra que casa.
+  {g:'MOTOR', k:['CORRENTE DO COMANDO','CORRENTE COMANDO','ENG CAMBIO','ENG CARC','ENG PRIM',
+    'CARCACA EMBR','SEPARADOR EMBR','BRACO DE EMBREAGEM','BRACO EMBR','REFIL BOMBA',
+    'GUIA OLEO CILINDRO','GUIA CILINDRO','CILINDRO MOTOR','TAMPA DO CARTER','TAMPA CARTER',
+    'TAMPA (T MOTOR','EIXO BALANC','EIXO BALACIM','BALANCIM','ANEL CILINDRO','ANEL EIXO COMANDO',
+    'ANEL CATALIZADOR','AGULHA PSITON','AFOGADOR','KIT A ','KIT B ','KIT C ']},
+  {g:'FREIO', k:['CILINDRO FRE','BRACO DE FREIO','PARAF ALLEN PASTILHA']},
+  {g:'PARTES', k:['PROT CORR','PROT. CORR','CORRENTE TRANS','GUIA DESLIZ','RODA LIGA','RAIO',
+    'ESTICADOR','CUBO ']},
+  {g:'ELETRICA', k:['INTER EMBR','CHAVE DE FAROL','CHAVE FAROL','REFLETOR']},
+  {g:'SUSPENSAO', k:['BORRACHA AMORTEC','TRAVA BENGALA','ALONGADOR SUSP','ANEL NYLON INF BENG']},
+  {g:'PLASTICO', k:['CAREN ','CARCACA DO FAROL','CARCACA DO ACEL','TAMPA DIANT','TAMPA INF',
+    'TAMPA LAT','TAMPA TRAS','APARABARRO']},
+  {g:'ACESSORIOS', k:['BAU ','TRAVA DISCO','CAPA IMPERMEAVEL','CAPA INPERMEAVEL','CAPA PAR COBRI',
+    'CAPA PARA COBRI','ADAPTADOR']},
+  {g:'BOUTIQUE', k:['CONJUNTO ','CAM. ASW','CAM ASW','BLUSA','COTOVELEIRA','PROTETOR DE COLUNA',
+    'PROTETOR COLUNA','BOLSA','ACELERADOR RAPIDO']},
+  // parafuso e afins fecham a fila: 'PARAF' e curto e pegaria peca com nome composto
+  {g:'MIUDEZAS', k:['PARAF','ANEL RET','ANEL PARAF','TRAVA BANCO']},
 ];
 
 function getGrupo(desc) {
@@ -2713,13 +2767,44 @@ const ANALISE_FONTES={
    item nesta empresa (ou na unidade em foco) so atrapalharia. O subgrupo acompanha o grupo
    escolhido pelos pares que realmente existem nos dados — e mais confiavel que a coluna de
    grupo da tabela de subgrupos, que vem vazia em boa parte das linhas. */
+/* ---- Grupo EFETIVO do item na Analise de Fornecedor -------------------------------
+   Na MC MOTO 12.651 dos 19.515 itens estao em DIVERSOS: o cadastro nunca foi classificado.
+   Sem tratar isso, qualquer visao por grupo vira "DIVERSOS: quase tudo" e nao serve.
+   Quando o cadastro diz DIVERSOS (codigo 1) a descricao decide, pelas mesmas regras de
+   palavra-chave que o Montar Pedido usa (getGrupo). O item fica marcado como DEDUZIDO — o
+   cadastro do ERP nao e alterado, isto vive so no painel.
+   Descricao sem contexto ("ESPACADOR", "REPARO", "TENSOR", "INATIVO") continua em DIVERSOS:
+   chutar grupo para elas seria inventar numero. */
+const GRUPO_REGRA_PARA_CADASTRO={PARTES:'PARTES DE RODA'};
+let _codPorNomeMc=null;
+function codGrupoMc(nome){
+  if(!_codPorNomeMc){
+    _codPorNomeMc={};
+    Object.keys(GRUPO_NOMES_MC).forEach(k=>{ _codPorNomeMc[GRUPO_NOMES_MC[k]]=k; });
+  }
+  return _codPorNomeMc[nome]||null;
+}
+const GRUPO_DIVERSOS_MC='1';
+function grupoEfetivo(it,fonte){
+  const cod=it.gr==null?'':String(it.gr);
+  const nomes=ANALISE_FONTES[fonte].gnomes();
+  if(fonte==='mc' && (cod===''||cod===GRUPO_DIVERSOS_MC)){
+    const nome=GRUPO_REGRA_PARA_CADASTRO[getGrupo(it.d||'')]||getGrupo(it.d||'');
+    const c=codGrupoMc(nome);
+    if(c && c!==GRUPO_DIVERSOS_MC) return {cod:c, nome:nome, deduzido:true};
+  }
+  if(!cod) return {cod:'', nome:'(sem grupo)', deduzido:false};
+  return {cod:cod, nome:nomes[cod]||('Grupo '+cod), deduzido:false};
+}
+
 function gruposAnalise(fonte){
   const cfg=ANALISE_FONTES[fonte];
   const gn=cfg.gnomes(), sn=cfg.snomes();
   const grupos={}, subs={};
   cfg.dados().forEach(it=>{
-    const g=it.gr!=null?String(it.gr):'', sg=it.sg!=null?String(it.sg):'';
-    if(g) grupos[g]=gn[g]||('Grupo '+g);
+    const ef=grupoEfetivo(it,fonte);
+    const g=ef.cod, sg=it.sg!=null?String(it.sg):'';
+    if(g) grupos[g]=ef.nome;
     if(sg) (subs[g]||(subs[g]={}))[sg]=sn[sg]||('Subgrupo '+sg);
   });
   return {grupos,subs,sn};
@@ -4468,7 +4553,8 @@ function calcularAnalise(fonte){
   cfg.dados().forEach(it=>{
     // grupo/subgrupo do cadastro: corta antes de tudo, inclusive do estoque por fornecedor,
     // para os totais da tela falarem só do recorte escolhido
-    if(grupoSel && String(it.gr==null?'':it.gr)!==grupoSel) return;
+    const _ef=grupoEfetivo(it,fonte);
+    if(grupoSel && _ef.cod!==grupoSel) return;
     if(subgrupoSel && String(it.sg==null?'':it.sg)!==subgrupoSel) return;
     // custo desta aba = preço REAL da última compra (it.pc, só a SEVEN tem) e, quando o produto
     // não tem entrada de compra registrada, cai para o custo médio (it.p). A MC MOTO não tem
@@ -4490,7 +4576,8 @@ function calcularAnalise(fonte){
     // mercadoria que chegou há pouco não conta como dinheiro parado
     if(dias>0 && it.ue && it.ue>=corte){ ignoradosRecentes++; valorIgnorado+=excValor; return; }
     const g=porForn[forn]||(porForn[forn]={fornecedor:forn,itens:[],qtd:0,valor:0});
-    g.itens.push({c:it.c,u:it.u,d:it.d,cf:it.cf,r:it.r,pico,estoque,ideal,excQtd,custo,excValor,ue:it.ue,preco:it.pv||0});
+    g.itens.push({c:it.c,u:it.u,d:it.d,cf:it.cf,r:it.r,pico,estoque,ideal,excQtd,custo,excValor,ue:it.ue,preco:it.pv||0,
+                  gcod:_ef.cod,gnome:_ef.nome,ded:_ef.deduzido,sg:it.sg==null?'':String(it.sg)});
     g.qtd+=excQtd; g.valor+=excValor;
     totalValor+=excValor; totalItens++;
   });
@@ -4520,6 +4607,98 @@ function calcularAnalise(fonte){
   }
   return {lista,totalValor,totalItens,fator,totalGeral,fornecedoresTotal,dias,ignoradosRecentes,
           valorIgnorado,totalEstoque,corrigidos,mesesCompra,busca,achouItem};
+}
+
+/* ---- Sub-aba "Por grupo" ------------------------------------------------------------
+   Mesmo excesso da visao por fornecedor, so que somado por grupo e subgrupo de mercadoria.
+   Reaproveita calcularAnalise() de proposito: fator, prazo de chegada, busca e os filtros
+   valem igual nas duas visoes, e nao existe chance de uma tela discordar da outra.
+   Item cujo grupo foi DEDUZIDO da descricao nao tem subgrupo confiavel (no cadastro ele
+   esta em DIVERSOS/GERAL), entao cai num balde proprio em vez de sujar um subgrupo real. */
+function calcularAnaliseGrupo(fonte){
+  const r=calcularAnalise(fonte);
+  const sn=ANALISE_FONTES[fonte].snomes();
+  const grupos={};
+  let total=0, deduzidos=0, vlDeduzido=0;
+  r.lista.forEach(f=>f.itens.forEach(i=>{
+    const gk=i.gcod||'';
+    const g=grupos[gk]||(grupos[gk]={cod:gk,nome:i.gnome||'(sem grupo)',valor:0,qtd:0,itens:0,subs:{}});
+    g.valor+=i.excValor; g.qtd+=i.excQtd; g.itens++;
+    total+=i.excValor;
+    const sk=i.ded?'*ded':(i.sg||'');
+    const rot=i.ded?'(grupo deduzido da descrição)':(sk?(sn[sk]||('Subgrupo '+sk)):'(sem subgrupo)');
+    const sub=g.subs[sk]||(g.subs[sk]={cod:sk,nome:rot,valor:0,qtd:0,itens:0,ded:!!i.ded});
+    sub.valor+=i.excValor; sub.qtd+=i.excQtd; sub.itens++;
+    if(i.ded){ deduzidos++; vlDeduzido+=i.excValor; }
+  }));
+  const lista=Object.keys(grupos).map(k=>grupos[k]).sort((a,b)=>b.valor-a.valor);
+  lista.forEach(g=>{ g.lsubs=Object.keys(g.subs).map(k=>g.subs[k]).sort((a,b)=>b.valor-a.valor); });
+  return {lista,total,deduzidos,vlDeduzido,base:r};
+}
+let _grupoAberto={mc:null,seven:null};
+function toggleGrupoAnalise(fonte,cod){
+  _grupoAberto[fonte]=(_grupoAberto[fonte]===cod)?null:cod;
+  renderAnaliseGrupo(fonte);
+}
+function renderAnaliseGrupo(fonte){
+  const cfg=ANALISE_FONTES[fonte];
+  const el=document.getElementById(cfg.px+'-tabela-grupo');
+  if(!el||el.style.display==='none') return;
+  const r=calcularAnaliseGrupo(fonte);
+  if(!r.lista.length){
+    el.innerHTML='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:30px;text-align:center;color:#94a3b8">Nenhum item com excesso neste recorte</div>';
+    return;
+  }
+  const aberto=_grupoAberto[fonte];
+  const nota=r.deduzidos
+    ? '<div style="background:#f5f3ff;border:1px solid #ddd6fe;color:#5b21b6;border-radius:8px;padding:9px 14px;font-size:12px;margin-bottom:12px">'+
+      '<strong>'+fmtN(r.deduzidos)+'</strong> '+(r.deduzidos===1?'item estava':'itens estavam')+' em DIVERSOS no cadastro e '+
+      (r.deduzidos===1?'teve seu grupo deduzido':'tiveram o grupo deduzido')+' da descrição ('+fmt(r.vlDeduzido)+' em excesso). '+
+      'O cadastro do ERP não foi alterado.</div>'
+    : '';
+  const linhas=r.lista.map(g=>{
+    const ab=aberto===g.cod;
+    const pct=r.total>0?(g.valor/r.total*100):0;
+    const cab='<tr onclick="toggleGrupoAnalise(\''+fonte+'\',\''+g.cod+'\')" style="cursor:pointer;border-top:1px solid #f1f5f9'+(ab?';background:#f8fafc':'')+'">'+
+      '<td style="padding:10px 12px;font-weight:600;color:#1a1a2e">'+(ab?'▾':'▸')+' '+escHtml(g.nome)+'</td>'+
+      '<td class="num" style="padding:10px 12px;font-weight:700;color:#b91c1c">'+fmt(g.valor)+'</td>'+
+      '<td class="num" style="padding:10px 12px;color:#64748b">'+fmtN(g.itens)+'</td>'+
+      '<td class="num" style="padding:10px 12px;color:#64748b">'+fmtN(Math.round(g.qtd))+'</td>'+
+      '<td style="padding:10px 12px;width:150px"><div style="background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden">'+
+        '<div style="width:'+pct.toFixed(1)+'%;background:#7c3aed;height:100%"></div></div>'+
+        '<div style="font-size:10px;color:#94a3b8;margin-top:2px">'+pct.toFixed(1).replace('.',',')+'%</div></td></tr>';
+    if(!ab) return cab;
+    const subs=g.lsubs.map(sb=>'<tr style="background:#fcfcfd;border-top:1px solid #f8fafc">'+
+      '<td style="padding:7px 12px 7px 34px;font-size:12px;color:'+(sb.ded?'#7c3aed':'#475569')+'">'+escHtml(sb.nome)+'</td>'+
+      '<td class="num" style="padding:7px 12px;font-size:12px;color:#b91c1c">'+fmt(sb.valor)+'</td>'+
+      '<td class="num" style="padding:7px 12px;font-size:12px;color:#94a3b8">'+fmtN(sb.itens)+'</td>'+
+      '<td class="num" style="padding:7px 12px;font-size:12px;color:#94a3b8">'+fmtN(Math.round(sb.qtd))+'</td>'+
+      '<td></td></tr>').join('');
+    return cab+subs;
+  }).join('');
+  el.innerHTML=nota+
+    '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'+
+    '<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8fafc">'+
+    ['Grupo / subgrupo','Valor em excesso','Itens','Qtd. em excesso','% do total'].map((h,i)=>
+      '<th style="padding:9px 12px;text-align:'+(i===0||i===4?'left':'right')+';font-size:11px;color:#64748b;text-transform:uppercase">'+h+'</th>').join('')+
+    '</tr></thead><tbody>'+linhas+
+    '<tr style="border-top:2px solid #e2e8f0;background:#f8fafc"><td style="padding:10px 12px;font-weight:700">TOTAL ('+r.lista.length+' grupos)</td>'+
+    '<td class="num" style="padding:10px 12px;font-weight:700;color:#b91c1c">'+fmt(r.total)+'</td><td colspan="3"></td></tr>'+
+    '</tbody></table></div>';
+}
+/* alterna entre as duas visoes da aba */
+let _analiseVista={mc:'forn',seven:'forn'};
+function setAnaliseVista(fonte,v){
+  _analiseVista[fonte]=v;
+  const px=ANALISE_FONTES[fonte].px;
+  ['forn','grupo'].forEach(x=>{
+    const b=document.getElementById(px+'-vista-'+x);
+    if(b) b.className='app-tab'+(x===v?' active':'');
+  });
+  const t=document.getElementById(px+'-tabela'), tg=document.getElementById(px+'-tabela-grupo');
+  if(t) t.style.display=(v==='forn')?'':'none';
+  if(tg) tg.style.display=(v==='grupo')?'':'none';
+  renderAnalise(fonte);
 }
 
 function renderAnalise(fonte){
@@ -4566,6 +4745,8 @@ function renderAnalise(fonte){
       : '';
     nota.style.display=r.ignoradosRecentes?'':'none';
   }
+
+  renderAnaliseGrupo(fonte);
 
   const cont=document.getElementById(cfg.px+'-tabela');
   if(!r.lista.length){
