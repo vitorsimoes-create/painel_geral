@@ -11,6 +11,7 @@ Não há API nem banco de dados acessado em tempo real pelo navegador. Todos os 
 | Arquivo | Papel | Como é gerado/atualizado |
 |---|---|---|
 | `index.html` | App principal — todo o shell de navegação, controle de acesso, e as abas de **Compras** (Montar Pedido, Cotação, Pedidos Salvos, Recebimentos) | Editado manualmente (features) + reescrita diária automática dos dados (`RAW_DATA`, `RECEBIMENTOS_DB`, `CMV_MENSAL`) por tarefa agendada |
+| `dados-mc.js` / `dados-seven.js` | Dados de **Compras** (catálogo `RAW_DATA*`, recebimentos, itens de nota, CMV, transferência). Saíram do `index.html` em 28/09/2026 — ele tinha 10,5 MB e levava ~5 s para abrir; agora ~1 MB e ~0,4 s | Carregados sob demanda por `carregarDados(emp)` quando uma aba de Compras abre (`switchAppTab` / `switchAppTabSeven` esperam). Cada constante numa linha `const NOME = ...;`, reescrita pelos geradores diários |
 | `mapa-vendas.html` | Iframe embutido em `index.html`, cobre as abas de **Vendas**, **Financeiro → Contas a Pagar** (MC MOTO) e **Unidades de Negócio** (RHS/SEVEN) | É uma **cópia sincronizada** de `Mapa de Vendas.html` (ver abaixo) — nunca editado diretamente |
 | `Mapa de Vendas.html` | Arquivo **original**, fonte de verdade do conteúdo acima | Gerado do zero a cada execução do script local `atualizar_mapa.py` (agendado no Windows Task Scheduler). **Nunca deve ser editado à mão** — qualquer mudança de conteúdo tem que ir no template Python e o script tem que ser rerodado |
 | `crm-seven.html` | Iframe embutido, aba RHS/SEVEN → CRM | Arquivo separado, não coberto em detalhe nesta documentação |
@@ -42,7 +43,7 @@ Cada clique passa primeiro pelo gate de senha (ver seção abaixo) antes de troc
 - 👥 **CRM** (`crm`) → mostra o iframe separado `crm-seven.html`.
 - 💰 **Financeiro** (`financeiroseven`) → mostra um painel nativo de `index.html` com 3 pills (`switchCategoriaFinanceiroSeven`): Contas a Pagar (placeholder "Em breve"), Contas a Receber (placeholder "Em breve"), Risco/Cliente (iframe `risco-cliente.html`, funcional).
 
-Se o iframe `mapa-vendas.html` ainda não terminou de carregar quando o usuário clica em uma sub-aba que depende dele, o `index.html` guarda o alvo pendente em `_mapaTabPendente` e dispara a troca assim que o evento `load` do iframe ocorre.
+Os 19 iframes têm `data-src` e só recebem o `src` quando aparecem na tela (`carregarIframesVisiveis()`, disparado por um MutationObserver a cada troca de aba) — antes todos carregavam na abertura. Se o iframe `mapa-vendas.html` ainda não terminou de carregar quando o usuário clica em uma sub-aba que depende dele, o `index.html` guarda o alvo pendente em `_mapaTabPendente` e dispara a troca assim que o evento `load` do iframe ocorre.
 
 ## Controle de acesso (usuários e permissões de aba)
 
