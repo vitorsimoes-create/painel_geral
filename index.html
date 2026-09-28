@@ -157,6 +157,20 @@
   .dash-graficos { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:14px; }
   .dash-panel { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:14px 16px; }
   .dash-panel.largo { grid-column:1/-1; }
+  /* faixa "Atencao hoje" e links "abrir" (28/09/2026) */
+  .dash-alertas { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 14px; margin-bottom:12px; }
+  .dash-al-tit { font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+  .dash-al { display:flex; align-items:flex-start; gap:9px; padding:8px 10px; border-radius:8px; margin-bottom:6px; font-size:12.5px; color:#1e293b; line-height:1.45; cursor:pointer; }
+  .dash-al:last-child { margin-bottom:0; }
+  .dash-al.vermelho { background:#fef2f2; border-left:4px solid #dc2626; }
+  .dash-al.amarelo { background:#fffbeb; border-left:4px solid #d97706; }
+  .dash-al.verde { background:#f0fdf4; border-left:4px solid #16a34a; cursor:default; }
+  .dash-al:hover:not(.verde) { filter:brightness(.97); }
+  .dash-al .ir { margin-left:auto; color:#2563eb; font-weight:700; white-space:nowrap; font-size:11.5px; }
+  .dash-det-cab { display:flex; justify-content:flex-end; margin:-6px 0 8px; }
+  .dash-det-btn { background:none; border:none; color:#2563eb; font-size:12px; font-weight:700; cursor:pointer; padding:4px 2px; }
+  .dash-ir { float:right; font-size:11px; font-weight:700; color:#2563eb; cursor:pointer; text-decoration:none; }
+  .dash-ir:hover { text-decoration:underline; }
   /* ---- celular (28/09/2026): numa tela de 375 px o cabecalho empurrava a pagina para
      538 px (rolagem lateral) e os graficos pediam 330 px de largura minima. ---- */
   @media (max-width:700px){
@@ -317,9 +331,13 @@
         <button class="dash-sel" style="cursor:pointer" onclick="abrirCentrosCusto()">⚙️ Custo fixo</button>
       </div>
     </div>
+    <div id="dash-alertas"></div>
     <div class="dash-kpis" id="dash-kpis"></div>
   </div>
 
+  <div class="dash-det-cab">
+    <button id="dash-det-btn" class="dash-det-btn" onclick="toggleDashDetalhes()"></button>
+  </div>
   <div class="dash-ind" id="dash-indicadores"></div>
 
   <div class="dash-graficos" id="dash-graficos"></div>
@@ -2335,7 +2353,11 @@ function atualizarBadgeSalvos(){
 }
 
 function switchAppTab(tab){
-  if(!dadosOk.mc){ carregarDados('mc').then(function(){ switchAppTab(tab); }); return; }
+  /* so conclui a troca se a pessoa ainda estiver em Compras quando o catalogo chegar —
+     senao um atalho do DASHBOARD (MC MOTO abre em Compras por padrao) era "puxado" de
+     volta para o Montar Pedido meio segundo depois */
+  if(!dadosOk.mc){ carregarDados('mc').then(function(){
+    if(_grupoAtual==='mcmoto' && _ultimaCategoriaMcMoto==='compras') switchAppTab(tab); }); return; }
   document.getElementById('app-tab-montar').classList.toggle('hidden',tab!=='montar');
   document.getElementById('app-tab-salvos').classList.toggle('hidden',tab!=='salvos');
   document.getElementById('app-tab-cotacao').classList.toggle('hidden',tab!=='cotacao');
@@ -4033,10 +4055,14 @@ function chartBarrasH(dados,opt){
   let s='';
   dados.forEach((d,i)=>{
     const y=i*alt+3, w=Math.max(2,(W-lw-70)*(d.v/max));
+    /* d.acao = [tipo, valor]: a linha vira clicavel (ex.: vendedor -> mes a mes dele) */
+    if(d.acao) s+='<g style="cursor:pointer" data-a="'+d.acao[0]+'" data-v="'+encodeURIComponent(d.acao[1])+'" onclick="dashAcao(this)"><title>'+escSvg(d.rot)+' — clique para abrir</title>'+
+      '<rect x="0" y="'+y+'" width="'+W+'" height="'+alt+'" fill="transparent"/>';
     s+='<text x="0" y="'+(y+14)+'" font-size="11" fill="#475569">'+escSvg(d.rot)+'</text>'+
        '<rect x="'+lw+'" y="'+(y+3)+'" width="'+w+'" height="15" rx="3" fill="'+(d.cor||DASH_PAL[i%DASH_PAL.length])+'"/>'+
        '<text x="'+(lw+w+6)+'" y="'+(y+15)+'" font-size="10" font-weight="700" fill="#334155">'+kAbrev(d.v)+
        (d.sub?'<tspan fill="#94a3b8" font-weight="400"> '+escSvg(d.sub)+'</tspan>':'')+'</text>';
+    if(d.acao) s+='</g>';
   });
   return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:'+Math.min(H,320)+'px" preserveAspectRatio="xMinYMin meet">'+s+'</svg>';
 }
@@ -4100,6 +4126,144 @@ function dashQuebra(D,nome,ym){
   const m=q[ym]||{};
   return Object.entries(m).map(([k,v])=>({rot:k,v:v[0],mc:dashMC(v[0],v[1])}))
     .filter(d=>d.v>0).sort((a,b)=>b.v-a.v);
+}
+
+/* ---------------- ir do DASHBOARD para a aba certa (28/09/2026) ----------------
+   Chave do ABAS_CATALOGO. Respeita a permissao: sem acesso, o link nem aparece. */
+function dashAba(mcKey, svKey){ return dashEmpresa==='mc' ? mcKey : svKey; }
+function dashLinkIr(k){
+  if(!k || typeof podeAba!=='function' || !podeAba(k)) return '';
+  return '<a class="dash-ir" onclick="dashIr(\''+k+'\')">abrir ›</a>';
+}
+function dashIr(k){
+  if(!k || !ABAS_CATALOGO[k]) return;
+  if(!podeAba(k)){ alert('Seu usuário não tem acesso a esta aba. Fale com o master.'); return; }
+  const a=ABAS_CATALOGO[k];
+  const clica=sel=>{ const b=document.querySelector(sel); if(b) b.click(); };
+  /* entra direto na categoria certa: sem isso o MC MOTO abria antes em Compras e baixava
+     o catalogo (4 MB) so para sair dali em seguida */
+  if(a.g==='mcmoto'){ _ultimaCategoriaMcMoto=a.cat; switchGrupo('mcmoto'); switchCategoriaMcMoto(a.cat); }
+  else{
+    switchGrupo('rhsseven');
+    if(a.cat==='sevenfin') clica('#subtabs-rhsseven [data-target="financeiroseven"]');
+    else if(/sevenvendas/.test(a.sel)) clica('#subtabs-rhsseven [data-target="unidades"]');
+    else if(/subtabs-crm/.test(a.sel)) clica('#subtabs-rhsseven [data-target="crm"]');
+    else if(/tabbtn-.*-seven|tabbtn-transferencia|comprasseven/.test(a.sel)) clica('#subtabs-rhsseven [data-target="comprasseven"]');
+  }
+  clica(a.sel);
+  window.scrollTo(0,0);
+}
+/* Clique numa barra: vendedor da MC abre o Painel Mensal ja no mes a mes dele. */
+function dashAcao(el){
+  const tipo=el.getAttribute('data-a'), v=decodeURIComponent(el.getAttribute('data-v')||'');
+  if(tipo==='vendedor'){
+    dashIr('mc.painel');
+    const f=document.getElementById('iframe-mapavendas');
+    const abre=()=>{ try{ f.contentWindow.abrirVendedorMc(v); }catch(e){} };
+    const pronto=()=>{ try{ return f.getAttribute('src') && f.contentDocument.readyState==='complete' &&
+                                  typeof f.contentWindow.abrirVendedorMc==='function'; }catch(e){ return false; } };
+    if(pronto()) setTimeout(abre,60);
+    else f.addEventListener('load',()=>setTimeout(abre,150),{once:true});
+  }
+}
+
+/* ---------------- faixa "Atencao hoje" ----------------
+   Poucos avisos (no maximo 5), cada um com o numero que o motiva e a aba onde agir.
+   Vermelho = dinheiro: abaixo do equilibrio, caixa da semana negativo. Amarelo = ritmo.
+   A divida antiga (>90 dias) NAO entra: e conhecida (decisao do usuario 28/09/2026) e
+   repetir todo dia so ensinaria a ignorar a faixa. Meta e ritmo so a partir do 3o dia
+   util do mes — antes disso a projecao nao tem base. */
+function dashAlertas(c){
+  const out=[];
+  const ok3=c.du.dec>=3;
+  const eq=dashEquilibrio(c.venda,c.custo,c.fixo);
+  if(c.parcial){
+    if(ok3 && eq.pe>0 && c.projecao<eq.pe)
+      out.push({n:'vermelho', ir:dashAba('mc.relatorio','sv.relatorio'),
+        t:'Pela projeção ('+fmt(c.projecao)+'), o mês fecha <b>'+fmt(eq.pe-c.projecao)+' abaixo do ponto de equilíbrio</b> ('+fmt(eq.pe)+').'});
+  }else{
+    const sobra=dashMC(c.venda,c.custo)-c.fixo;
+    if(sobra<0) out.push({n:'vermelho', ir:dashAba('mc.relatorio','sv.relatorio'),
+      t:'O mês fechou com <b>sobra negativa de '+fmt(-sobra)+'</b> (margem de contribuição menor que o custo fixo).'});
+  }
+  const c7=dashCaixa(6);
+  if(c7 && c7.saldo<0)
+    out.push({n:'vermelho', ir:dashAba('mc.caixa','sv.fin.caixa'),
+      t:'Nos próximos 7 dias saem '+fmt(c7.sai)+' e entram '+fmt(c7.entra)+': <b>faltam '+fmt(-c7.saldo)+'</b> (sem contar o saldo em banco).'});
+  if(c.parcial && ok3 && c.meta>0 && c.projecao<c.meta*0.95){
+    const faltam=Math.max(1,c.du.total-c.du.dec);
+    const porDia=Math.max(0,(c.meta-c.venda)/faltam);
+    out.push({n:'amarelo', ir:dashAba('mc.painel','sv.unidades'),
+      t:'Projeção em <b>'+pct(c.projecao/c.meta)+' da meta</b>. Para bater, precisa vender '+fmt(porDia)+' por dia útil nos '+faltam+' dias que faltam (média atual '+fmt(c.mediaDia)+').'});
+  }
+  if(c.parcial && ok3){
+    const baixo=[];
+    if(dashEmpresa==='mc'){
+      const q=((DASHBOARD_DB.mc.quebras||{}).vendedor||{})[c.ym]||{};
+      Object.keys(q).forEach(nome=>{
+        const mt=parseFloat(lsGet('mapa_meta_'+nome+'_vendas'));
+        if(!(mt>0)) return;
+        const pr=q[nome][0]/c.du.dec*c.du.total;
+        if(pr<mt*0.8) baixo.push([nome,pr/mt]);
+      });
+    }else{
+      dashUnidades().forEach(u=>{
+        const mt=parseFloat(lsGet('mapa_meta_U'+u+'_vendas'));
+        if(!(mt>0)) return;
+        const m=((DASHBOARD_DB.seven.unidades[u]||{}).mensal||{})[c.ym]||[0];
+        const pr=m[0]/c.du.dec*c.du.total;
+        if(pr<mt*0.8) baixo.push([DASH_UNI_NOMES[u]||('Unidade '+u),pr/mt]);
+      });
+    }
+    if(baixo.length){
+      baixo.sort((a,b)=>a[1]-b[1]);
+      out.push({n:'amarelo', ir:dashAba('mc.painel','sv.unidades'),
+        t:(dashEmpresa==='mc'?'Vendedores':'Unidades')+' abaixo de 80% da própria meta pela projeção: <b>'+
+          baixo.map(x=>escHtml(x[0])+' '+pct(x[1])).join(', ')+'</b>.'});
+    }
+  }
+  const atr=dashAtraso(c.D);
+  if(atr.a30>0)
+    out.push({n:'amarelo', ir:dashAba('mc.contaspagar','sv.fin.pagar'),
+      t:'<b>'+fmt(atr.a30)+'</b> em contas que venceram nos últimos 30 dias e seguem em aberto.'});
+  if(c.H && c.H.med[0]>0 && c.venda>0){
+    const hist=dashMC(c.H.med[0],c.H.med[1])/c.H.med[0], atual=c.mcPct;
+    if(atual<hist-0.02)
+      out.push({n:'amarelo', ir:dashAba('mc.consistencia','sv.unigraf'),
+        t:'Margem de <b>'+pct(atual)+'</b>, '+((hist-atual)*100).toFixed(1).replace('.',',')+' p.p. abaixo da média de 12 meses ('+pct(hist)+').'});
+  }
+  const ordem={vermelho:0,amarelo:1};
+  return out.sort((a,b)=>ordem[a.n]-ordem[b.n]).slice(0,5);
+}
+function renderAlertas(c){
+  const lista=dashAlertas(c);
+  const linha=a=>{
+    const pode=a.ir && podeAba(a.ir);
+    return '<div class="dash-al '+a.n+'"'+(pode?' onclick="dashIr(\''+a.ir+'\')"':'')+'>'+
+      '<span>'+(a.n==='vermelho'?'🔴':'🟡')+'</span><span>'+a.t+'</span>'+(pode?'<span class="ir">abrir ›</span>':'')+'</div>';
+  };
+  document.getElementById('dash-alertas').innerHTML='<div class="dash-alertas"><div class="dash-al-tit">Atenção'+
+    (c.parcial?' hoje':' em '+c.rotMes(c.ym))+'</div>'+
+    (lista.length?lista.map(linha).join('')
+      :'<div class="dash-al verde"><span>🟢</span><span>Nenhum ponto de atenção: acima do equilíbrio, no ritmo da meta e com o caixa dos próximos 7 dias positivo.</span></div>')+
+    '</div>';
+}
+
+/* Indicadores detalhados: recolhiveis. Padrao aberto no computador, fechado no celular
+   (a tela ja tem os KPIs e os alertas); a escolha fica lembrada neste navegador. */
+const LS_DASH_DET='dash_detalhes';
+function dashDetalhesAbertos(){
+  let v=null; try{ v=localStorage.getItem(LS_DASH_DET); }catch(e){}
+  return v===null ? window.innerWidth>700 : v==='1';
+}
+function aplicarDashDetalhes(){
+  const ab=dashDetalhesAbertos();
+  document.getElementById('dash-indicadores').classList.toggle('hidden',!ab);
+  document.getElementById('dash-det-btn').textContent=ab?'▾ Esconder indicadores detalhados':'▸ Mostrar indicadores detalhados';
+}
+function toggleDashDetalhes(){
+  try{ localStorage.setItem(LS_DASH_DET, dashDetalhesAbertos()?'0':'1'); }catch(e){}
+  aplicarDashDetalhes();
 }
 
 function renderDashboard(){
@@ -4183,13 +4347,13 @@ function renderDashboard(){
   const meses12=Object.keys(D.mensal).filter(m=>m<=ym).sort().slice(-12);
   g.push(painel('Vendas por mês × meta','últimos 12 meses · linha laranja = meta',
     chartBarrasMeta(meses12.map(m=>{ const mt=dashMeta(m); return {rot:rotMes(m),v:D.mensal[m][0],meta:mt,
-      cor:m===ym?'#1e293b':(mt>0&&D.mensal[m][0]>=mt?'#10b981':'#2563eb')}; }))));
+      cor:m===ym?'#1e293b':(mt>0&&D.mensal[m][0]>=mt?'#10b981':'#2563eb')}; })),false,dashAba('mc.historicas','sv.unihist')));
 
   // 2. venda diária do mês
   const dias=Object.keys(D.diario).filter(d=>d.slice(0,7)===ym).sort();
   g.push(painel('Venda dia a dia','mês de '+rotMes(ym),
     dias.length?chartLinha(dias.map(d=>({rot:d.slice(8)+'/'+d.slice(5,7),v:D.diario[d][0]}))):
-    '<div style="font-size:12px;color:#94a3b8;padding:12px">Sem venda diária neste mês (a série cobre os últimos 120 dias).</div>'));
+    '<div style="font-size:12px;color:#94a3b8;padding:12px">Sem venda diária neste mês (a série cobre os últimos 120 dias).</div>',false,dashAba('mc.diarias','sv.unidiarias')));
 
   // 3. composição do resultado
   const fixoMes=dashFixoDoMes(D.fixo,ym);
@@ -4197,22 +4361,23 @@ function renderDashboard(){
     chartRosca([{rot:'CMV (mercadoria)',v:custo,cor:'#2563eb'},
                 {rot:'Impostos, comissão, prêmio e frete',v:venda-vendaLiq,cor:'#8b5cf6'},
                 {rot:'Custo fixo',v:fixoMes,cor:'#f59e0b'},
-                {rot:'Sobra',v:Math.max(0,vendaLiq-custo-fixoMes),cor:'#10b981'}])));
+                {rot:'Sobra',v:Math.max(0,vendaLiq-custo-fixoMes),cor:'#10b981'}]),false,dashAba('mc.relatorio','sv.relatorio')));
 
   // 4. grupo de produto
   const grp=dashQuebra(D,'grupo',ym).slice(0,8);
   g.push(painel('Venda por grupo de produto',rotMes(ym)+' · % = margem do grupo',
-    chartBarrasH(grp.map(d=>({rot:d.rot,v:d.v,sub:'('+(d.v>0?(d.mc/d.v*100).toFixed(0):0)+'% MC)'})))));
+    chartBarrasH(grp.map(d=>({rot:d.rot,v:d.v,sub:'('+(d.v>0?(d.mc/d.v*100).toFixed(0):0)+'% MC)'}))),false,dashAba('mc.consistencia','sv.unigraf')));
 
   // 5. vendedores
   const vend=dashQuebra(D,'vendedor',ym).slice(0,8);
-  g.push(painel('Venda por vendedor',rotMes(ym),
-    chartBarrasH(vend.map(d=>({rot:d.rot,v:d.v,sub:'('+(d.v>0?(d.mc/d.v*100).toFixed(0):0)+'% MC)'})))));
+  g.push(painel('Venda por vendedor',rotMes(ym)+(dashEmpresa==='mc'?' · clique no vendedor para ver o mês a mês':''),
+    chartBarrasH(vend.map(d=>({rot:d.rot,v:d.v,sub:'('+(d.v>0?(d.mc/d.v*100).toFixed(0):0)+'% MC)',
+      acao:(dashEmpresa==='mc'&&podeAba('mc.painel'))?['vendedor',d.rot]:null}))),false,dashAba('mc.painel','sv.unidades')));
 
   // 6. marcas
   const mar=dashQuebra(D,'marca',ym).slice(0,8);
   g.push(painel('Top marcas / fornecedores',rotMes(ym),
-    chartBarrasH(mar.map(d=>({rot:d.rot,v:d.v,sub:'('+(d.v>0?(d.mc/d.v*100).toFixed(0):0)+'% MC)'})))));
+    chartBarrasH(mar.map(d=>({rot:d.rot,v:d.v,sub:'('+(d.v>0?(d.mc/d.v*100).toFixed(0):0)+'% MC)'}))),false,dashAba('mc.fornecedor','sv.unifor')));
 
   // 7. unidades (só SEVEN)
   if(dashEmpresa==='seven'){
@@ -4220,11 +4385,11 @@ function renderDashboard(){
     const NOMEUN=DASH_UNI_NOMES;
     const du2=uns.map(u=>{const m=((DASHBOARD_DB.seven.unidades[u]||{}).mensal||{})[ym]||[0,0];
       return {rot:NOMEUN[u]||('Unidade '+u),v:m[0],sub:'('+(m[0]>0?((m[0]-m[1])/m[0]*100).toFixed(0):0)+'% MC)'};}).filter(d=>d.v>0).sort((a,b)=>b.v-a.v);
-    g.push(painel('Venda por unidade de negócio',rotMes(ym),chartBarrasH(du2)));
+    g.push(painel('Venda por unidade de negócio',rotMes(ym),chartBarrasH(du2),false,'sv.unidades'));
   }
 
   // 8. contas a pagar por semana
-  g.push(painel('Contas a pagar','em atraso por idade + próximas semanas',chartPagar(D)));
+  g.push(painel('Contas a pagar','em atraso por idade + próximas semanas',chartPagar(D),false,dashAba('mc.contaspagar','sv.fin.pagar')));
 
   // 9. custo fixo por centro
   const ativos=new Set(dashCentrosAtivos()), cat=dashCentrosCatalogo();
@@ -4232,9 +4397,11 @@ function renderDashboard(){
   const cf=(dreMes ? Object.entries(dreMes.porCentro).map(([c,v])=>({rot:String(c).slice(0,28),v:v}))
                    : Object.entries(D.fixo[ym]||{}).filter(([c])=>ativos.has(c)).map(([c,v])=>({rot:(cat[c]||c).slice(0,28),v:v})))
     .filter(d=>d.v>0).sort((a,b)=>b.v-a.v).slice(0,8);
-  g.push(painel('Custo fixo por centro de custo',rotMes(ym)+' · total '+fmt(fixoMes),chartBarrasH(cf)));
+  g.push(painel('Custo fixo por centro de custo',rotMes(ym)+' · total '+fmt(fixoMes),chartBarrasH(cf),false,dashAba('mc.relatorio','sv.relatorio')));
 
   renderIndicadores(D,ym,ymAnt,mes,ant,H,du,meta,fixoMes,rotMes);
+  aplicarDashDetalhes();
+  renderAlertas({D,ym,rotMes,venda,custo,fixo:fixoMes,meta,du,projecao,mediaDia,parcial,H,mcPct});
   document.getElementById('dash-graficos').innerHTML=g.join('');
 
   /* ---------- tabela mensal com semáforo ---------- */
@@ -4288,7 +4455,7 @@ function renderIndicadores(D,ym,ymAnt,mes,ant,H,du,meta,fixoMes,rotMes){
 
   const L=(n,v,h)=>'<div class="ind-l"><span class="ind-n">'+n+'</span><span class="ind-v">'+v+
     (h?'<span class="ind-h">'+h+'</span>':'')+'</span></div>';
-  const B=(t,linhas)=>'<div class="ind-bloco"><div class="ind-tit">'+t+'</div>'+linhas+'</div>';
+  const B=(t,linhas,ir)=>'<div class="ind-bloco"><div class="ind-tit">'+dashLinkIr(ir)+t+'</div>'+linhas+'</div>';
 
   const eq=dashEquilibrio(venda,custo,fixoMes);
   const ymAno=dashMesAnoAnterior(ym);
@@ -4307,7 +4474,7 @@ function renderIndicadores(D,ym,ymAnt,mes,ant,H,du,meta,fixoMes,rotMes){
       L('Entra em 30 dias',fmt(c30.entra),dashEmpresa==='mc'?'venda prevista '+fmt(c30.prev):'')+
       L('Sai em 30 dias',fmt(c30.sai))+
       L('Saldo 30 dias',sinal(c30.saldo),'sem o saldo em banco')+
-      L('A receber vencido',fmt(c30.recVenc)));
+      L('A receber vencido',fmt(c30.recVenc)),dashAba('mc.caixa','sv.fin.caixa'));
   }else{
     const receber=D.receber||{};
     let recVenc=0,recSem=0;
@@ -4321,11 +4488,10 @@ function renderIndicadores(D,ym,ymAnt,mes,ant,H,du,meta,fixoMes,rotMes){
   document.getElementById('dash-indicadores').innerHTML=
     B('Ponto de equilíbrio',
       L('Venda p/ empatar',fmt(eq.pe),'custo fixo ÷ MC%')+
-      L('Margem de segurança',eq.margem===null?'—':pct(eq.margem),
-        eq.margem===null?'':eq.margem<0?'<b style="color:#dc2626">abaixo do equilíbrio</b>':eq.margem<0.10?'<b style="color:#d97706">folga curta</b>':'')+
       L('Sobra do mês',fmt(dashMC(venda,custo)-fixoMes))+
       L('Falta p/ equilíbrio',venda>=eq.pe?'atingido':fmt(eq.pe-venda),
-        parcial&&venda<eq.pe?(projecao>=eq.pe?'pela projeção, atinge':'<b style="color:#dc2626">pela projeção, não atinge</b>'):''))+
+        parcial&&venda<eq.pe?(projecao>=eq.pe?'pela projeção, atinge':'<b style="color:#dc2626">pela projeção, não atinge</b>'):''),
+      dashAba('mc.relatorio','sv.relatorio'))+
     blocoCaixa+
     B('Contas a pagar',
       L('Vence hoje',fmt(pagarDia))+
@@ -4334,28 +4500,31 @@ function renderIndicadores(D,ym,ymAnt,mes,ant,H,du,meta,fixoMes,rotMes){
       L('Em atraso',fmt(atr.tot),'<b style="color:#dc2626">dívida vencida</b>')+
       L('· até 30 dias',fmt(atr.a30))+
       L('· 31 a 90 dias',fmt(atr.a90))+
-      L('· mais de 90 dias',fmt(atr.mais)))+
+      L('· mais de 90 dias',fmt(atr.mais)),dashAba('mc.contaspagar','sv.fin.pagar'))+
     B('Estoque parado',
       L('Dinheiro parado',fmt(parado.valor),D.estoque>0?pct(parado.valor/D.estoque)+' do estoque':'')+
       L('· sem venda em 12 meses',fmt(parado.semVenda),num(parado.nSem)+' itens · liquidar/inativar')+
       L('· acima de 3× o pico',fmt(parado.acima),num(parado.nAcima)+' itens · parar de comprar')+
       L('Cobertura',(function(){const g=giro;
-        return g>0?(12/g).toFixed(1).replace('.',',')+' meses':'—';})(),'ideal '+(12/dashGiroIdeal()).toFixed(1).replace('.',',')+' meses'))+
+        return g>0?(12/g).toFixed(1).replace('.',',')+' meses':'—';})(),'ideal '+(12/dashGiroIdeal()).toFixed(1).replace('.',',')+' meses'),
+      dashAba('mc.inativar','sv.inativar'))+
     B(parcial?'Comparações (mês pela projeção)':'Comparações',
-      L('Vs. '+rotMes(ymAnt),ant[0]>0?varPct(base/ant[0]-1):'—',rotMes(ymAnt)+' '+fmt(ant[0]))+
       (mtd?L('Até dia '+mtd.dia+' vs. '+rotMes(ymAnt),mtd.v===null?'—':varPct(mtd.v),fmt(mtd.atual)+' × '+fmt(mtd.anterior)):'')+
       L('Vs. '+rotMes(ymAno),anoAnt&&anoAnt[0]>0?varPct(base/anoAnt[0]-1):'—',anoAnt?rotMes(ymAno)+' '+fmt(anoAnt[0]):'sem dados')+
-      L('QC vs. '+rotMes(ymAno),num(qc),anoAnt?'era '+num(anoAnt[2]):''))+
+      L('QC vs. '+rotMes(ymAno),num(qc),anoAnt?'era '+num(anoAnt[2]):''),
+      dashAba('mc.historicas','sv.unihist'))+
     B('Vendas',
       L('Esta semana',fmt(vendaSem),ddmm(semIni)+' a hoje')+
       L('Semana passada',fmt(vendaSemAnt),ddmm(semAntIni)+' a '+ddmm(semAntFim))+
       L('Média por dia útil',fmt(mediaDia),du.dec+'/'+du.total+' dias')+
-      L('Projeção do mês',fmt(projecao),meta>0?pct(projecao/meta)+' da meta':''))+
+      L('Projeção do mês',fmt(projecao),meta>0?pct(projecao/meta)+' da meta':''),
+      dashAba('mc.painel','sv.unidades'))+
     B('Atendimento',
       L('Ticket médio',fmt(pedidos>0?venda/pedidos:0),H&&H.med[4]>0?'hist '+fmt(H.med[0]/H.med[4]):'')+
       L('Ticket por cliente',fmt(qc>0?venda/qc:0),H&&H.med[2]>0?'hist '+fmt(H.med[0]/H.med[2]):'')+
       L('Itens vendidos',num(itens),H?'hist '+num(H.med[3]):'')+
-      L('Itens por cliente',(qc>0?itens/qc:0).toFixed(2).replace('.',','),H&&H.med[2]>0?'hist '+(H.med[3]/H.med[2]).toFixed(2).replace('.',','):''))+
+      L('Itens por cliente',(qc>0?itens/qc:0).toFixed(2).replace('.',','),H&&H.med[2]>0?'hist '+(H.med[3]/H.med[2]).toFixed(2).replace('.',','):''),
+      dashAba('mc.clientes','sv.clientes'))+
     B('Rentabilidade e estoque',
       L('Margem %',pct(venda>0?mc/venda:0),H&&H.med[0]>0?'hist '+pct(dashMC(H.med[0],H.med[1])/H.med[0]):'')+
       L('CMV do mês',fmt(custo),venda>0?pct(custo/venda)+' da venda':'')+
@@ -4364,12 +4533,13 @@ function renderIndicadores(D,ym,ymAnt,mes,ant,H,du,meta,fixoMes,rotMes){
         'ideal '+ideal.toFixed(2).replace('.',',')+'× · <a href="#" onclick="dashEditarGiro();return false;" style="color:#3b82f6">alterar</a>'+
         (giro>0?' · cobertura '+(12/giro).toFixed(1).replace('.',',')+'m':''))+
       L('Custo fixo do mês',fmt(fixoMes),'anterior '+fmt(fixoAnt))+
-      L('Custo fixo médio 12m',fmt(fixoMed),venda>0?pct(fixoMes/venda)+' da venda':''));
+      L('Custo fixo médio 12m',fmt(fixoMed),venda>0?pct(fixoMes/venda)+' da venda':''),
+      dashAba('mc.relatorio','sv.relatorio'));
 }
 
-function painel(titulo,sub,corpo,largo){
+function painel(titulo,sub,corpo,largo,ir){
   return '<div class="dash-panel'+(largo?' largo':'')+'">'+
-    '<div class="dash-ptit">'+titulo+'</div>'+
+    '<div class="dash-ptit">'+dashLinkIr(ir)+titulo+'</div>'+
     (sub?'<div class="dash-psub">'+sub+'</div>':'')+corpo+'</div>';
 }
 
@@ -6753,7 +6923,8 @@ window._buscaModoSeven='E';
 window._ultimoTabSeven='montar';
 
 function switchAppTabSeven(tab){
-  if(!dadosOk.seven){ carregarDados('seven').then(function(){ switchAppTabSeven(tab); }); return; }
+  if(!dadosOk.seven){ carregarDados('seven').then(function(){
+    if(_grupoAtual==='rhsseven' && !document.getElementById('app-tab-comprasseven').classList.contains('hidden')) switchAppTabSeven(tab); }); return; }
   // respeita as permissões: cai na primeira sub-aba de Compras que o usuário pode ver
   const _permSv={montar:'sv.compras',cotacao:'sv.compras',salvos:'sv.compras',analise:'sv.analise',recebimentos:'sv.recebimentos',agenda:'sv.agenda',transferencia:'sv.transferencia',inativar:'sv.inativar'};
   if(!podeAba(_permSv[tab]||'sv.compras')){

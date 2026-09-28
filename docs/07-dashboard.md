@@ -118,3 +118,16 @@ Conferência (jul/2026): todas R$ 326.976,62 · só Ipatinga R$ 206.322,67 · Co
 ## Chaves de `localStorage`
 
 `dash_empresa` · `dash_centros_fixo` · `dash_giro_ideal` · `dash_meta_seven` · `dash_deducoes` · `dash_unidades`. Lê (sem escrever) `mapa_meta_*_vendas`, `mapa_feriados` e `mapa_descontoPct`, do Mapa de Vendas.
+
+## Atenção hoje, atalhos e detalhes recolhíveis (28/09/2026)
+
+- **Faixa "Atenção hoje"** (`dashAlertas()` / `renderAlertas()`), logo acima dos KPIs: no máximo 5 avisos, vermelhos primeiro, cada um clicável para a aba onde agir.
+  - 🔴 projeção do mês abaixo do ponto de equilíbrio (em mês fechado: sobra negativa) → Relatório Gerencial;
+  - 🔴 caixa dos próximos 7 dias negativo (mesma regra da Posição de Caixa) → Posição de Caixa;
+  - 🟡 projeção abaixo de 95% da meta, com a venda por dia útil necessária → Painel Mensal;
+  - 🟡 vendedores (MC) ou unidades (SEVEN) abaixo de 80% da própria meta pela projeção → Painel Mensal;
+  - 🟡 contas vencidas nos últimos 30 dias ainda em aberto → Contas a Pagar;
+  - 🟡 margem mais de 2 p.p. abaixo da média de 12 meses → Consistência por Grupo.
+  A dívida vencida há mais de 90 dias **não** gera alerta (é conhecida; ver bloco Contas a pagar). Os alertas de meta e ritmo só aparecem a partir do 3º dia útil.
+- **"abrir ›"** em cada gráfico e bloco: `dashIr(chave do ABAS_CATALOGO)`, só aparece se o usuário tiver a aba. No gráfico de vendedores da MC, clicar na barra abre o Painel Mensal já no mês a mês do vendedor (`abrirVendedorMc` dentro do iframe).
+- **Indicadores detalhados** recolhíveis (`toggleDashDetalhes`, `localStorage dash_detalhes`): abertos no computador e fechados no celular por padrão. Saíram dali as duas linhas que repetiam a faixa de KPIs (margem de segurança e comparação com o mês anterior).
