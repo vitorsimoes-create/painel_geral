@@ -143,6 +143,31 @@ dados = _bling._enviar(conta, "GET", "/pedidos/vendas?dataInicial=2026-09-29&dat
 invalidariam um ao outro, e a integração cairia sem aviso. Um cliente Bling escrito neste
 projeto em 30/09/2026 foi **apagado** por isso.
 
+### São DUAS contas de Bling, de duas empresas diferentes
+
+O `_db.py` daquele projeto tem dois perfis de Bling, e cada um é uma **pessoa jurídica
+distinta**. Confundir as duas seria fácil: o banco de credenciais da Seven chama-se
+`bling_rhs_moto` (o nome vem do app no Mercado Livre, "RHS Moto") e **não** é o Bling da RHS.
+
+| | CONTA 1 | CONTA 2 |
+|---|---|---|
+| Perfil no `_db.py` | `bling` | `bling_rhs` |
+| Banco de credenciais | `bling_rhs_moto` (tabelas `bling_empresa` + `bling_token`) | `bling_api_rhs` (`bling_oauth_credentials`) |
+| Classe | `_bling.ContaBling` | `_bling_oauth_rhs.ContaBlingRHS` |
+| Empresa na API | **SEVEN MOTOPECAS LTDA** | **RHS LOCADORA LTDA** |
+| CNPJ | 42.448.285/0001-78 | 53.943.748/0001-94 |
+| Depósitos | 5 — Estoque F-7, Full Betim, Full Extrema, Shopee (Fulfillment), Ultra Motos e-commerce | 1 — "Geral" |
+| Pedidos de venda (abr a set/2026) | **zero** | 61, sendo **43 em set/2026** |
+| Para que serve | cadastro, estoque e preço nos marketplaces (ML/Shopee/Full) — não fatura pedido | **é onde Contagem fatura desde 29/09/2026** |
+
+**A unidade 4 do painel passa a ser lida da CONTA 2 (RHS LOCADORA LTDA).** Fica registrado
+que é outro CNPJ, diferente do da Seven Motopeças — o faturamento de Contagem mudou de
+pessoa jurídica junto com a mudança de sistema.
+
+A CONTA 2 já vinha com movimento pequeno antes do corte (1 pedido em abr, 3 em mai, 4 em
+jul, 10 em ago) e o painel, lendo só o ERP, não mostrava nada disso. De 29/09 em diante ela
+é a operação inteira.
+
 ### API v3 — o que foi medido na conta real (30/09/2026)
 
 | Ponto | Medido |
@@ -200,11 +225,19 @@ O ERP para em 28/09 e o Bling assume em 29/09 com volume compatível com a médi
 (~24 pedidos/dia). Antes do corte o Bling tinha movimento esporádico (1 a 6 pedidos/dia,
 provavelmente atacado/marketplace lançado em paralelo) — pequeno, e anterior ao corte.
 
-⚠️ **Conflito de sentido no estoque.** A tarefa do Windows `BlingSincronizarEstoqueProton`
-roda todo dia às 10:00 (`sincronizar_estoque_diario.py`) empurrando o estoque da unidade 4
-do Proton para o depósito do Bling. Agora que Contagem vende no Bling, o Bling é o dono do
-estoque — essa tarefa passa a **sobrescrever o saldo real com o do ERP de D-1**. Precisa ser
-desligada ou invertida.
+### A tarefa das 10:00 não ameaça o estoque de Contagem (conferido)
+
+A tarefa do Windows `BlingSincronizarEstoqueProton` roda todo dia às 10:00 e empurra o
+estoque da unidade 4 do Proton para um depósito do Bling. **Ela escreve na CONTA 1**
+(`sincronizar_estoque_diario.cmd` chama o script sem `--empresa`, e o padrão é `seven`),
+no depósito "Ultra Motos e-commerce" — **não** na CONTA 2, onde Contagem vende. Logo, não
+sobrescreve o saldo real de Contagem.
+
+⚠️ O problema que ela passa a ter é outro: **a origem congelou**. O Proton parou de receber
+os lançamentos da unidade 4 em 28/09/2026, então essa tarefa continuará publicando nos
+marketplaces um estoque que não se move mais. Ou passa a ler a CONTA 2
+(`--empresa rhs` inverteria o sentido, o que não resolve), ou a fonte do estoque de
+marketplace tem de virar a CONTA 2, ou a tarefa é desligada.
 
 ### O que a integração precisa entregar (levantado nos 15 geradores)
 
