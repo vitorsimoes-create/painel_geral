@@ -20,3 +20,13 @@ backup_comissao_avista_*.csv
 
 # Monitor de fechamento — snapshots/relatorios locais (estado, como um banco; nunca publicar)
 monitor_fechamento/
+
+# Faturamento por e-mail — credenciais SMTP e preview local
+.env.email
+faturamento-email-preview.html
+
+# Bling (unidade 4 / RHS) — credenciais da API e cache de token, NUNCA publicar
+_bling*.py
+_bling*.json
+bling_token.json
+.env.bling

@@ -57,6 +57,52 @@ O `<select>` de unidade virou **checkboxes** (`#uni-checks`), então dá para co
 
 ⚠️ **`aplicarUnidadesPermitidas()` no `index.html` teve de ser adaptado** — ele manipulava as `<option>` do select e agora marca/desmarca checkboxes. Usuário restrito continua vendo só as unidades liberadas; se a restrição desmarcar tudo, as permitidas são remarcadas automaticamente.
 
+## Unidade 4 (Seven Contagem) — a fonte passa a ser o Bling RHS (30/09/2026)
+
+**Decisão do usuário, 30/09/2026:** de agora em diante, tudo o que o painel mostra da **unidade 4 (Seven Contagem)** vem do **Bling da RHS**, não mais do espelho `projeto_f7`. As unidades **3 (Ultra Motos)** e **5 (Seven Ipatinga)** continuam no `projeto_f7`.
+
+O painel passa a ter **duas fontes** para a mesma aba, e a rotina diária deve trazer o **movimento do dia anterior (D-1)** do Bling.
+
+### Estado do ERP na data do corte (medido em 30/09/2026)
+
+| Unidade | Última venda no ERP | Última entrada | Itens com saldo | Títulos em aberto (pagar / receber) |
+|---|---|---|---|---|
+| 3 — Ultra Motos | 30/07/2026 (parada) | 30/06/2026 | 1.697 | 362 / 11.348 |
+| 4 — Seven Contagem | **28/09/2026** | 25/09/2026 | 4.057 | 323 / 445 |
+| 5 — Seven Ipatinga | 28/09/2026 | 28/09/2026 | 3.792 | 226 / 621 |
+
+A unidade 4 **ainda estava sendo alimentada no ERP** até 28/09/2026 — ou seja, existe histórico no `projeto_f7` que não deve ser jogado fora. A regra é **emendar**: histórico do ERP até a data de corte, Bling a partir dela.
+
+### O que a unidade 4 alimenta hoje (15 geradores)
+
+Trocar a fonte da unidade 4 atinge, na prática, toda a aba RHS/SEVEN:
+
+| Gerador | Tela |
+|---|---|
+| `atualizar_mapa.py` | Unidades de Negócio (Painel Mensal, Gráficos, por Fornecedor, Históricas, Diárias) |
+| `gerar_raw_data_seven.py` | Compras › Montar Pedido (estoque, pico, custo) |
+| `gerar_recebimentos_seven.py` | Compras › Recebimentos + CMV |
+| `gerar_receb_itens_seven.py` | Itens da nota de entrada |
+| `gerar_agenda_compras.py` | Compras › Agenda |
+| `gerar_forn_real_seven.py` | Análise de Fornecedor (fornecedor real) |
+| `gerar_contas_seven.py` | Financeiro › Contas a Pagar / a Receber |
+| `gerar_posicao_caixa.py` | Financeiro › Posição de Caixa |
+| `gerar_clientes.py` | Vendas › Clientes |
+| `gerar_cadastro_clientes.py` | Cadastro de Clientes |
+| `gerar_risco_cliente.py` | Risco de Inadimplência |
+| `gerar_dashboard.py` | DASHBOARD |
+| `gerar_relatorio.py` | Relatório Gerencial |
+| `gerar_transferencia_seven.py` | Transferência entre unidades (4 e 5) |
+| `gerar_premiacao.py` | Premiação — **só unidade 4**, então depende 100% do Bling |
+
+### Segurança
+
+As credenciais do Bling **nunca** entram no repositório. O `.gitignore` já barra `_bling*.py`, `_bling*.json`, `bling_token.json` e `.env.bling` antes de o primeiro arquivo existir. O Bling v3 usa OAuth 2.0: o `access_token` vale poucas horas e o `refresh_token` precisa ser renovado, então o cache de token é um arquivo local — estado, como o `relatorio-historico.json`, nunca publicado.
+
+### Pendente
+
+A integração **não existe ainda** — falta a credencial da API do Bling. Ver as perguntas em aberto registradas na conversa de 30/09/2026.
+
 ## CRM
 
 Iframe separado, `crm-seven.html`, escopo declarado "Unidades 3 e 4". Painel próprio, independente do sistema de navegação por senha/categoria do restante do painel. Não detalhado nesta documentação (arquivo autocontido, fora do escopo revisado).
