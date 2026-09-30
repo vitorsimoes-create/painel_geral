@@ -259,6 +259,57 @@ marketplaces um estoque que não se move mais. Ou passa a ler a CONTA 2
 (`--empresa rhs` inverteria o sentido, o que não resolve), ou a fonte do estoque de
 marketplace tem de virar a CONTA 2, ou a tarefa é desligada.
 
+### O coletor: `gerar_bling_un4.py` -> `bling-un4.json` (30/09/2026)
+
+Passo **B0** da rotina diária, antes de tudo na Parte B. Sem argumento lê o **dia anterior** e
+**acumula** em `bling-un4.json`, que é **estado versionado e nunca apagado**, na mesma
+categoria do `relatorio-historico.json`.
+
+**O custo é congelado no dia da leitura** (decisão do usuário, 30/09/2026). O Bling não guarda
+o custo dentro do item vendido, só o `precoCusto` do cadastro, que é o custo de hoje — sem
+congelar, o CMV e a margem de um mês **fechado** mudariam sozinhos a cada reajuste, o mesmo
+problema que a MC MOTO já monitora. Dia já congelado não é reescrito; `--refazer <data>`
+sobrescreve de propósito.
+
+Regras do custo, também decididas em 30/09/2026:
+
+| Caso | Custo |
+|---|---|
+| Item de **serviço** (`tipo == "S"` no Bling — 139 dos 5.186 ativos) | **zero**, sempre |
+| Produto **sem custo** no cadastro (1.119 não-serviço, 825 deles com saldo) | **60% do preço de venda**, a mesma regra das unidades 3 e 5 |
+| Produto com custo | o custo do cadastro, congelado |
+
+**Vendedor:** mantido, considerando só os que têm venda (decisão do usuário). A conta tem 3
+cadastrados e dois deles são empresas.
+
+**Armadilha dos filtros de data — cada recurso obedece a um parâmetro diferente, e pedir o
+errado não dá erro: o Bling devolve tudo, calado.** Medido em 30/09/2026:
+
+| Recurso | Filtro que funciona | Filtro ignorado |
+|---|---|---|
+| `/pedidos/vendas` | `dataInicial`/`dataFinal`, com **período máximo** (varrer de 31 em 31 dias) | — |
+| `/contas/pagar` | `dataEmissaoInicial`/`Final` | `dataInicial` |
+| `/contas/receber` | `dataInicial`/`Final` | `dataEmissaoInicial` |
+
+Para separar o nativo da carga, além da data: conta a receber nativa tem **`idOrigem` ≠ 0**
+("Ref. ao pedido de venda nº …"); a da carga veio por POST direto e fica com `idOrigem` 0. Em
+conta a pagar `idOrigem` é sempre 0, então o teste é o **histórico**: `"Proton"` ou
+`"[F7-U4-TIT:"` (há mais de uma carga, com marcadores diferentes).
+
+### Primeira coleta — 29 e 30/09/2026
+
+| Dia | Pedidos | Venda | CMV | MC% | Clientes |
+|---|---|---|---|---|---|
+| 29/09 | 21 | R$ 2.543,68 | R$ 1.473,13 | 42,1% | 16 |
+| 30/09 | 8 | R$ 954,11 | R$ 617,39 | 35,3% | 8 |
+
+Títulos nativos: **6 a pagar** (R$ 14.908,10) e **26 a receber** (R$ 7.701,35).
+
+**A conferência que valida tudo:** o estoque a custo lido do Bling deu **R$ 656.176,53 em
+4.177 itens**, contra **R$ 643.412,63 em 4.057 itens** da unidade 4 no ERP — **2,0% de
+diferença**. É a prova de que a conta 2 é mesmo o estoque de Contagem. Se algum dia essa
+diferença abrir muito, desconfie da conta antes de acreditar no número.
+
 ### O que a integração precisa entregar (levantado nos 15 geradores)
 
 Consolidando o que cada gerador lê hoje do `projeto_f7` para a unidade 4, são **7 domínios**. A coluna da direita é o que ainda tem de ser confirmado no Bling — é para isso que serve o `_bling_explorar.py`.
