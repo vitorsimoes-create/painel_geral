@@ -160,9 +160,29 @@ distinta**. Confundir as duas seria fácil: o banco de credenciais da Seven cham
 | Pedidos de venda (abr a set/2026) | **zero** | 61, sendo **43 em set/2026** |
 | Para que serve | cadastro, estoque e preço nos marketplaces (ML/Shopee/Full) — não fatura pedido | **é onde Contagem fatura desde 29/09/2026** |
 
-**A unidade 4 do painel passa a ser lida da CONTA 2 (RHS LOCADORA LTDA).** Fica registrado
-que é outro CNPJ, diferente do da Seven Motopeças — o faturamento de Contagem mudou de
-pessoa jurídica junto com a mudança de sistema.
+**REGRA (usuário, 30/09/2026): o painel NUNCA usa a conta 1. Toda informação de Bling —
+qualquer uma — vem da CONTA 2, a da RHS.** Fica registrado que é outro CNPJ, diferente do da
+Seven Motopeças: o faturamento de Contagem mudou de pessoa jurídica junto com a mudança de
+sistema. (O e-mail da conta, `rhsmotopecas@gmail.com`, confirma que é a loja de peças
+operando sob o CNPJ da RHS Locadora.)
+
+A regra não fica só na documentação — está **imposta em código**. Todo acesso do painel ao
+Bling passa por um módulo só, `_bling_rhs.py`, que:
+
+- instancia apenas `ContaBlingRHS` (banco `bling_api_rhs`) e **nunca** `_bling.ContaBling`;
+- confere o **CNPJ** da empresa na primeira chamada de cada execução e **aborta** se não for
+  `53.943.748/0001-94`. Se um dia alguém trocar as credenciais de lugar, o painel para em vez
+  de publicar o faturamento de outra empresa dentro da unidade 4.
+
+Conferido em 30/09/2026: a conta 1 responde `SEVEN MOTOPECAS LTDA / 42.448.285/0001-78` e é
+rejeitada pelo guarda; a conta 2 passa e devolveu as 21 vendas de 29/09 (R$ 2.543,68).
+
+O módulo já entrega os domínios que os geradores precisam — `vendas()` (com o detalhe de cada
+pedido, porque a listagem não traz item nem vendedor, e descartando a carga histórica pelo
+marcador `U3-`/`U4-`), `titulos("pagar"/"receber")` filtrando por **data de emissão** a partir
+do corte, `estoque()` (código, custo e saldo), `contatos()`, `vendedores()` e `categorias()`.
+Como ele não guarda token — quem guarda é `_bling_oauth_rhs`, cifrado no banco —, não há dois
+cofres disputando o `refresh_token`, que o Bling rotaciona a cada renovação.
 
 A CONTA 2 já vinha com movimento pequeno antes do corte (1 pedido em abr, 3 em mai, 4 em
 jul, 10 em ago) e o painel, lendo só o ERP, não mostrava nada disso. De 29/09 em diante ela
