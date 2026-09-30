@@ -99,9 +99,25 @@ Trocar a fonte da unidade 4 atinge, na prática, toda a aba RHS/SEVEN:
 
 As credenciais do Bling **nunca** entram no repositório. O `.gitignore` já barra `_bling*.py`, `_bling*.json`, `bling_token.json` e `.env.bling` antes de o primeiro arquivo existir. O Bling v3 usa OAuth 2.0: o `access_token` vale poucas horas e o `refresh_token` precisa ser renovado, então o cache de token é um arquivo local — estado, como o `relatorio-historico.json`, nunca publicado.
 
+### Decisões tomadas (30/09/2026)
+
+| Ponto | Decisão |
+|---|---|
+| Versão da API | **v3** (OAuth 2.0, `client_id` + `client_secret`) |
+| Data de corte | **29/09/2026** — ERP até 28/09, Bling de 29/09 em diante, sem buraco nem dia repetido |
+| Escopo | **tudo** da unidade 4 vem do Bling: vendas, estoque, compras, contas a pagar/receber e caixa |
+
+### Cliente da API (pronto, aguardando credencial)
+
+- **`_bling.py`** — OAuth 2.0 Authorization Code, renovação automática pelo `refresh_token`, espaçamento de 3 req/s, paginação (`pagina`+`limite`, `data` na resposta). `python _bling.py autorizar` faz a autorização única; sobe um servidor local só para capturar o `code` quando a URL de redirecionamento é `localhost`.
+- **`_bling_explorar.py`** — varre os endpoints candidatos e relata quais respondem, com os campos de uma amostra. É o mapa Bling → painel; grava `_bling_mapa.json`.
+- **`_bling_cfg.exemplo.json`** — modelo do arquivo de credenciais.
+
+Endpoints confirmados na doc oficial: authorize em `https://www.bling.com.br/Api/v3/oauth/authorize`, token em `https://www.bling.com.br/Api/v3/oauth/token` (Basic `client_id:client_secret`), recursos em `https://api.bling.com.br/Api/v3/`. O header **`enable-jwt: 1`** vai no `/token` e em toda renovação: o Bling está migrando de token opaco para JWT e o opaco já está em descontinuação — sem esse header a integração pararia sozinha numa data ainda não anunciada. `access_token` dura poucas horas; `refresh_token`, 30 dias.
+
 ### Pendente
 
-A integração **não existe ainda** — falta a credencial da API do Bling. Ver as perguntas em aberto registradas na conversa de 30/09/2026.
+Falta a credencial da API do Bling (`client_id` + `client_secret`) para autorizar e rodar o `_bling_explorar.py`. Só depois de ver o que a conta realmente tem é que os geradores são alterados.
 
 ## CRM
 
