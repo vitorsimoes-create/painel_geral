@@ -30,3 +30,7 @@ _bling*.py
 _bling*.json
 bling_token.json
 .env.bling
+
+# Bling unidade 4 — foto do dia (regeravel; o congelado e o bling-un4.json, versionado)
+bling-un4-hoje.json
+_bling_forn_cache.json
