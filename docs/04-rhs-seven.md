@@ -106,6 +106,8 @@ As credenciais do Bling **nunca** entram no repositório. O `.gitignore` já bar
 | Versão da API | **v3** (OAuth 2.0, `client_id` + `client_secret`) |
 | Data de corte | **29/09/2026** — ERP até 28/09, Bling de 29/09 em diante, sem buraco nem dia repetido |
 | Escopo | **tudo** da unidade 4 vem do Bling: vendas, estoque, compras, contas a pagar/receber e caixa |
+| Identificação da unidade | **a conta do Bling RHS é só de Contagem** — não precisa de filtro por loja/depósito: tudo o que está lá é unidade 4 |
+| Custo do produto | **preenchido no Bling** — o CMV e a margem da unidade 4 saem do custo real. A regra dos 60% (custo zerado → 60% do preço de venda) vale só para as unidades 3 e 5, no ERP |
 
 ### Cliente da API (pronto, aguardando credencial)
 
@@ -114,6 +116,36 @@ As credenciais do Bling **nunca** entram no repositório. O `.gitignore` já bar
 - **`_bling_cfg.exemplo.json`** — modelo do arquivo de credenciais.
 
 Endpoints confirmados na doc oficial: authorize em `https://www.bling.com.br/Api/v3/oauth/authorize`, token em `https://www.bling.com.br/Api/v3/oauth/token` (Basic `client_id:client_secret`), recursos em `https://api.bling.com.br/Api/v3/`. O header **`enable-jwt: 1`** vai no `/token` e em toda renovação: o Bling está migrando de token opaco para JWT e o opaco já está em descontinuação — sem esse header a integração pararia sozinha numa data ainda não anunciada. `access_token` dura poucas horas; `refresh_token`, 30 dias.
+
+### O que a integração precisa entregar (levantado nos 15 geradores)
+
+Consolidando o que cada gerador lê hoje do `projeto_f7` para a unidade 4, são **7 domínios**. A coluna da direita é o que ainda tem de ser confirmado no Bling — é para isso que serve o `_bling_explorar.py`.
+
+| # | Domínio | Hoje no ERP | Quem usa | Precisa ter no Bling |
+|---|---|---|---|---|
+| 1 | **Pedidos de venda + itens** | `VPED_PEDIDO_HISTORICO` / `_ITEM` | 11 dos 15 | data de emissão, cliente, **vendedor**, valor líquido, forma de pagamento, cancelamento, devolução, e por item: produto, quantidade, valor e **custo** |
+| 2 | **Saldo de estoque por item** | `TMER_ESTOQUE` (campo TOTAL) | 6 | saldo, custo, preço de venda, fornecedor principal |
+| 3 | **Cadastro de produto** | `TMER_MERCADORIA` | 5 | código, descrição, grupo/categoria, marcação de serviço |
+| 4 | **Notas de entrada + itens** | `TENT_ENTRADA` / `_ITEM` | 4 | data de liberação/entrada, fornecedor, valor da nota, e por item: produto, quantidade e custo |
+| 5 | **Contas a pagar** | `TPAG_ABERTO` / `TPAG_BAIXADO` / `_CCUSTO` | 4 | vencimento, pagamento, valor, valor pago, fornecedor e **centro de custo / categoria** |
+| 6 | **Contas a receber** | `TREC_ABERTO` / `TREC_BAIXADO` | 5 | vencimento, recebimento, valor, cliente e **tipo de cobrança** (para separar cartão) |
+| 7 | **Cadastros** | `TCLI_CLIENTE`, `TFOR_FORNECEDOR`, `TVND_VENDEDOR`, `TTES_CENTRO_CUSTO` | todos | razão social de cliente e fornecedor, grupo de cliente, vendedor, centro de custo |
+
+### Regras do painel que a troca de fonte não pode quebrar
+
+Este é o risco real da migração: cada uma destas regras foi estabelecida com o usuário e está calibrada na fonte antiga. O equivalente no Bling tem de preservar todas.
+
+| Regra | Onde está documentada | O que precisa do Bling |
+|---|---|---|
+| Estoque é sempre o **total**, nunca o "atual" | `feedback_seven_estoque_total` | saber qual campo do Bling equivale ao total |
+| Venda e CMV **líquidos de devolução** | `feedback_seven_venda_cmv_fonte` | como o Bling registra devolução (pedido próprio? NF de devolução?) |
+| A receber **sem cartão** (cartão parado inflava a carteira em R$ 1,8 mi) | `feedback_receber_sem_cartao` | campo que identifica cartão no título a receber |
+| Cartão entra no caixa em **D+1** | `feedback_cartao_d1_caixa` | data de emissão do título de cartão |
+| Despesa agrupada por **fornecedor + centro de custo** | `feedback_despesa_forn_centro` | categoria/centro de custo por título, não só por fornecedor |
+| Cliente e fornecedor sempre pela **razão social** | `feedback_razao_social_sempre` | razão social separada do nome fantasia em `/contatos` |
+| À vista × a prazo (cartão parcelado conta como a prazo) | `docs/04` | forma de pagamento e número de parcelas |
+| **Regra dos 60% NÃO se aplica** à unidade 4 | decisão de 30/09/2026 | custo real preenchido (confirmado pelo usuário) |
+| Pico de vendas = **máximo mensal**, nunca a soma | `feedback_janela_pico` | histórico mensal por item, 12 e 6 meses |
 
 ### Pendente
 
