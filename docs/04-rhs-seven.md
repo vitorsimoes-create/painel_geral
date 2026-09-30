@@ -109,13 +109,102 @@ As credenciais do Bling **nunca** entram no repositório. O `.gitignore` já bar
 | Identificação da unidade | **a conta do Bling RHS é só de Contagem** — não precisa de filtro por loja/depósito: tudo o que está lá é unidade 4 |
 | Custo do produto | **preenchido no Bling** — o CMV e a margem da unidade 4 saem do custo real. A regra dos 60% (custo zerado → 60% do preço de venda) vale só para as unidades 3 e 5, no ERP |
 
-### Cliente da API (pronto, aguardando credencial)
+### A conexão JÁ EXISTE — reaproveitar, nunca criar uma segunda
 
-- **`_bling.py`** — OAuth 2.0 Authorization Code, renovação automática pelo `refresh_token`, espaçamento de 3 req/s, paginação (`pagina`+`limite`, `data` na resposta). `python _bling.py autorizar` faz a autorização única; sobe um servidor local só para capturar o `code` quando a URL de redirecionamento é `localhost`.
-- **`_bling_explorar.py`** — varre os endpoints candidatos e relata quais respondem, com os campos de uma amostra. É o mapa Bling → painel; grava `_bling_mapa.json`.
-- **`_bling_cfg.exemplo.json`** — modelo do arquivo de credenciais.
+A integração com o Bling da RHS está pronta e funcionando em **outro projeto**:
 
-Endpoints confirmados na doc oficial: authorize em `https://www.bling.com.br/Api/v3/oauth/authorize`, token em `https://www.bling.com.br/Api/v3/oauth/token` (Basic `client_id:client_secret`), recursos em `https://api.bling.com.br/Api/v3/`. O header **`enable-jwt: 1`** vai no `/token` e em toda renovação: o Bling está migrando de token opaco para JWT e o opaco já está em descontinuação — sem esse header a integração pararia sozinha numa data ainda não anunciada. `access_token` dura poucas horas; `refresh_token`, 30 dias.
+```
+...\PROTON\SEVEN\f7-painel-pedido-de-compras-main\f7-painel-pedido-de-compras-main\ferramentas\
+    _bling.py              cliente da API v3 (GET/POST, 0,55 s entre chamadas, erro traduzido)
+    _bling_oauth_rhs.py    ContaBlingRHS: token do Bling da RHS
+    _db.py                 conexões PyMySQL, credenciais do .env da raiz
+```
+
+O app já está registrado e autorizado: `client_id` e `client_secret` ficam no banco
+**`bling_api_rhs`**, tabela `bling_oauth_credentials` (linha única), com segredo e tokens
+**cifrados em Fernet** — a chave vive no `.env` da raiz daquele projeto
+(`BLING_RHS_CHAVE_CIFRA`), então quem lê o banco sem o `.env` não usa os tokens. O perfil
+`bling_rhs` do `_db.py` exige **conexão SSL** (sem ela o MySQL responde "Access denied", o
+que parece senha errada).
+
+Uso, de qualquer script:
+
+```python
+import sys; sys.path.insert(0, FERRAMENTAS)
+import _bling
+from _bling_oauth_rhs import ContaBlingRHS
+conta = ContaBlingRHS(); conta.carregar()
+if conta.precisa_renovar: conta.renovar()
+dados = _bling._enviar(conta, "GET", "/pedidos/vendas?dataInicial=2026-09-29&dataFinal=2026-09-30")
+```
+
+⚠️ **Nunca criar um segundo cliente para o mesmo app.** O Bling **rotaciona o
+`refresh_token` a cada renovação**: dois clientes guardando tokens em lugares diferentes
+invalidariam um ao outro, e a integração cairia sem aviso. Um cliente Bling escrito neste
+projeto em 30/09/2026 foi **apagado** por isso.
+
+### API v3 — o que foi medido na conta real (30/09/2026)
+
+| Ponto | Medido |
+|---|---|
+| Financeiro | os caminhos são **`/contas/pagar`** e **`/contas/receber`** — com hífen (`/contas-pagar`) dá **404** |
+| Filtro do financeiro | aceita `dataEmissaoInicial/Final` e `dataVencimentoInicial/Final` — é o que separa o movimento novo da carga histórica |
+| Filtro de vendas | `dataInicial`/`dataFinal`, com **período máximo** (intervalo largo devolve `400 Período do filtro é maior que o permitido`) — tem de varrer mês a mês |
+| Listagem do financeiro | **não** devolve `numeroDocumento` nem `historico`; só o detalhe (`/contas/pagar/{id}`) devolve |
+| Depósito | **um só**, "Geral" (id 14889201244) |
+| Custo | **não existe no item do pedido**; vem do produto (`precoCusto`), ou seja, é o custo de HOJE — o mesmo problema de reprecificação já conhecido na MC MOTO |
+| Comissão | **existe no item** do pedido (`comissao.base`, `aliquota`, `valor`) |
+| Estoque | `/estoques/saldos?idsDepositos[]=…&idsProdutos[]=…` devolve `saldoFisicoTotal` e `saldoVirtualTotal`; a listagem de produtos já traz `estoque.saldoVirtualTotal` e `precoCusto` |
+
+### O que a conta tem hoje (medido em 30/09/2026)
+
+| Recurso | Volume | Observação |
+|---|---|---|
+| Pedidos de venda | **66 em toda a conta** | 42 em set/2026, dos quais **26 em 29 e 30/09** |
+| Contas a pagar | 2.325 títulos, R$ 2,26 mi | vencimentos de 2023 a **2029**; a amostra deu **8 de 8 da carga histórica**, a maioria da **unidade 3** |
+| Contas a receber | 417 títulos, R$ 225 mil | **8 de 8 da carga histórica**, todos unidade 4 |
+| Produtos ativos | 4.000+ | **1.015 sem custo (25%)**, dos quais **587 com saldo** |
+| Vendedores | 3 | "MARCO ANTONIO DE SOUZA", "ULTRA MOTOS LTDA", "SHEKINAH MOTOS…" — dois são empresas, não vendedores |
+
+### A carga histórica Proton → Bling e o risco de duplicar
+
+Existe no projeto da SEVEN um conjunto de scripts que empurra o **Proton (unidades 3 e 4)
+para dentro do Bling da RHS** — `executar_carga_historica_rhs.py`, que chama
+`sincronizar_tpag_historico.py`, `sincronizar_trec_historico.py` e
+`sincronizar_vendas_historico.py`. É o **sentido oposto** do que o painel precisa.
+
+Isso significa que boa parte do financeiro que está no Bling **é cópia do que já está no
+ERP, e inclui a unidade 3**. Ler tudo como "unidade 4" duplicaria valores e misturaria as
+duas unidades. Os registros da carga são reconhecíveis:
+
+| Recurso | Marcador da carga |
+|---|---|
+| Pedido de venda | `numeroPedidoCompra` = `U3-…` / `U4-…`; `observacoes` começa com "Venda Histórica Proton" |
+| Conta a pagar | `numeroDocumento` = `U3-…/…` / `U4-…/…`; `historico` contém "(Proton TPAG_…)" |
+| Conta a receber | `historico` = "U4 - DUPLICATA …/… (Proton PK …)" |
+
+**A defesa boa é a data de emissão**, não o marcador: a carga gravou as datas ORIGINAIS,
+então `dataEmissaoInicial = 2026-09-29` deixa de fora tudo o que é histórico sem precisar
+abrir título por título (o marcador só aparece no detalhe, e são 2.325 chamadas).
+
+### O corte de 29/09/2026 confere
+
+| Dia | ERP unidade 4 | Bling |
+|---|---|---|
+| 25/09 | 26 pedidos · R$ 2.518,63 | 6 · R$ 1.696,37 |
+| 28/09 | 26 pedidos · R$ 1.849,50 | 0 |
+| **29/09** | **0** | **21 · R$ 2.543,68** |
+| **30/09** | **0** | **5 · R$ 353,20** |
+
+O ERP para em 28/09 e o Bling assume em 29/09 com volume compatível com a média da unidade
+(~24 pedidos/dia). Antes do corte o Bling tinha movimento esporádico (1 a 6 pedidos/dia,
+provavelmente atacado/marketplace lançado em paralelo) — pequeno, e anterior ao corte.
+
+⚠️ **Conflito de sentido no estoque.** A tarefa do Windows `BlingSincronizarEstoqueProton`
+roda todo dia às 10:00 (`sincronizar_estoque_diario.py`) empurrando o estoque da unidade 4
+do Proton para o depósito do Bling. Agora que Contagem vende no Bling, o Bling é o dono do
+estoque — essa tarefa passa a **sobrescrever o saldo real com o do ERP de D-1**. Precisa ser
+desligada ou invertida.
 
 ### O que a integração precisa entregar (levantado nos 15 geradores)
 
