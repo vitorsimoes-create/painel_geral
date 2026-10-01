@@ -21,6 +21,17 @@
     "inadimplencia": 20.47,
     "itensEstoque": 8492,
     "vencido": 977.0
+   },
+   "2026-09": {
+    "aPagar": 985423.48,
+    "aReceber": 0.0,
+    "atrasado": false,
+    "caixa": null,
+    "estoque": 1657867.25,
+    "fechadoEm": "2026-10-01",
+    "inadimplencia": 0.0,
+    "itensEstoque": 8627,
+    "vencido": 0.0
    }
   }
  },
@@ -43,6 +54,17 @@
     "caixa": null,
     "estoque": 1129137.17,
     "fechadoEm": "2026-09-01",
+    "inadimplencia": 100.0,
+    "itensEstoque": 1697,
+    "vencido": 2682.0
+   },
+   "2026-09": {
+    "aPagar": 176124.42,
+    "aReceber": 2682.0,
+    "atrasado": false,
+    "caixa": null,
+    "estoque": 1129137.17,
+    "fechadoEm": "2026-10-01",
     "inadimplencia": 100.0,
     "itensEstoque": 1697,
     "vencido": 2682.0
@@ -69,6 +91,17 @@
     "inadimplencia": 43.04,
     "itensEstoque": 4084,
     "vencido": 67882.51
+   },
+   "2026-09": {
+    "aPagar": 674907.27,
+    "aReceber": 160981.01,
+    "atrasado": false,
+    "caixa": null,
+    "estoque": 653568.36,
+    "fechadoEm": "2026-10-01",
+    "inadimplencia": 50.2,
+    "itensEstoque": 4170,
+    "vencido": 80815.86
    }
   },
   "5": {
@@ -92,6 +125,17 @@
     "inadimplencia": 17.18,
     "itensEstoque": 3607,
     "vencido": 35914.57
+   },
+   "2026-09": {
+    "aPagar": 349528.03,
+    "aReceber": 199006.74,
+    "atrasado": false,
+    "caixa": null,
+    "estoque": 588394.11,
+    "fechadoEm": "2026-10-01",
+    "inadimplencia": 16.93,
+    "itensEstoque": 3768,
+    "vencido": 33688.28
    }
   }
  }
