@@ -44,6 +44,37 @@
 // tipo: novo | melhoria | correcao | aviso
 const EDICOES = [
   {
+    semana: "25/09 a 01/10/2026",
+    publicado: "02/10/2026",
+    resumo: "Semana de Dashboard: ele ganhou alertas do dia, atalhos para as abas e passou a mostrar os mesmos números para todos, iguais aos do Painel Mensal e do Relatório Gerencial. O painel também abre muito mais rápido, e a SEVEN Contagem, que saiu do ERP em 28/09, passou a ser lida do Bling sem perder o histórico.",
+    itens: [
+      { tipo: "novo", titulo: "Dashboard: alertas \"Atenção hoje\" e atalhos para as abas",
+        onde: "Dashboard (MC MOTO e SEVEN)",
+        texto: "Acima dos indicadores aparecem até 5 alertas do dia, como venda projetada abaixo do ponto de equilíbrio, caixa negativo nos próximos 7 dias, ritmo da meta, vendedor ou unidade abaixo de 80% da meta, contas vencidas nos últimos 30 dias e margem abaixo da média de 12 meses. Cada alerta e cada gráfico tem um link \"abrir\" que leva direto para a aba onde agir. Na MC MOTO, clicar em um vendedor abre o Painel Mensal no mês a mês dele. Os indicadores detalhados agora ficam recolhidos (fechados no celular) e podem ser abertos quando precisar." },
+      { tipo: "melhoria", titulo: "Painel abre em menos de meio segundo",
+        onde: "Painel inteiro",
+        texto: "O painel abria em cerca de 5 segundos e agora abre em menos de meio. Os dados de Compras e as abas internas só carregam quando você entra nelas, então a primeira abertura de uma aba de Compras pode levar um instante. No celular não há mais rolagem para os lados: as abas deslizam e os indicadores ficam em duas colunas." },
+      { tipo: "melhoria", titulo: "Dashboard: contas, caixa e comparações mais claras",
+        onde: "Dashboard (MC MOTO e SEVEN)",
+        texto: "Contas a pagar em atraso agora aparecem separadas por idade (até 30, 31 a 90 e mais de 90 dias), e os vencimentos mostram os próximos 7 e 30 dias. O bloco de caixa usa a mesma regra da aba Posição de Caixa e bate com ela. O mês em aberto é comparado pela projeção e pelos mesmos dias do mês anterior, as vendas mostram a última semana completa ao lado da atual e o estoque parado é dividido entre \"sem venda em 12 meses\" e \"acima de 3 vezes o pico\". A meta da SEVEN passou a ser a soma das metas das unidades (R$ 330 mil)." },
+      { tipo: "melhoria", titulo: "SEVEN Contagem passa a vir do Bling",
+        onde: "SEVEN › Unidade Contagem (Relatório Gerencial, Dashboard, Mapa de Vendas, Premiação, Montar Pedido, contas a pagar e a receber)",
+        texto: "A loja de Contagem deixou de usar o ERP em 28/09 e passou a faturar pelo Bling. O painel junta as duas fontes: até 28/09 os números vêm do ERP e, a partir de 29/09, do Bling, sem contar nenhum dia duas vezes. O estoque e o custo de Contagem vêm do Bling, e no Montar Pedido entraram cerca de 900 produtos com R$ 173 mil em estoque que antes não apareciam. O pico de vendas de setembro soma as duas fontes, para que a sugestão de compra não fique pela metade." },
+      { tipo: "correcao", titulo: "Dashboard: os mesmos números para toda a equipe",
+        onde: "Dashboard (MC MOTO e SEVEN)",
+        texto: "Parte da equipe via lucro em setembro enquanto a gerência via prejuízo, porque o Dashboard usava parâmetros diferentes em cada computador. Agora todos veem os valores publicados pela gerência. A meta da MC MOTO é a mesma do total do Painel Mensal (antes somava também as metas da SEVEN) e o custo fixo é a linha \"Custo fixo\" do Relatório Gerencial, batendo centavo a centavo nas duas empresas." },
+      { tipo: "correcao", titulo: "Dashboard SEVEN: estoque sem a Ultra Motos",
+        onde: "Dashboard (SEVEN)",
+        texto: "O estoque, o giro, a cobertura e o estoque parado da SEVEN agora consideram só as unidades em operação, porque o estoque da Ultra Motos no ERP estava errado e a loja está inativa. O histórico de vendas da Ultra Motos continua contando." },
+      { tipo: "aviso", titulo: "Vendas de Contagem de 29/09 ficaram fora até 30/09 à tarde",
+        onde: "SEVEN › telas com vendas da unidade Contagem",
+        texto: "Na atualização da manhã de 30/09, as vendas de Contagem do dia 29/09 ainda não apareciam, porque a loja já tinha saído do ERP e a leitura do Bling ainda não estava pronta. Isso foi resolvido em 30/09 à tarde e, desde então, os números de Contagem estão em dia." },
+      { tipo: "aviso", titulo: "Painel sem atualização em 27/09 (domingo)",
+        onde: "Painel inteiro",
+        texto: "A atualização automática não rodou no domingo, 27/09. Os números voltaram a ser atualizados em 28/09 normalmente." }
+    ]
+  },
+  {
     semana: "18/09 a 24/09/2026",
     publicado: "24/09/2026",
     resumo: "Semana focada na Análise de Fornecedor, que ganhou filtros e uma visão por grupo de mercadoria, e em Vendas Diárias, que agora abre por vendedor. Houve também uma interrupção nos dados da MC MOTO entre 22 e 24/09, causada pela atualização do sistema (ERP), já resolvida.",
