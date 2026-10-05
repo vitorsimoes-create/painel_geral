@@ -1749,16 +1749,25 @@ function filterData(){
   return d;
 }
 
+/* Destaca os termos da busca na descricao.
+   UMA passada so, em cima do texto CRU, escapando pedaco por pedaco.
+   Antes era um replace por termo, encadeado sobre o resultado JA marcado, e um termo curto
+   casava dentro do proprio <mark class="highlight"> recem-inserido: buscar "FILTRO A" fazia
+   a linha sair como 'ELEMENTO ark class="highlight">FILTR...' na tela.
+   Termo mais longo primeiro, para ele ganhar quando dois se sobrepoem. */
 function highlight(text, terms){
-  if(!terms||!terms.length) return escHtml(text);
-  // Marca cada termo individualmente
-  let result=escHtml(text);
-  const all=(Array.isArray(terms)?terms:[terms]).filter(Boolean);
-  all.forEach(term=>{
-    const re=new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
-    result=result.replace(re,m=>`<mark class="highlight">${m}</mark>`);
-  });
-  return result;
+  const src=String(text==null?'':text);
+  const all=(Array.isArray(terms)?terms:[terms]).filter(Boolean).map(String)
+    .sort((a,b)=>b.length-a.length);
+  if(!all.length) return escHtml(src);
+  const re=new RegExp('('+all.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','gi');
+  let out='', last=0, m;
+  while((m=re.exec(src))!==null){
+    if(!m[0]){ re.lastIndex++; continue; }      // termo vazio: nao travar o laco
+    out+=escHtml(src.slice(last,m.index))+'<mark class="highlight">'+escHtml(m[0])+'</mark>';
+    last=m.index+m[0].length;
+  }
+  return out+escHtml(src.slice(last));
 }
 
 function escHtml(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
