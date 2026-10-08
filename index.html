@@ -368,6 +368,21 @@
         </div>
       </div>
     </div>
+    <div class="filter-group" style="min-width:200px;position:relative">
+      <label>Marca</label>
+      <button type="button" id="btn-marca-multi" onclick="toggleMarcaDropdown()" style="text-align:left;display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:13px;cursor:pointer;width:100%">
+        <span id="marca-multi-label">Todas as marcas</span>
+        <span style="color:#94a3b8;font-size:11px">▾</span>
+      </button>
+      <div id="marca-dropdown-panel" class="hidden" style="position:absolute;top:100%;left:0;margin-top:4px;width:300px;max-height:320px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:50;display:flex;flex-direction:column">
+        <input type="text" id="marca-multi-busca" placeholder="Buscar marca..." oninput="renderMarcaChecklist()" style="border:none;border-bottom:1px solid #e2e8f0;padding:9px 12px;font-size:13px;outline:none;flex-shrink:0">
+        <div id="marca-multi-lista" style="overflow-y:auto;flex:1"></div>
+        <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e2e8f0;flex-shrink:0">
+          <button type="button" class="btn btn-outline" style="flex:1;font-size:11px;padding:6px" onclick="limparSelecaoMarca()">Limpar</button>
+          <button type="button" class="btn btn-primary" style="flex:1;font-size:11px;padding:6px" onclick="toggleMarcaDropdown()">Aplicar</button>
+        </div>
+      </div>
+    </div>
     <div class="filter-group" id="fg-grupo" style="min-width:160px">
       <label>Grupo de produto</label>
       <select id="sel-grupo">
@@ -1430,6 +1445,78 @@ function atualizarLabelFornecedor(){
   else label.textContent=`${n} fornecedores selecionados`;
 }
 
+/* ---- Filtro de MARCA (so MC MOTO) ---------------------------------------------------
+   Mesmo desenho do filtro de fornecedor: varias marcas de uma vez, com busca dentro do
+   menu. A marca e a do CADASTRO (produtos.MARCA -> tabela marcas), nao a ultima palavra da
+   descricao — aquela e palpite e so serve para achar fornecedor orfao.
+   Guardo o CODIGO, nao o nome: nome repetido no cadastro juntaria marcas diferentes.
+   Item sem marca valida entra como "(sem marca)" e da para filtrar por ele tambem — sao
+   3.173 itens, e saber quais sao e o primeiro passo para o cadastro ser arrumado. */
+const MARCA_SEM='';
+let marcasSelecionadas=new Set();
+function marcasCatalogo(){
+  const usadas={};
+  RAW_DATA.forEach(x=>{
+    const k=(x.ma==null)?MARCA_SEM:String(x.ma);
+    usadas[k]=(usadas[k]||0)+1;
+  });
+  return Object.keys(usadas).map(k=>({
+    cod:k,
+    nome:(k===MARCA_SEM)?'(sem marca)':(MARCA_NOMES_MC[k]||('Marca '+k)),
+    n:usadas[k]
+  })).sort((a,b)=>{
+    if((a.cod===MARCA_SEM)!==(b.cod===MARCA_SEM)) return a.cod===MARCA_SEM?1:-1;  // "(sem marca)" por ultimo
+    return a.nome.localeCompare(b.nome,'pt-BR');
+  });
+}
+function toggleMarcaDropdown(){
+  const panel=document.getElementById('marca-dropdown-panel');
+  const abrindo=panel.classList.contains('hidden');
+  panel.classList.toggle('hidden');
+  if(abrindo){
+    document.getElementById('marca-multi-busca').value='';
+    renderMarcaChecklist();
+  }
+}
+function renderMarcaChecklist(){
+  const busca=(document.getElementById('marca-multi-busca').value||'').toUpperCase().trim();
+  const lista=marcasCatalogo().filter(m=>!busca||m.nome.toUpperCase().includes(busca));
+  const cont=document.getElementById('marca-multi-lista');
+  if(!lista.length){
+    cont.innerHTML='<div style="padding:14px;text-align:center;color:#94a3b8;font-size:13px">Nenhuma marca encontrada</div>';
+    return;
+  }
+  cont.innerHTML=lista.map(m=>'<label style="display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid #f8fafc">'+
+    '<input type="checkbox" '+(marcasSelecionadas.has(m.cod)?'checked':'')+' onchange="toggleMarcaSelecionada(\''+m.cod+'\')">'+
+    '<span style="flex:1">'+escHtml(m.nome)+'</span>'+
+    '<span style="color:#94a3b8;font-size:11px">'+fmtN(m.n)+'</span>'+
+    '</label>').join('');
+}
+function toggleMarcaSelecionada(cod){
+  if(marcasSelecionadas.has(cod)) marcasSelecionadas.delete(cod);
+  else marcasSelecionadas.add(cod);
+  atualizarLabelMarca();
+  page=0;render();
+}
+function limparSelecaoMarca(){
+  marcasSelecionadas.clear();
+  atualizarLabelMarca();
+  renderMarcaChecklist();
+  page=0;render();
+}
+function atualizarLabelMarca(){
+  const label=document.getElementById('marca-multi-label');
+  if(!label) return;
+  const n=marcasSelecionadas.size;
+  if(n===0){ label.textContent='Todas as marcas'; return; }
+  if(n===1){
+    const c=[...marcasSelecionadas][0];
+    label.textContent=(c===MARCA_SEM)?'(sem marca)':(MARCA_NOMES_MC[c]||('Marca '+c));
+    return;
+  }
+  label.textContent=n+' marcas selecionadas';
+}
+
 /* As paginas geradas (relatorio, clientes, contas, mapa...) abrem em IFRAME, e o
    navegador guarda o iframe em cache mesmo com Ctrl+F5 na pagina de fora — o usuario
    ficava vendo numero velho depois de a rotina rodar.
@@ -1557,11 +1644,14 @@ function init(){
   }
 
   document.addEventListener('click',(e)=>{
-    const panel=document.getElementById('fornecedor-dropdown-panel');
-    const btn=document.getElementById('btn-fornecedor-multi');
-    if(!panel.classList.contains('hidden') && !panel.contains(e.target) && e.target!==btn && !btn.contains(e.target)){
-      panel.classList.add('hidden');
-    }
+    [['fornecedor-dropdown-panel','btn-fornecedor-multi'],
+     ['marca-dropdown-panel','btn-marca-multi']].forEach(([idp,idb])=>{
+      const panel=document.getElementById(idp), btn=document.getElementById(idb);
+      if(!panel||!btn) return;
+      if(!panel.classList.contains('hidden') && !panel.contains(e.target) && e.target!==btn && !btn.contains(e.target)){
+        panel.classList.add('hidden');
+      }
+    });
   });
 
   document.getElementById('inp-busca').addEventListener('input',()=>{page=0;render()});
@@ -1591,6 +1681,7 @@ function init(){
 function getFilters(){
   return {
     fornecedor: [...fornecedoresSelecionados],
+    marcas: [...marcasSelecionadas],
     grupo: document.getElementById('sel-grupo').value,
     busca: document.getElementById('inp-busca').value.trim().toUpperCase(),
     modo: window._buscaModo || 'E',
@@ -1668,6 +1759,8 @@ function setMesesCompraMc(v){
 function limparFiltros(){
   fornecedoresSelecionados.clear();
   atualizarLabelFornecedor();
+  marcasSelecionadas.clear();
+  atualizarLabelMarca();
   document.getElementById('sel-grupo').value='';
   document.getElementById('fg-grupo').classList.remove('grupo-ativo');
   document.getElementById('inp-busca').value='';
@@ -1703,6 +1796,7 @@ function filterData(){
   else if(f.filtro==='inativar') d=d.filter(x=>inativarMotivo(x,'mc'));
 
   if(f.fornecedor.length) d=d.filter(x=>f.fornecedor.includes(x.f));
+  if(f.marcas.length) d=d.filter(x=>f.marcas.includes(x.ma==null?MARCA_SEM:String(x.ma)));
   if(f.grupo) d=d.filter(x=>x.g===f.grupo);
 
   if(f.busca){
