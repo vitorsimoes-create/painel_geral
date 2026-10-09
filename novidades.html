@@ -44,6 +44,31 @@
 // tipo: novo | melhoria | correcao | aviso
 const EDICOES = [
   {
+    semana: "02/10 a 08/10/2026",
+    publicado: "09/10/2026",
+    resumo: "Semana de Montar Pedido: a MC MOTO ganhou filtro por marca e, na SEVEN, o custo dos itens passou a ser o que a loja realmente paga na nota. Atenção: as Contas a Receber da MC MOTO seguem sem dados desde 30/09, ainda sem solução.",
+    itens: [
+      { tipo: "novo", titulo: "Montar Pedido: filtro por marca",
+        onde: "MC MOTO › Compras › Montar Pedido",
+        texto: "Agora dá para filtrar os itens por marca, escolhendo várias de uma vez. O menu tem busca, uma caixinha por marca com a quantidade de itens ao lado e os botões Limpar e Aplicar, igual ao filtro de fornecedor. A marca vem do cadastro do produto; os itens sem marca cadastrada aparecem em \"(sem marca)\", que também pode ser filtrado para ajudar a arrumar o cadastro. O botão \"Limpar filtros\" da aba também limpa a marca." },
+      { tipo: "melhoria", titulo: "SEVEN: custo do item igual ao custo real da nota de entrada",
+        onde: "SEVEN › Compras › Montar Pedido e Análise de Fornecedor",
+        texto: "O custo mostrado passou a ser o custo real da última compra, já com os impostos que a loja paga (como a substituição tributária na unidade 5) e sem o crédito de imposto da unidade 3. Exemplo: um item que aparecia a R$ 54,29 agora aparece a R$ 71,77, que é o que custou de fato. Com isso, o estoque a custo da unidade 5 subiu cerca de 15% e o da unidade 3 caiu cerca de 1%, e mudou um pouco a lista de itens marcados para inativar por margem baixa. A unidade Contagem continua com o custo vindo do Bling." },
+      { tipo: "melhoria", titulo: "Montar Pedido: aviso de inativo não corta mais a descrição",
+        onde: "Compras › Montar Pedido",
+        texto: "O aviso \"INATIVO NO ERP\" ficava ao lado do nome e cortava o fim da descrição. Agora é um marcador curto na coluna do código; passando o mouse sobre ele (ou sobre a descrição) aparece o texto completo. Para ver só esses itens, use o filtro \"Inativos no ERP\" em Mostrar apenas." },
+      { tipo: "correcao", titulo: "Busca não embaralha mais a descrição",
+        onde: "Busca por descrição (MC MOTO e SEVEN)",
+        texto: "Ao buscar com mais de uma palavra (por exemplo \"FILTRO A\"), o destaque amarelo das palavras encontradas quebrava o texto e a descrição aparecia com pedaços de código no meio. Isso foi corrigido nas duas empresas: as palavras buscadas aparecem destacadas e o resto da descrição fica intacto." },
+      { tipo: "aviso", titulo: "Contas a Receber da MC MOTO sem dados desde 30/09",
+        onde: "MC MOTO › Contas a Receber, Posição de Caixa e Clientes",
+        texto: "Desde 30/09 o sistema não está enviando as contas a receber da MC MOTO para o painel. Por isso a aba Contas a Receber aparece vazia, a Posição de Caixa da MC MOTO está sem os recebimentos previstos e a inadimplência dos clientes aparece zerada. Ainda não está resolvido: até lá, consulte os valores a receber direto no sistema." },
+      { tipo: "aviso", titulo: "Painel sem atualização no fim de semana (03 e 04/10)",
+        onde: "Painel inteiro",
+        texto: "A atualização automática não rodou no sábado, 03/10, nem no domingo, 04/10. Os números voltaram a ser atualizados em 05/10 (no fim da manhã) e seguiram normais no resto da semana." }
+    ]
+  },
+  {
     semana: "25/09 a 01/10/2026",
     publicado: "02/10/2026",
     resumo: "Semana de Dashboard: ele ganhou alertas do dia, atalhos para as abas e passou a mostrar os mesmos números para todos, iguais aos do Painel Mensal e do Relatório Gerencial. O painel também abre muito mais rápido, e a SEVEN Contagem, que saiu do ERP em 28/09, passou a ser lida do Bling sem perder o histórico.",
