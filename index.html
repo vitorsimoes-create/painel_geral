@@ -860,9 +860,9 @@
       <div class="filter-group">
         <label>Unidade</label>
         <div style="display:flex;gap:6px;padding:8px 0">
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="chk-unidade-seven" value="3" checked onchange="toggleUnidadeSeven('3')"> 3</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="chk-unidade-seven" value="4" checked onchange="toggleUnidadeSeven('4')"> 4</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="chk-unidade-seven" value="5" checked onchange="toggleUnidadeSeven('5')"> 5</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="chk-unidade-seven" value="3" checked autocomplete="off" onchange="toggleUnidadeSeven('3')"> 3</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="chk-unidade-seven" value="4" checked autocomplete="off" onchange="toggleUnidadeSeven('4')"> 4</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="chk-unidade-seven" value="5" checked autocomplete="off" onchange="toggleUnidadeSeven('5')"> 5</label>
         </div>
       </div>
       <div class="filter-group" id="fg-grupo-seven" style="min-width:160px">
@@ -2861,9 +2861,10 @@ function aplicarUnidadesPermitidas(){
     if(!ok) chk.checked=false;
   });
   if(typeof unidadesSelecionadasSeven!=='undefined'){
-    [...unidadesSelecionadasSeven].forEach(u=>{ if(!permitidas.includes(String(u))) unidadesSelecionadasSeven.delete(u); });
-    permitidas.forEach(u=>{ if(document.querySelector('.chk-unidade-seven[value="'+u+'"]:checked')) unidadesSelecionadasSeven.add(u); });
-    if(!unidadesSelecionadasSeven.size) permitidas.forEach(u=>unidadesSelecionadasSeven.add(u));
+    // a lista sai das caixas marcadas (e nao o contrario); nada marcado = todas as permitidas
+    if(!document.querySelector('.chk-unidade-seven:checked'))
+      document.querySelectorAll('.chk-unidade-seven').forEach(c=>c.checked=permitidas.includes(c.value));
+    syncUnidadesSeven();
     if(typeof renderSeven==='function' && document.getElementById('tbl-body-seven')) { try{ pageSeven=0; renderSeven(); }catch(e){} }
   }
   // 2) iframes do Financeiro da SEVEN (mesma origem): esconde as unidades bloqueadas.
@@ -7112,9 +7113,14 @@ function atualizarLabelFornecedorSeven(){
   else label.textContent=`${n} fornecedores selecionados`;
 }
 
+/* A lista de unidades do filtro e SEMPRE lida das caixas marcadas. Antes cada clique so
+   alternava a lista interna, e quando o navegador restaurava as caixas ao recarregar a pagina
+   as duas se desencontravam: so a 4 marcada na tela e a tabela mostrando a unidade 5. */
+function syncUnidadesSeven(){
+  unidadesSelecionadasSeven=new Set([...document.querySelectorAll('.chk-unidade-seven:checked')].map(c=>c.value));
+}
 function toggleUnidadeSeven(u){
-  if(unidadesSelecionadasSeven.has(u)) unidadesSelecionadasSeven.delete(u);
-  else unidadesSelecionadasSeven.add(u);
+  syncUnidadesSeven();
   pageSeven=0;renderSeven();
 }
 
