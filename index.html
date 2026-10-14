@@ -260,7 +260,8 @@
 <div style="background:#1a1a2e;padding:0 24px;display:flex;gap:4px">
   <button id="grupobtn-dashboard" class="grupo-tab active" onclick="switchGrupo('dashboard')">📊 DASHBOARD</button>
   <button id="grupobtn-mcmoto" class="grupo-tab" onclick="switchGrupo('mcmoto')">🏍️ MC MOTO</button>
-  <button id="grupobtn-rhsseven" class="grupo-tab" onclick="switchGrupo('rhsseven')">🏢 RHS/SEVEN</button>
+  <button id="grupobtn-rhs" class="grupo-tab" onclick="switchGrupo('rhs')">🏢 RHS</button>
+  <button id="grupobtn-seven" class="grupo-tab" onclick="switchGrupo('seven')">🏪 SEVEN</button>
 </div>
 
 <div id="categorias-mcmoto" style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:8px 24px;display:flex;gap:8px">
@@ -1590,9 +1591,80 @@ function carregarIframe(f){
       try{ if(typeof aplicarUnidadesPermitidas==='function') aplicarUnidadesPermitidas(); }catch(e){}
     },{once:true});
   }
-  f.setAttribute('src', /^https?:/i.test(src) ? src : src.split('?')[0]+'?d='+_carimbo);
+  f.setAttribute('src', IFRAMES_COM_EMPRESA.indexOf(f.id)>=0
+    ? urlComEmpresa(src)
+    : (/^https?:/i.test(src) ? src : src.split('?')[0]+'?d='+_carimbo));
 }
 const _carimbo=Date.now();
+
+/* ===================== EMPRESA EM USO (RHS ou SEVEN) =====================
+   14/10/2026: o grupo "RHS/SEVEN" virou DOIS grupos no topo, porque cada empresa le de um
+   banco diferente — a RHS vem do Bling e a SEVEN do Proton. As abas sao as mesmas; o que
+   muda e a empresa.
+
+   As paginas de dentro (iframe) recebem a empresa pela URL (`?emp=RHS`): elas mesmas
+   marcam o filtro e escondem o seletor, porque o grupo escolhido JA diz qual empresa e.
+   Passar pela URL, e nao por localStorage, garante que a pagina nasce certa em vez de
+   nascer com todas e corrigir depois (o que piscava na tela). */
+const EMPRESAS_SEVEN=['RHS','SEVEN'];
+const LS_EMPRESA_SEVEN='painel_empresa_seven';
+/* iframes que entendem ?emp= */
+const IFRAMES_COM_EMPRESA=['iframe-contaspagar-seven','iframe-contasreceber-seven',
+  'iframe-riscocliente','iframe-caixa-seven','iframe-mapavendas','iframe-clientes-seven',
+  'iframe-cadastro-seven','iframe-premiacao-seven','iframe-crm-seven'];
+/* sub-abas que so existem numa das empresas (a Premiacao e da antiga unidade 4) */
+const SUBABA_SO_EMPRESA={'premiacao':'RHS'};
+
+let _empresaSeven=(function(){
+  try{ const v=localStorage.getItem(LS_EMPRESA_SEVEN); if(EMPRESAS_SEVEN.indexOf(v)>=0) return v; }catch(e){}
+  return 'RHS';
+})();
+function empresaSeven(){ return _empresaSeven; }
+function podeEmpresa(e){
+  const p=(typeof unidadesPermitidas==='function')?unidadesPermitidas().map(String):EMPRESAS_SEVEN;
+  return p.indexOf(String(e))>=0;
+}
+/* Troca a empresa: guarda, acerta o filtro do Montar Pedido e manda os iframes
+   recarregarem com a empresa nova (quem ja estava aberto tem de trocar tambem). */
+function definirEmpresaSeven(emp){
+  if(EMPRESAS_SEVEN.indexOf(emp)<0) return;
+  const mudou=(_empresaSeven!==emp);
+  _empresaSeven=emp;
+  try{ localStorage.setItem(LS_EMPRESA_SEVEN,emp); }catch(e){}
+  /* Montar Pedido e Analise de Fornecedor leem daqui */
+  try{ unidadesSelecionadasSeven=new Set([emp]);
+       document.querySelectorAll('.chk-unidade-seven').forEach(c=>{ c.checked=(c.value===emp); });
+  }catch(e){}
+  /* o Mapa guarda a escolha no localStorage, que e compartilhado com o iframe */
+  try{ localStorage.setItem('mapa_uni_sel', JSON.stringify([emp])); }catch(e){}
+  if(mudou) recarregarIframesEmpresa();
+  marcarSubAbasDaEmpresa();
+}
+function recarregarIframesEmpresa(){
+  IFRAMES_COM_EMPRESA.forEach(function(id){
+    const f=document.getElementById(id);
+    if(!f) return;
+    const base=f.getAttribute('data-src');
+    if(!base) return;
+    if(f.getAttribute('src')) f.setAttribute('src', urlComEmpresa(base));   // ja aberto: troca
+  });
+}
+function urlComEmpresa(src){
+  if(/^https?:/i.test(src)) return src;
+  return src.split('?')[0]+'?d='+_carimbo+'&emp='+encodeURIComponent(_empresaSeven);
+}
+/* Esconde a sub-aba que nao existe na empresa escolhida (Premiacao e so da RHS). */
+function marcarSubAbasDaEmpresa(){
+  document.querySelectorAll('#subtabs-sevenvendas .sub-sevenvendas').forEach(function(b){
+    const so=SUBABA_SO_EMPRESA[b.dataset.mapatab];
+    const esconde=!!so && so!==_empresaSeven;
+    b.classList.toggle('hidden',esconde);
+    if(esconde && b.classList.contains('active')){
+      const outra=document.querySelector('#subtabs-sevenvendas .sub-sevenvendas:not(.hidden)');
+      if(outra) abrirSubAbaVendasSeven(outra.dataset.mapatab,outra);
+    }
+  });
+}
 /* os que aplicarUnidadesPermitidas() mexe por dentro (filtro de unidade da SEVEN) */
 const IFRAMES_COM_UNIDADE=['iframe-contaspagar-seven','iframe-contasreceber-seven','iframe-riscocliente','iframe-caixa-seven','iframe-mapavendas'];
 /* Visivel = tem caixa na pagina (nenhum ancestral com display:none). Nao depende de a
@@ -2839,7 +2911,19 @@ function aplicarPermissoes(){
     if(b) b.classList.toggle('hidden', !podeAba('sv.compras'));
   });
   document.getElementById('grupobtn-mcmoto').classList.toggle('hidden', !podeGrupo('mcmoto'));
-  document.getElementById('grupobtn-rhsseven').classList.toggle('hidden', !podeGrupo('rhsseven'));
+  /* RHS e SEVEN: o botao aparece se o usuario tem a aba do grupo E a empresa liberada.
+     A permissao por empresa vem de unidadesPermitidas() — que converte quem ainda esta
+     cadastrado com 3/4/5. */
+  const temGrupoSv=podeGrupo('rhsseven');
+  EMPRESAS_SEVEN.forEach(function(e){
+    const b=document.getElementById('grupobtn-'+e.toLowerCase());
+    if(b) b.classList.toggle('hidden', !(temGrupoSv && podeEmpresa(e)));
+  });
+  /* se a empresa em uso nao e permitida, cai para a primeira que e */
+  if(temGrupoSv && !podeEmpresa(_empresaSeven)){
+    const livre=EMPRESAS_SEVEN.find(podeEmpresa);
+    if(livre) definirEmpresaSeven(livre);
+  }
   aplicarUnidadesPermitidas();
   // identificação do usuário no cabeçalho
   const badge=document.getElementById('user-badge');
@@ -6002,12 +6086,36 @@ function restaurarConfigPadrao(){
   renderGestaoUsuarios();
 }
 
+/* Qual botao fica aceso. RHS e SEVEN compartilham o grupo 'rhsseven', entao quem decide
+   entre os dois e a empresa em uso. */
+function marcarBotoesGrupo(grupo){
+  const aceso={dashboard:grupo==='dashboard', mcmoto:grupo==='mcmoto',
+               rhs:grupo==='rhsseven'&&_empresaSeven==='RHS',
+               seven:grupo==='rhsseven'&&_empresaSeven==='SEVEN'};
+  Object.keys(aceso).forEach(function(g){
+    const b=document.getElementById('grupobtn-'+g);
+    if(b) b.classList.toggle('active',aceso[g]);
+  });
+}
+
 function switchGrupo(grupo){
+  /* RHS e SEVEN sao o MESMO conjunto de abas com empresa diferente. Internamente o grupo
+     continua sendo 'rhsseven' — e assim que a permissao por aba esta cadastrada
+     (ABAS_CATALOGO.g) — e a empresa viaja por fora, em _empresaSeven. */
+  if(grupo==='rhs'||grupo==='seven'){
+    const emp=(grupo==='rhs')?'RHS':'SEVEN';
+    if(!podeEmpresa(emp)){
+      marcarBotoesGrupo(_grupoAtual);
+      return;
+    }
+    definirEmpresaSeven(emp);
+    grupo='rhsseven';
+  }
   /* DASHBOARD e a pagina inicial: todo usuario logado entra nela, sem senha de grupo.
      O conteudo e que respeita a permissao (seletor de empresa + unidades da SEVEN). */
   if(grupo==='dashboard'){
     _grupoAtual='dashboard';
-    ['dashboard','mcmoto','rhsseven'].forEach(g=>{
+    ['dashboard','mcmoto','rhs','seven'].forEach(g=>{
       const b=document.getElementById('grupobtn-'+g);
       if(b) b.classList.toggle('active',g==='dashboard');
     });
@@ -6021,15 +6129,12 @@ function switchGrupo(grupo){
     return;
   }
   if(!verificarSenhaAba(grupo)){
-    document.getElementById('grupobtn-mcmoto').classList.toggle('active',_grupoAtual==='mcmoto');
-    document.getElementById('grupobtn-rhsseven').classList.toggle('active',_grupoAtual==='rhsseven');
+    marcarBotoesGrupo(_grupoAtual);
     return;
   }
   _grupoAtual=grupo;
   document.getElementById('app-tab-dashboard').classList.add('hidden');
-  document.getElementById('grupobtn-dashboard').classList.remove('active');
-  document.getElementById('grupobtn-mcmoto').classList.toggle('active',grupo==='mcmoto');
-  document.getElementById('grupobtn-rhsseven').classList.toggle('active',grupo==='rhsseven');
+  marcarBotoesGrupo(grupo);
 
   document.getElementById('categorias-mcmoto').classList.toggle('hidden',grupo!=='mcmoto');
   document.getElementById('subtabs-rhsseven').classList.toggle('hidden',grupo!=='rhsseven');
