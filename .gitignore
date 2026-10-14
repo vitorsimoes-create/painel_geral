@@ -12,6 +12,9 @@ conexaomc.md
 Mapa de Vendas.html
 painel_caixa feito.html
 
+# Atalho distribuido para a equipe (binario regeravel por abrir_painel.py)
+dist_colaboradores/
+
 # Diversos locais
 __pycache__/
 _estimativas.json
