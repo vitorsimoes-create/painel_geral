@@ -37,3 +37,6 @@ bling_token.json
 # Bling unidade 4 — foto do dia (regeravel; o congelado e o bling-un4.json, versionado)
 bling-un4-hoje.json
 _bling_forn_cache.json
+
+# Plantao do diagnostico da carga (local, nunca publicar)
+_diag_*.cmd
