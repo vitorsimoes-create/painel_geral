@@ -32,6 +32,51 @@ Na aba **Compras > Recebimentos** da SEVEN, cada nota de **mercadoria** é clic�
 - **Colunas escolhidas por medição:** quantidade = `COALESCE(NULLIF(TENT_QTDE_ENTRADA1,0), TENT_QTDE_ENTRADA2)` — as duas são **estritamente complementares** (dos 14.882 itens, nenhum tem as duas preenchidas nem as duas zeradas); valor = **`TENT_CUSTO_ENTRADA_TOT`**, que somado por entrada dá **99,2%** do `TENT_VALOR_NOTA` do cabeçalho, contra 90,5% (`TENT_PRECO_REAL_TOTAL`) e 63,1% (`TENT_PRECO_COMPRA_TOTAL`). Filtra `TENT_STATUS_ENTRADA='L'`.
 - ⚠️ **A reconstrução das notas continua vindo dos títulos a pagar**, não de `TENT_ENTRADA`. Os valores e a meta da aba estão calibrados nessa fonte — não trocar sem o usuário pedir. Credenciais não reproduzidas aqui — ver `conexaomc.md` (arquivo local, não versionado).
 
+## Três empresas, não mais unidades de negócio (14/10/2026)
+
+**Decisão do usuário:** o painel deixou de falar em unidade 3/4/5 e passou a falar em
+**empresa**, porque cada uma lê de um banco diferente.
+
+| Empresa | O que era | Fonte |
+|---|---|---|
+| **MC MOTO** | — | banco `mc_moto` (não mudou nada) |
+| **RHS** | unidades 3 + 4 **somadas** | **Bling** (antes: Proton) |
+| **SEVEN** | unidade 5 | Proton, como sempre |
+
+A unidade 3 (Ultra Motos) está **encerrada** — última venda 30/07/2026, zero pedidos desde agosto. O histórico dela continua dentro da RHS; movimento novo não é esperado.
+
+**Estoque da RHS: só o do Bling.** O da unidade 3 fica fora. Vale registrar que o número que eu apresentei na primeira vez para essa decisão **estava errado**: eu disse R$ 262.040,52, mas pela régua do próprio painel (custo médio, e 60% do preço quando falta) a Ultra Motos tem **R$ 1.129.137,17** — R$ 867 mil disso é estimativa. A decisão foi mantida com o número certo. Os **meses já fechados** também passaram a excluir a unidade 3, senão apareceria um degrau de R$ 1,1 milhão entre o último fechamento e hoje sem nada ter acontecido.
+
+### Onde o colapso acontece
+
+Nas **consultas, nada mudou**: elas continuam lendo 3, 4 e 5 do ERP. A troca é no último passo, quando o payload é montado (`_emp.py`, `_emp_payload.py`). Assim o `relatorio-historico.json` continua gravado por unidade e nenhum histórico orfana.
+
+Regras por tipo de linha — errar isso dobra número:
+
+| Tipo | Regra |
+|---|---|
+| Fluxo (venda, CMV, itens, pedidos) | **soma** 3+4 |
+| Estoque | **só o Bling** para a RHS; o do ERP é descartado |
+| Títulos em aberto | **soma** (os do ERP são antigos, os do Bling são novos) |
+| Dias com faturamento | **o maior**, nunca a soma — a RHS não abriu o dobro de dias por ter tido duas lojas |
+| Ritmo de compra (Agenda) | chaveia por empresa **antes** de calcular: é média de intervalo entre datas, não soma |
+| Pico (Montar Pedido) | a Ultra Motos **sai**: o pico de uma loja fechada faria Contagem comprar para uma venda que não existe |
+
+### Armadilhas encontradas, para não repetir
+
+- **A configuração do colapso é explícita por chave do payload**, não inferida. Tentar inferir perdeu dinheiro em silêncio: a unidade está na posição 0 em algumas listas e na 1 em outras, e alguns campos numéricos são **id de vendedor e código de cliente**, que nunca podem ser somados. Chave nova sem regra agora **avisa** em vez de chutar.
+- **`ultimaData` tem de entrar pelo MAIOR**, não como critério de agrupamento. Como dimensão, a Ultra Motos (parada em 30/07) não se juntava a Contagem e a RHS aparecia **duas vezes** na tela.
+- **O Cadastro de Clientes apagava dados**: atribuía os números da unidade à chave da empresa, então a 4 sobrescrevia a 3. Agora primeira compra é a menor data, última a maior, e os contadores somam.
+- **Risco de Inadimplência e Posição de Caixa** têm matemática própria no JS (média ponderada de atraso; chave de saldo inicial por recorte). O filtro mostra a empresa e **expande** para as unidades na leitura — a conta não foi duplicada.
+
+### O menu
+
+O topo tem **três grupos**: MC MOTO, RHS e SEVEN. Internamente RHS e SEVEN continuam sendo o grupo `rhsseven` (é onde a permissão por aba está cadastrada em `ABAS_CATALOGO.g`) e a empresa viaja por fora, em `_empresaSeven`.
+
+A empresa chega às páginas de dentro pela **URL do iframe** (`?emp=RHS`), não por `localStorage`: assim a página **nasce** filtrada em vez de carregar tudo e se corrigir depois, o que piscava. Dentro delas o seletor vira um **selo** — o grupo já disse qual empresa é, e dois lugares para escolher a mesma coisa divergem. Aberta fora do painel, sem o parâmetro, cada página funciona como antes.
+
+**Permissão por empresa:** o botão só aparece se o usuário tem o grupo **e** aquela empresa; se a empresa em uso não for permitida, o painel cai para uma que seja. Usuário ainda cadastrado com 3/4/5 continua funcionando — a conversão é na leitura. **Premiação** só existe na RHS (era a unidade 4) e fica escondida na SEVEN.
+
 ## Unidades de Negócio
 
 Sub-aba padrão do grupo RHS/SEVEN. **Não é conteúdo próprio de `index.html`** — é o mesmo iframe `mapa-vendas.html` usado pela aba Vendas da MC MOTO, apenas trocado para sua sub-aba interna `unidades` (`trocarAba('unidades')`), agora mostrando dados agregados por unidade de negócio em vez de por vendedor/grupo de produto MC MOTO.
