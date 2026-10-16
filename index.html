@@ -5877,12 +5877,12 @@ function montarSelectsUnidadeReceb(){
   const permitidas=unidadesPermitidas();
   const sel=document.getElementById('recebsv-unidade');
   if(sel){
-    const desejado='<option value="">Todas as unidades</option>'+permitidas.map(u=>'<option value="'+u+'">Unidade '+u+'</option>').join('');
+    const desejado='<option value="">Todas as empresas</option>'+permitidas.map(u=>'<option value="'+u+'">'+u+'</option>').join('');
     if(sel.innerHTML!==desejado){ const at=sel.value; sel.innerHTML=desejado; sel.value=permitidas.includes(at)?at:''; }
   }
   const selNova=document.getElementById('recebsv-nova-unidade');
   if(selNova){
-    const d=permitidas.map(u=>'<option value="'+u+'">Unidade '+u+'</option>').join('');
+    const d=permitidas.map(u=>'<option value="'+u+'">'+u+'</option>').join('');
     if(selNova.innerHTML!==d) selNova.innerHTML=d;
   }
 }
