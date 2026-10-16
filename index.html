@@ -1639,6 +1639,7 @@ function definirEmpresaSeven(emp){
   try{ localStorage.setItem('mapa_uni_sel', JSON.stringify([emp])); }catch(e){}
   if(mudou) recarregarIframesEmpresa();
   marcarSubAbasDaEmpresa();
+  fixarEmpresaNosFiltros();
 }
 function recarregarIframesEmpresa(){
   IFRAMES_COM_EMPRESA.forEach(function(id){
@@ -1653,6 +1654,49 @@ function urlComEmpresa(src){
   if(/^https?:/i.test(src)) return src;
   return src.split('?')[0]+'?d='+_carimbo+'&emp='+encodeURIComponent(_empresaSeven);
 }
+/* ---- Os filtros de empresa de DENTRO das telas ------------------------------------
+   RHS e SEVEN viraram abas separadas la em cima (decisao do usuario 16/10/2026), entao o
+   seletor de empresa repetido dentro de Recebimentos, Analise de Fornecedor, Agenda e
+   Montar Pedido so atrapalhava: dava para estar na aba SEVEN lendo numero da RHS, e o
+   formulario de registrar recebimento chegava a oferecer a outra empresa.
+
+   Em vez de arrancar os <select> do HTML (dezenas de leitores espalhados usam o .value
+   deles), cada um fica com UMA opcao — a empresa da aba — e o campo e escondido. Quem le
+   continua lendo o mesmo lugar e sempre acha a empresa certa.
+
+   Montar Pedido usa checkbox em vez de select: a da empresa ativa fica marcada, a outra
+   desmarcada, e a caixa inteira some.
+
+   NAO entra aqui a aba Transferencia: ela existe justamente para comparar as duas lojas. */
+const FILTROS_EMPRESA_SEVEN=[
+  ['recebsv-unidade','self'],        // vizinho do seletor de mes: esconde so o select
+  ['recebsv-nova-unidade','grupo'],  // campo "Unidade" do formulario de registro
+  ['afs-unidade','pai'],
+  ['ags-unidade','pai']
+];
+function fixarEmpresaNosFiltros(){
+  const emp=(typeof empresaSeven==='function')?empresaSeven():null;
+  if(!emp) return;
+  const opcao='<option value="'+emp+'">'+emp+'</option>';
+  FILTROS_EMPRESA_SEVEN.forEach(function(par){
+    const sel=document.getElementById(par[0]);
+    if(!sel) return;
+    if(sel.innerHTML!==opcao) sel.innerHTML=opcao;
+    if(sel.value!==emp) sel.value=emp;
+    let alvo=sel;
+    if(par[1]==='grupo') alvo=sel.closest('.filter-group')||sel.parentElement||sel;
+    else if(par[1]==='pai') alvo=sel.parentElement||sel;
+    alvo.style.display='none';
+  });
+  const chks=document.querySelectorAll('.chk-unidade-seven');
+  if(chks.length){
+    chks.forEach(function(c){ c.checked=(c.value===emp); });
+    const caixa=chks[0].closest('.filter-group');
+    if(caixa) caixa.style.display='none';
+    try{ if(typeof syncUnidadesSeven==='function') syncUnidadesSeven(); }catch(e){}
+  }
+}
+
 /* Esconde a sub-aba que nao existe na empresa escolhida (Premiacao e so da RHS). */
 function marcarSubAbasDaEmpresa(){
   document.querySelectorAll('#subtabs-sevenvendas .sub-sevenvendas').forEach(function(b){
@@ -2925,6 +2969,7 @@ function aplicarPermissoes(){
     if(livre) definirEmpresaSeven(livre);
   }
   aplicarUnidadesPermitidas();
+  fixarEmpresaNosFiltros();
   // identificação do usuário no cabeçalho
   const badge=document.getElementById('user-badge');
   if(badge){
@@ -3675,13 +3720,7 @@ function salvarAgendaParam(fonte){
   });
   renderAgenda(fonte);
 }
-function montarSelectUnidadeAgenda(){
-  const sel=document.getElementById('ags-unidade');
-  if(!sel||sel.dataset.pronto) return;
-  const permitidas=unidadesPermitidas();
-  sel.innerHTML='<option value="">Todas</option>'+permitidas.map(u=>'<option value="'+u+'">Unidade '+u+'</option>').join('');
-  sel.dataset.pronto='1';
-}
+function montarSelectUnidadeAgenda(){ fixarEmpresaNosFiltros(); }
 function exportarAgenda(fonte){
   const cfg=AGENDA_FONTES[fonte], r=calcularAgenda(fonte);
   if(!r.lista.length){alert('Nada a exportar: nenhum fornecedor precisa de pedido.');return;}
@@ -5563,17 +5602,7 @@ function toggleAnaliseForn(fonte,forn){
   renderAnalise(fonte);
 }
 
-function montarSelectUnidadeAnalise(){
-  const sel=document.getElementById('afs-unidade');
-  if(!sel) return;
-  const permitidas=unidadesPermitidas();
-  const atual=sel.value;
-  const desejado='<option value="">Todas</option>'+permitidas.map(u=>'<option value="'+u+'">Unidade '+u+'</option>').join('');
-  if(sel.innerHTML!==desejado){
-    sel.innerHTML=desejado;
-    sel.value=permitidas.includes(atual)?atual:'';
-  }
-}
+function montarSelectUnidadeAnalise(){ fixarEmpresaNosFiltros(); }
 
 function exportarAnaliseResumo(fonte){
   const cfg=ANALISE_FONTES[fonte];
@@ -5864,28 +5893,18 @@ function metaEfetivaSeven(mes){
   const uns=unidadesReceb();
   const mesAnt=mesAnterior(mes);
   let valor=0, temManual=false, temAuto=false;
+  // mes futuro nao recebe meta automatica — ver o comentario de metaAutoCMV na MC MOTO
+  const futuro=mes>mesAtualStr();
   uns.forEach(u=>{
     const chave=mes+'|'+u;
     if(metas[chave]!=null){ valor+=metas[chave]; temManual=true; }
-    else { valor+=cmvMesUnidade(mesAnt,u); temAuto=true; }
+    else if(!futuro){ valor+=cmvMesUnidade(mesAnt,u); temAuto=true; }
   });
   // 'auto' = true quando nenhuma parcela foi definida manualmente (mostra "(CMV)")
   return {valor:valor, auto:!temManual, misto:(temManual&&temAuto)};
 }
 
-function montarSelectsUnidadeReceb(){
-  const permitidas=unidadesPermitidas();
-  const sel=document.getElementById('recebsv-unidade');
-  if(sel){
-    const desejado='<option value="">Todas as empresas</option>'+permitidas.map(u=>'<option value="'+u+'">'+u+'</option>').join('');
-    if(sel.innerHTML!==desejado){ const at=sel.value; sel.innerHTML=desejado; sel.value=permitidas.includes(at)?at:''; }
-  }
-  const selNova=document.getElementById('recebsv-nova-unidade');
-  if(selNova){
-    const d=permitidas.map(u=>'<option value="'+u+'">'+u+'</option>').join('');
-    if(selNova.innerHTML!==d) selNova.innerHTML=d;
-  }
-}
+function montarSelectsUnidadeReceb(){ fixarEmpresaNosFiltros(); }
 
 function renderRecebimentosSeven(){
   montarSelectsUnidadeReceb();
@@ -8348,7 +8367,14 @@ function mesAnterior(mes){
   const d=new Date(ano,mesNum-2,1);
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
+/* Meta automatica = CMV do MES ANTERIOR (regra do usuario 30/07/2026).
+   MES FUTURO NAO TEM META AUTOMATICA (decisao do usuario 16/10/2026): o mes de
+   referencia dele ainda esta correndo, entao o CMV sairia parcial e o quadro anual
+   mostrava uma meta pequena demais com um desvio negativo que nao existe — em
+   16/10/2026, Nov/2026 aparecia com meta de R$ 76.795,80, que era so meio outubro.
+   Meta digitada a mao continua valendo para qualquer mes: quem escreveu, quis. */
 function metaAutoCMV(mes){
+  if(mes>mesAtualStr()) return 0;
   const cmv=(typeof CMV_MENSAL!=='undefined'?CMV_MENSAL:{});
   return cmv[mesAnterior(mes)]||0;
 }
