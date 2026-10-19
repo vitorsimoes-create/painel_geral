@@ -102,7 +102,7 @@
   <button id="btn-atualizar" onclick="atualizarDados()" title="Reconsulta os 2 bancos (mc_moto + Seven/F7) e recarrega"
     style="background:#0ca30c; color:#fff; border:none; padding:9px 16px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">🔄 Atualizar dados</button>
 </h1>
-<div class="sub">Dados atualizados automaticamente em: <b>19/10/2026 10:46:06</b> — atualização diária agendada às 19:00, ou clique em "Atualizar dados". Faturamento considerado até: <b>18/10/2026</b> (dia anterior, dia corrente sempre excluído por poder estar incompleto).</div>
+<div class="sub">Dados atualizados automaticamente em: <b>19/10/2026 10:50:27</b> — atualização diária agendada às 19:00, ou clique em "Atualizar dados". Faturamento considerado até: <b>18/10/2026</b> (dia anterior, dia corrente sempre excluído por poder estar incompleto).</div>
 <div id="atualizar-msg" style="display:none; margin-bottom:12px; padding:8px 12px; border-radius:6px; font-size:13px;"></div>
 
 <div class="tabs">
@@ -888,11 +888,23 @@ function pubParam(chave){
   const v = (P.pub || {})[chave];
   return (v === undefined || v === null || v === '') ? null : v;
 }
-function getMeta(vendedor, campo){
-  const v = localStorage.getItem(metaKey(vendedor, campo));
+/* Metas das empresas (19/10/2026): desde 14/10 a linha e por EMPRESA (URHS, USEVEN), mas
+   as metas foram gravadas e publicadas por UNIDADE (U4, U5) — e a RHS/SEVEN apareciam sem
+   meta. Le primeiro a chave da empresa; sem ela, a da unidade antiga: RHS = U4 (ou U3, a
+   Ultra Motos, ja encerrada), SEVEN = U5. A mesma regra do Dashboard (dashMetaUni). */
+const META_CHAVES_ANTIGAS = {'URHS': ['URHS', 'U4', 'U3'], 'USEVEN': ['USEVEN', 'U5']};
+function _metaUma(id, campo){
+  const v = localStorage.getItem(metaKey(id, campo));
   if (v !== null && v !== '') return parseFloat(v);
-  const p = pubParam(metaKey(vendedor, campo));
+  const p = pubParam(metaKey(id, campo));
   return p === null ? null : parseFloat(p);
+}
+function getMeta(vendedor, campo){
+  for (const id of (META_CHAVES_ANTIGAS[vendedor] || [vendedor])){
+    const m = _metaUma(id, campo);
+    if (m !== null && !isNaN(m)) return m;
+  }
+  return null;
 }
 function setMeta(vendedor, campo, valor){
   if (valor === '' || valor === null || isNaN(valor)) localStorage.removeItem(metaKey(vendedor, campo));

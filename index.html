@@ -3971,17 +3971,18 @@ function dashDiasUteis(ym){
 }
 /* meta do mês: soma das metas por vendedor do Painel Mensal (mesmo localStorage,
    mesma origem). A SEVEN não tem meta por vendedor, então lá é um valor digitado. */
-function dashMetaUnidadesSv(){
-  /* a meta e gravada pelo Mapa por codigo; quem tinha meta em U3/U4 vale para a RHS,
-     senao ela apareceria sem meta so porque o codigo mudou */
+/* a meta e gravada pelo Mapa por codigo; quem tinha meta em U3/U4 vale para a RHS,
+   senao ela apareceria sem meta so porque o codigo mudou (mesma regra do getMeta do Mapa) */
+function dashMetaUni(u){
   const ANTIGOS={'RHS':['RHS','4','3'],'SEVEN':['SEVEN','5']};
-  return dashUnidades().reduce((a,u)=>{
-    for(const k of (ANTIGOS[u]||[u])){
-      const v=parseFloat(lsGet('mapa_meta_U'+k+'_vendas'));
-      if(!isNaN(v)) return a+v;
-    }
-    return a;
-  },0);
+  for(const k of (ANTIGOS[u]||[u])){
+    const v=parseFloat(lsGet('mapa_meta_U'+k+'_vendas'));
+    if(!isNaN(v)) return v;
+  }
+  return NaN;
+}
+function dashMetaUnidadesSv(){
+  return dashUnidades().reduce((a,u)=>{ const v=dashMetaUni(u); return isNaN(v)?a:a+v; },0);
 }
 function dashMeta(ym){
   if(dashEmpresa==='seven'){
@@ -4448,7 +4449,7 @@ function dashAlertas(c){
       });
     }else{
       dashUnidades().forEach(u=>{
-        const mt=parseFloat(lsGet('mapa_meta_U'+u+'_vendas'));
+        const mt=dashMetaUni(u);
         if(!(mt>0)) return;
         const m=((DASHBOARD_DB.seven.unidades[u]||{}).mensal||{})[c.ym]||[0];
         const pr=m[0]/c.du.dec*c.du.total;
