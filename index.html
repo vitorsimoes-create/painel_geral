@@ -444,6 +444,7 @@
         <option value="todos">Todos os itens</option>
         <option value="sem_estoque">Estoque zerado ou negativo</option>
         <option value="inativar">🚫 Candidatos a inativar</option>
+        <option value="equiv">🔗 Com equivalente</option>
       </select>
     </div>
     <div class="filter-group">
@@ -496,6 +497,7 @@
               <th class="num" id="th-pico" title="Maior venda mensal da janela escolhida">Pico 12m</th>
               <th class="num" id="th-pico-mult" title="Pico multiplicado pelo horizonte escolhido em &quot;Comprar para&quot;">Pico × 1</th>
               <th class="num">Sugestão</th>
+              <th title="Mesma peça de outra marca equivalente (EMBUS, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALLEN): pico e estoque somados do grupo">Equiv.</th>
               <th>Comprar?</th>
               <th title="Há quanto tempo o item está em estoque sem vender">Parado</th>
               <th title="Item com estoque excedente e margem baixa ou sem giro — candidato a inativar, para não comprar de novo">Inativar</th>
@@ -925,6 +927,7 @@
           <option value="sem_estoque">Estoque zerado ou negativo</option>
           <option value="inativar">🚫 Candidatos a inativar</option>
           <option value="inativo_erp">⚠️ Inativos no ERP</option>
+          <option value="equiv">🔗 Com equivalente</option>
         </select>
       </div>
       <div class="filter-group">
@@ -980,6 +983,7 @@
                 <th class="num" id="th-pico-seven" title="Maior venda mensal da janela escolhida">Pico 12m</th>
                 <th class="num" id="th-pico-mult-seven" title="Pico multiplicado pelo horizonte escolhido em &quot;Comprar para&quot;">Pico × 1</th>
                 <th class="num" title="Sugestão de compra (pico − estoque) — editável">Sugestão</th>
+                <th title="Mesma peça de outra marca equivalente (EMBUS, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALLEN): pico e estoque somados do grupo">Equiv.</th>
                 <th title="Há quanto tempo o item está em estoque sem vender">Parado</th>
                 <th title="Item com estoque excedente e margem baixa ou sem giro — candidato a inativar, para não comprar de novo">Inativar</th>
                 <th></th>
@@ -1841,8 +1845,101 @@ const LS_MESES_MC='mc_meses_compra';
 let mesesCompraMc=1;
 try{ const v=parseInt(localStorage.getItem(LS_MESES_MC),10); if(v>=1&&v<=6) mesesCompraMc=v; }catch(e){}
 
+/* ============================ EQUIVALENCIA DE MARCAS ============================
+   Pedido do usuario (21/10/2026): marcas paralelas — EMBUS, CATIMOTO, TMAC, SMARTFOX,
+   ILLION, K&D, ALLEN — fazem a mesma peca. Quando uma tem estoque e a outra tem venda, o
+   pedido nao pode mandar comprar como se fossem itens soltos. Caso que originou a regra:
+   RHS 4365 CATIMOTO (estoque 6, pico 0) e 105274 EMBUS (estoque 0, pico 1) — e a mesma
+   ARVORE COMANDO TITAN 160/BROS/XRE190; somados, pico 1 e estoque 6: nao precisa comprar.
+
+   COMO RECONHECE: na MESMA empresa, descricao igual depois de tirar a marca do fim. So
+   separador pode diferir ("TITAN-150" = "TITAN 150", "00/01" = "00-01"). A marca do fim
+   pode vir composta ("RHINO-CATIMOTO", "EMBUS/STYLU", "TMAC/NIKKI/CATI").
+   O codigo de fabricante NAO serve de ligacao: no caso acima e AC-17 de um lado e 9751 do
+   outro.
+
+   O QUE FOI TESTADO E DESCARTADO: casar por semelhanca de palavras. Juntava sobremedida
+   0,25 com 0,75, CARBURADOR com BOIA CARBURADOR, CABO ACELERADOR com CABO EMBREAGEM —
+   erro que faz deixar de comprar peca que falta. Peca escrita com palavras diferentes
+   entre marcas fica de fora de proposito.
+
+   A CONTA: o grupo soma pico e estoque (decisao do usuario). Falta do grupo =
+   pico somado x meses - estoque somado. Ela aparece no item de MAIOR pico (a marca que o
+   cliente mais leva); os outros ficam com sugestao <= 0, senao "adicionar todos"
+   compraria em dobro. Pela propria conta, o grupo NUNCA compra mais do que item a item.
+   Somar os picos e conservador: picos de meses diferentes somam como se fossem do mesmo.
+   ================================================================================== */
+const EQUIV_MARCAS={EMBUS:'EMBUS',EMBU:'EMBUS',EMB:'EMBUS',CATIMOTO:'CATIMOTO',CATI:'CATIMOTO',
+  TMAC:'TMAC','T-MAC':'TMAC',SMARTFOX:'SMARTFOX',ILLION:'ILLION',ILION:'ILLION',ALLEN:'ALLEN','K&D':'K&D'};
+function equivSepara(desc){
+  let d=String(desc||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+         .replace(/\s+/g,' ').trim()
+         .replace(/\bSMART FOX$/,'SMARTFOX').replace(/\bK ?& ?D$/,'K&D');
+  const partes=d.split(' ');
+  const ultimo=partes.pop()||'';
+  let resto=partes.join(' ');
+  if(resto.endsWith(' -')) resto=resto.slice(0,-2);
+  if(EQUIV_MARCAS[ultimo]) return {rotulo:ultimo, resto:resto};
+  // marca composta; com ponto fica de fora ("C/RETENT.ALLEN" e "com retentor", nao marca)
+  if(/[\/-]/.test(ultimo) && ultimo.indexOf('.')<0){
+    if(ultimo.split(/[\/-]/).some(p=>EQUIV_MARCAS[p])) return {rotulo:ultimo, resto:resto};
+  }
+  return null;
+}
+function aplicarEquivalencia(lista,meses){
+  if(!Array.isArray(lista)) return;
+  const grupos={};
+  lista.forEach(it=>{
+    it.eq=null;
+    if(it._eqChave===undefined){            // a descricao nao muda: calcula uma vez so
+      const sp=equivSepara(it.d);
+      it._eqChave=sp?((it.u||'MC')+'|'+sp.resto.replace(/[^A-Z0-9]/g,'')):null;
+      it._eqRot=sp?sp.rotulo:null;
+    }
+    if(!it._eqChave) return;
+    (grupos[it._eqChave]=grupos[it._eqChave]||[]).push(it);
+  });
+  let n=0;
+  Object.keys(grupos).forEach(chave=>{
+    const g=grupos[chave];
+    if(g.length<2 || new Set(g.map(x=>x._eqRot)).size<2) return;   // 2+ marcas diferentes
+    n++;
+    const kG=g.reduce((t,x)=>t+(x.k||0),0), eG=g.reduce((t,x)=>t+(x.e||0),0);
+    const falta=Math.round(kG*meses-eG);
+    const comp=g.slice().sort((a,b)=>(b.k||0)-(a.k||0)||(b.e||0)-(a.e||0)||(a.c-b.c))[0];
+    const info={id:chave,k:kG,e:eG,n:g.length,falta:falta,meses:meses,comp:comp.c,
+      membros:g.map(x=>({c:x.c,r:x._eqRot,e:x.e||0,k:x.k||0}))};
+    g.forEach(it=>{
+      it.sInd=it.s;
+      it.eq=info;
+      it.s=(it===comp)?falta:Math.min(it.s,0);
+    });
+  });
+  return n;
+}
+/* celula da coluna "Equiv." do Montar Pedido */
+function equivCelula(item){
+  const q=item&&item.eq;
+  if(!q) return '<span class="tag" style="background:#f1f5f9;color:#cbd5e1" title="sem item equivalente de outra marca">—</span>';
+  const fmtE=v=>(typeof fmtEstoqueSeven==='function'&&item.u)?fmtEstoqueSeven(v):String(Math.round(v*100)/100);
+  const linhas=q.membros.map(m=>'  '+m.c+' '+m.r+' — estoque '+fmtE(m.e)+', pico '+m.k+(m.c===q.comp?'  ← recebe a compra':'')).join('\n');
+  const conta='Grupo: pico '+q.k+(q.meses>1?' × '+q.meses+' meses':'')+' − estoque '+fmtE(q.e)+' = '+
+    (q.falta>0?'comprar '+q.falta:'não precisa comprar');
+  const tip='Mesma peça em outra marca:\n'+linhas+'\n\n'+conta+
+    '\nA falta do grupo vai para o item de maior pico; os outros ficam sem sugestão para não comprar em dobro.';
+  const ehComp=(item.c===q.comp);
+  const rodape=ehComp
+    ? (q.falta>0?'<span style="color:#b45309;font-weight:700">falta '+q.falta+'</span>'
+       :(q.k>0?'<span style="color:#059669">coberto</span>':'<span style="color:#94a3b8">sem venda</span>'))
+    : '<span style="color:#94a3b8">no '+q.comp+'</span>';
+  return '<span class="tag" style="background:#ecfeff;color:#0e7490;font-weight:700;cursor:help" title="'+escHtml(tip)+'">🔗 '+q.n+'</span>'+
+    '<div style="font-size:10px;color:#64748b;white-space:nowrap">pico '+q.k+' · est '+fmtE(q.e)+'</div>'+
+    '<div style="font-size:10px;white-space:nowrap">'+rodape+'</div>';
+}
+
 function aplicarMesesCompraMc(){
   RAW_DATA.forEach(it=>{ it.s=Math.round((it.k||0)*mesesCompraMc-(it.e||0)); });
+  aplicarEquivalencia(RAW_DATA,mesesCompraMc);   // o grupo de marcas equivalentes por cima
 }
 /* Mesma correção da SEVEN: o pedido guarda uma cópia do item, então trocar o horizonte
    de compra não chegava a quem já estava no pedido. A quantidade só muda quando ainda é
@@ -1909,6 +2006,7 @@ function filterData(){
   if(f.filtro==='sugestao') d=d.filter(x=>x.s>0);
   else if(f.filtro==='sem_estoque') d=d.filter(x=>x.e<=0);
   else if(f.filtro==='inativar') d=d.filter(x=>inativarMotivo(x,'mc'));
+  else if(f.filtro==='equiv') d=d.filter(x=>x.eq).sort((a,b)=>(a.eq.id<b.eq.id?-1:a.eq.id>b.eq.id?1:0));
 
   if(f.fornecedor.length) d=d.filter(x=>f.fornecedor.includes(x.f));
   if(f.marcas.length) d=d.filter(x=>f.marcas.includes(x.ma==null?MARCA_SEM:String(x.ma)));
@@ -1940,7 +2038,7 @@ function filterData(){
   }
 
   // Só aplica ordenação padrão quando não há busca OU no modo E
-  if(!f.busca || f.modo==='E'){
+  if((!f.busca || f.modo==='E') && f.filtro!=='equiv'){
     if(f.order==='sugestao') d.sort((a,b)=>b.s-a.s);
     else if(f.order==='sugestao_asc') d.sort((a,b)=>a.s-b.s);
     else if(f.order==='desc') d.sort((a,b)=>a.d.localeCompare(b.d));
@@ -2070,7 +2168,7 @@ function render(){
 
   const tbody=document.getElementById('tbl-body');
   if(pageItems.length===0){
-    tbody.innerHTML='<tr><td colspan="14" style="text-align:center;padding:30px;color:#94a3b8">Nenhum item encontrado</td></tr>';
+    tbody.innerHTML='<tr><td colspan="15" style="text-align:center;padding:30px;color:#94a3b8">Nenhum item encontrado</td></tr>';
   }else{
     tbody.innerHTML=pageItems.map(item=>{
       const inPedido=pedido[item.c];
@@ -2104,6 +2202,7 @@ function render(){
         <td class="num" style="color:#7c3aed;font-weight:600" title="Pico de vendas">${item.k||0}</td>
         <td class="num" style="color:#5b21b6;font-weight:700" title="${item.k||0} x ${mesesCompraMc} ${mesesCompraMc===1?'m\u00eas':'meses'}">${(item.k||0)*mesesCompraMc}</td>
         <td class="num">${sugBadge}</td>
+        <td>${equivCelula(item)}</td>
         <td>${comprarBadge}</td>
         <td>${paradoBadge(item)}</td>
         <td>${inativarBadge(item,'mc')}</td>
@@ -7135,6 +7234,7 @@ try{ const v=parseInt(localStorage.getItem(LS_MESES_SEVEN),10); if(v>=1&&v<=6) m
 
 function aplicarMesesCompraSeven(){
   RAW_DATA_SEVEN.forEach(it=>{ it.s=Math.round((it.k||0)*mesesCompraSeven-(it.e||0)); });
+  aplicarEquivalencia(RAW_DATA_SEVEN,mesesCompraSeven);   // agrupa por empresa (it.u)
 }
 /* O pedido guarda uma COPIA do item (o pedido salvo precisa da foto do momento), entao
    trocar o horizonte de compra nao chegava ate quem ja estava no pedido: a quantidade e
@@ -7315,6 +7415,7 @@ function filterDataSeven(){
   else if(f.filtro==='sem_estoque') d=d.filter(x=>x.e<=0);
   else if(f.filtro==='inativar') d=d.filter(x=>inativarMotivo(x,'seven'));
   else if(f.filtro==='inativo_erp') d=d.filter(x=>x.ia);
+  else if(f.filtro==='equiv') d=d.filter(x=>x.eq).sort((a,b)=>(a.eq.id<b.eq.id?-1:a.eq.id>b.eq.id?1:0));
   if(f.fornecedor.length) d=d.filter(x=>f.fornecedor.includes(x.f));
   if(f.grupo) d=d.filter(x=>x.g===f.grupo);
 
@@ -7338,7 +7439,7 @@ function filterDataSeven(){
     }
   }
 
-  if(!f.busca || f.modo==='E'){
+  if((!f.busca || f.modo==='E') && f.filtro!=='equiv'){
     if(f.order==='sugestao') d.sort((a,b)=>sugestaoSeven(b)-sugestaoSeven(a));
     else if(f.order==='sugestao_asc') d.sort((a,b)=>sugestaoSeven(a)-sugestaoSeven(b));
     else if(f.order==='desc') d.sort((a,b)=>a.d.localeCompare(b.d));
@@ -7377,7 +7478,7 @@ function renderSeven(){
 
   const tbody=document.getElementById('tbl-body-seven');
   if(pageItems.length===0){
-    tbody.innerHTML='<tr><td colspan="14" style="text-align:center;padding:30px;color:#94a3b8">Nenhum item encontrado</td></tr>';
+    tbody.innerHTML='<tr><td colspan="15" style="text-align:center;padding:30px;color:#94a3b8">Nenhum item encontrado</td></tr>';
   }else{
     tbody.innerHTML=pageItems.map(item=>{
       const key=skey(item);
@@ -7401,6 +7502,7 @@ function renderSeven(){
         <td class="num" style="color:#7c3aed;font-weight:600" title="Pico de vendas">${item.k||0}</td>
         <td class="num" style="color:#5b21b6;font-weight:700" title="${item.k||0} x ${mesesCompraSeven} ${mesesCompraSeven===1?'m\u00eas':'meses'}">${(item.k||0)*mesesCompraSeven}</td>
         <td class="num" onclick="event.stopPropagation()"><input type="number" value="${sug}" onchange="setSugestaoSeven('${key}',this.value)" title="${editado?'digitada à mão. O cálculo daria '+(item.s||0)+' (pico '+(item.k||0)+' \u00d7 '+mesesCompraSeven+' \u2212 estoque '+fmtEstoqueSeven(item.e)+'). Apague o campo para voltar ao cálculo.':'cálculo: pico \u00d7 '+mesesCompraSeven+' \u2212 estoque'}" style="width:56px;text-align:center;border:1px solid ${editado?'#7c3aed':'#e2e8f0'};border-radius:4px;padding:3px;font-size:13px;font-weight:700;color:${editado?'#7c3aed':'#1a1a2e'}"></td>
+        <td>${equivCelula(item)}</td>
         <td>${paradoBadge(item)}</td>
         <td>${inativarBadge(item,'seven')}</td>
         <td>${addBtn}</td>
