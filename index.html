@@ -497,7 +497,7 @@
               <th class="num" id="th-pico" title="Maior venda mensal da janela escolhida">Pico 12m</th>
               <th class="num" id="th-pico-mult" title="Pico multiplicado pelo horizonte escolhido em &quot;Comprar para&quot;">Pico × 1</th>
               <th class="num">Sugestão</th>
-              <th title="Mesma peça de outra marca equivalente (EMBUS, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALLEN): pico e estoque somados do grupo">Equiv.</th>
+              <th title="Mesma peça de outra marca equivalente (EMBUS, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALLEN; VEDAMOTORS e MAGNETRON só na linha elétrica): pico e estoque somados do grupo">Equiv.</th>
               <th>Comprar?</th>
               <th title="Há quanto tempo o item está em estoque sem vender">Parado</th>
               <th title="Item com estoque excedente e margem baixa ou sem giro — candidato a inativar, para não comprar de novo">Inativar</th>
@@ -983,7 +983,7 @@
                 <th class="num" id="th-pico-seven" title="Maior venda mensal da janela escolhida">Pico 12m</th>
                 <th class="num" id="th-pico-mult-seven" title="Pico multiplicado pelo horizonte escolhido em &quot;Comprar para&quot;">Pico × 1</th>
                 <th class="num" title="Sugestão de compra (pico − estoque) — editável">Sugestão</th>
-                <th title="Mesma peça de outra marca equivalente (EMBUS, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALLEN): pico e estoque somados do grupo">Equiv.</th>
+                <th title="Mesma peça de outra marca equivalente (EMBUS, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALLEN; VEDAMOTORS e MAGNETRON só na linha elétrica): pico e estoque somados do grupo">Equiv.</th>
                 <th title="Há quanto tempo o item está em estoque sem vender">Parado</th>
                 <th title="Item com estoque excedente e margem baixa ou sem giro — candidato a inativar, para não comprar de novo">Inativar</th>
                 <th></th>
@@ -1847,7 +1847,7 @@ try{ const v=parseInt(localStorage.getItem(LS_MESES_MC),10); if(v>=1&&v<=6) mese
 
 /* ============================ EQUIVALENCIA DE MARCAS ============================
    Pedido do usuario (21/10/2026): marcas paralelas — EMBUS, CATIMOTO, TMAC, SMARTFOX,
-   ILLION, K&D, ALLEN — fazem a mesma peca. Quando uma tem estoque e a outra tem venda, o
+   ILLION, K&D, ALLEN, e VEDAMOTORS/MAGNETRON so na linha eletrica — fazem a mesma peca. Quando uma tem estoque e a outra tem venda, o
    pedido nao pode mandar comprar como se fossem itens soltos. Caso que originou a regra:
    RHS 4365 CATIMOTO (estoque 6, pico 0) e 105274 EMBUS (estoque 0, pico 1) — e a mesma
    ARVORE COMANDO TITAN 160/BROS/XRE190; somados, pico 1 e estoque 6: nao precisa comprar.
@@ -1870,19 +1870,39 @@ try{ const v=parseInt(localStorage.getItem(LS_MESES_MC),10); if(v>=1&&v<=6) mese
    Somar os picos e conservador: picos de meses diferentes somam como se fossem do mesmo.
    ================================================================================== */
 const EQUIV_MARCAS={EMBUS:'EMBUS',EMBU:'EMBUS',EMB:'EMBUS',CATIMOTO:'CATIMOTO',CATI:'CATIMOTO',
-  TMAC:'TMAC','T-MAC':'TMAC',SMARTFOX:'SMARTFOX',ILLION:'ILLION',ILION:'ILLION',ALLEN:'ALLEN','K&D':'K&D'};
+  TMAC:'TMAC','T-MAC':'TMAC',SMARTFOX:'SMARTFOX',ILLION:'ILLION',ILION:'ILLION',ALLEN:'ALLEN','K&D':'K&D',
+  VEDAMOTORS:'VEDAMOTORS',VEDAMOTOR:'VEDAMOTORS',MAGNETRON:'MAGNETRON'};
+/* VEDAMOTORS e MAGNETRON so contam como equivalentes em item de LINHA ELETRICA (decisao
+   do usuario 21/10/2026). Fora dela continuam marca solta: VEDAMOTORS faz junta, retentor
+   e kit de motor, MAGNETRON faz cabo de acelerador — nada disso entra no grupo.
+   "Eletrica" = grupo do cadastro ELETRICA OU o classificador por descricao do painel
+   (getGrupo) dizer ELETRICA. Precisa dos dois porque cada um erra para um lado: o cadastro
+   da SEVEN poe ESTATOR em MOTOR, o da MC deixa 242 MAGNETRON em DIVERSOS, e a descricao
+   nao reconhece BOBINA IGNICAO nem SONDA LAMBDA. Testado: nenhum dos dois marca junta,
+   cabo de acelerador/embreagem, kit cilindro, retentor ou filtro como eletrico. */
+const EQUIV_SO_ELETRICA={VEDAMOTORS:1,MAGNETRON:1};
+function equivEhEletrica(it,resto){
+  const nomes=it.u?(typeof GRUPO_NOMES_SEVEN!=='undefined'?GRUPO_NOMES_SEVEN:{})
+                  :(typeof GRUPO_NOMES_MC!=='undefined'?GRUPO_NOMES_MC:{});
+  if(it.gr!=null && String(nomes[String(it.gr)]||'').trim()==='ELETRICA') return true;
+  try{ if(typeof getGrupo==='function' && getGrupo(resto)==='ELETRICA') return true; }catch(e){}
+  return false;
+}
 function equivSepara(desc){
   let d=String(desc||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
          .replace(/\s+/g,' ').trim()
-         .replace(/\bSMART FOX$/,'SMARTFOX').replace(/\bK ?& ?D$/,'K&D');
+         .replace(/\bSMART FOX$/,'SMARTFOX').replace(/\bK ?& ?D$/,'K&D')
+         .replace(/\bVEDA MOTORS?$/,'VEDAMOTORS');
   const partes=d.split(' ');
   const ultimo=partes.pop()||'';
   let resto=partes.join(' ');
   if(resto.endsWith(' -')) resto=resto.slice(0,-2);
-  if(EQUIV_MARCAS[ultimo]) return {rotulo:ultimo, resto:resto};
+  if(EQUIV_MARCAS[ultimo]) return {rotulo:ultimo, resto:resto, soEletrica:!!EQUIV_SO_ELETRICA[EQUIV_MARCAS[ultimo]]};
   // marca composta; com ponto fica de fora ("C/RETENT.ALLEN" e "com retentor", nao marca)
   if(/[\/-]/.test(ultimo) && ultimo.indexOf('.')<0){
-    if(ultimo.split(/[\/-]/).some(p=>EQUIV_MARCAS[p])) return {rotulo:ultimo, resto:resto};
+    const eq=ultimo.split(/[\/-]/).map(p=>EQUIV_MARCAS[p]).filter(Boolean);
+    // composta so de marca condicional (ex.: "VEDAMOTORS/MAGNETRON") tambem exige eletrica
+    if(eq.length) return {rotulo:ultimo, resto:resto, soEletrica:eq.every(m=>EQUIV_SO_ELETRICA[m])};
   }
   return null;
 }
@@ -1892,7 +1912,8 @@ function aplicarEquivalencia(lista,meses){
   lista.forEach(it=>{
     it.eq=null;
     if(it._eqChave===undefined){            // a descricao nao muda: calcula uma vez so
-      const sp=equivSepara(it.d);
+      let sp=equivSepara(it.d);
+      if(sp && sp.soEletrica && !equivEhEletrica(it,sp.resto)) sp=null;   // VEDAMOTORS/MAGNETRON fora da eletrica
       it._eqChave=sp?((it.u||'MC')+'|'+sp.resto.replace(/[^A-Z0-9]/g,'')):null;
       it._eqRot=sp?sp.rotulo:null;
     }
