@@ -30,7 +30,7 @@ Na aba **Compras > Recebimentos** da SEVEN, cada nota de **mercadoria** é clic�
 - **Como amarra item → nota:** o título a pagar carrega **`TPAG_ENTRADA_FKN`**, que liga direto em `TENT_ENTRADA_ITEM.TENT_CHAVE_FK_PK` (+ unidade). Validado: número da nota e fornecedor do título batem com o cabeçalho `TENT_ENTRADA` em **850/850** casos, e 100% das chaves referenciadas têm itens.
 - **Cobertura ~58% (757 de 1.309 notas) — é o esperado, não é falha.** As 42% sem itens são exatamente os títulos que **não são mercadoria**: banco, aluguel, salários, INSS/FGTS/CSLL, transportadora. Nota de mercadoria tem entrada; despesa não tem. Por isso essas linhas ficam não-clicáveis por design.
 - **Colunas escolhidas por medição:** quantidade = `COALESCE(NULLIF(TENT_QTDE_ENTRADA1,0), TENT_QTDE_ENTRADA2)` — as duas são **estritamente complementares** (dos 14.882 itens, nenhum tem as duas preenchidas nem as duas zeradas); valor = **`TENT_CUSTO_ENTRADA_TOT`**, que somado por entrada dá **99,2%** do `TENT_VALOR_NOTA` do cabeçalho, contra 90,5% (`TENT_PRECO_REAL_TOTAL`) e 63,1% (`TENT_PRECO_COMPRA_TOTAL`). Filtra `TENT_STATUS_ENTRADA='L'`.
-- ⚠️ **A reconstrução das notas continua vindo dos títulos a pagar**, não de `TENT_ENTRADA`. Os valores e a meta da aba estão calibrados nessa fonte — não trocar sem o usuário pedir. Credenciais não reproduzidas aqui — ver `conexaomc.md` (arquivo local, não versionado).
+- ~~A reconstrução das notas continua vindo dos títulos a pagar~~ — **trocado em 02/09/2026 a pedido do usuário:** a nota passou a ser a **entrada de mercadoria** (`TENT_ENTRADA`, status `'L'`, data `TENT_DATA_LIBERACAO`, valor `TENT_VALOR_TOTAL_PEDIDO`, id `sv_ent_<unidade>_<chave>`), porque o ERP quebra a mesma NF em duplicata e previsão e a reconstrução pelos títulos duplicava a nota. Os títulos continuam lidos só para a "nota sem mercadoria", que o painel esconde. Credenciais não reproduzidas aqui — ver `conexaomc.md` (arquivo local, não versionado).
 
 ## Três empresas, não mais unidades de negócio (14/10/2026)
 
@@ -120,25 +120,27 @@ A unidade 4 **ainda estava sendo alimentada no ERP** até 28/09/2026 — ou seja
 
 ### O que a unidade 4 alimenta hoje (15 geradores)
 
-Trocar a fonte da unidade 4 atinge, na prática, toda a aba RHS/SEVEN:
+Trocar a fonte da unidade 4 atinge, na prática, toda a aba RHS/SEVEN. A coluna da direita é o
+estado **conferido no código em 23/10/2026** — o detalhe campo a campo está em
+[`08-origem-dos-dados.md`](08-origem-dos-dados.md).
 
-| Gerador | Tela |
-|---|---|
-| `atualizar_mapa.py` | Unidades de Negócio (Painel Mensal, Gráficos, por Fornecedor, Históricas, Diárias) |
-| `gerar_raw_data_seven.py` | Compras › Montar Pedido (estoque, pico, custo) |
-| `gerar_recebimentos_seven.py` | Compras › Recebimentos + CMV |
-| `gerar_receb_itens_seven.py` | Itens da nota de entrada |
-| `gerar_agenda_compras.py` | Compras › Agenda |
-| `gerar_forn_real_seven.py` | Análise de Fornecedor (fornecedor real) |
-| `gerar_contas_seven.py` | Financeiro › Contas a Pagar / a Receber |
-| `gerar_posicao_caixa.py` | Financeiro › Posição de Caixa |
-| `gerar_clientes.py` | Vendas › Clientes |
-| `gerar_cadastro_clientes.py` | Cadastro de Clientes |
-| `gerar_risco_cliente.py` | Risco de Inadimplência |
-| `gerar_dashboard.py` | DASHBOARD |
-| `gerar_relatorio.py` | Relatório Gerencial |
-| `gerar_transferencia_seven.py` | Transferência entre unidades (4 e 5) |
-| `gerar_premiacao.py` | Premiação — **só unidade 4**, então depende 100% do Bling |
+| Gerador | Tela | Já soma o Bling depois de 28/09? |
+|---|---|---|
+| `atualizar_mapa.py` | Vendas (Painel Mensal, Gráficos, por Fornecedor, Históricas, Diárias) | **Em parte** — totais do mês, vendedores, estoque por fornecedor, históricas e diárias sim; grupo, cidade, clientes, venda por fornecedor e acompanhamento mensal não |
+| `gerar_raw_data_seven.py` | Compras › Montar Pedido (estoque, pico, custo) | Sim |
+| `gerar_recebimentos_seven.py` | Compras › Recebimentos + CMV | Sim |
+| `gerar_receb_itens_seven.py` | Itens da nota de entrada | Sim |
+| `gerar_agenda_compras.py` | Compras › Agenda | **Não** |
+| `gerar_forn_real_seven.py` | Análise de Fornecedor (fornecedor real) | **Não** |
+| `gerar_contas_seven.py` | Financeiro › Contas a Pagar / a Receber | Sim (títulos nativos) |
+| `gerar_posicao_caixa.py` | Financeiro › Posição de Caixa | **Não** |
+| `gerar_clientes.py` | Vendas › Clientes | **Não** |
+| `gerar_cadastro_clientes.py` | Cadastro de Clientes | **Não** |
+| `gerar_risco_cliente.py` | Risco de Inadimplência | **Não** |
+| `gerar_dashboard.py` | DASHBOARD | **Em parte** — venda, CMV, QC e estoque sim; títulos, custo fixo e quebras não |
+| `gerar_relatorio.py` | Relatório Gerencial | Sim |
+| `gerar_transferencia_seven.py` | Transferência entre unidades (4 e 5) | **Não** (o complemento da un. 4 traz estoque do ERP) |
+| `gerar_premiacao.py` | Premiação — **só unidade 4** | Sim |
 
 ### Segurança
 
@@ -387,7 +389,10 @@ Este é o risco real da migração: cada uma destas regras foi estabelecida com 
 
 ### Pendente
 
-Falta a credencial da API do Bling (`client_id` + `client_secret`) para autorizar e rodar o `_bling_explorar.py`. Só depois de ver o que a conta realmente tem é que os geradores são alterados.
+~~Falta a credencial da API do Bling~~ — resolvido em 30/09/2026: a conexão da RHS já existia
+(banco `bling_api_rhs`), o coletor `gerar_bling_un4.py` roda todo dia no passo A0 da rotina. O que
+ainda falta é **fazer os geradores marcados com "Não" na tabela acima somarem o Bling** — lista
+em [`08-origem-dos-dados.md`](08-origem-dos-dados.md), seção 12.
 
 ## CRM
 
@@ -397,7 +402,7 @@ Iframe separado, `crm-seven.html`, escopo declarado "Unidades 3 e 4". Painel pr�
 
 ## Compras
 
-Réplica da aba **MC MOTO → Compras** (mesmo fluxo, mesmas regras de interface), mas alimentada pelo banco **`projeto_f7`** da SEVEN, unidades **3, 4 e 5**. Conteúdo nativo de `index.html` (`app-tab-comprasseven`), com 3 sub-abas: Montar Pedido, Cotação, Pedidos Salvos. **Recebimentos ficou de fora por decisão explícita** — não existe fonte confiável de notas de entrada no espelho da SEVEN (a candidata `TMOV_EXTRA` filtrada por fornecedor tem só ~1 registro por unidade em ~3 anos).
+Réplica da aba **MC MOTO → Compras** (mesmo fluxo, mesmas regras de interface), mas alimentada pelo banco **`projeto_f7`** da SEVEN, unidades **3, 4 e 5** (a 4 pelo Bling desde 29/09/2026). Conteúdo nativo de `index.html` (`app-tab-comprasseven`), com as sub-abas Montar Pedido, Cotação, Pedidos Salvos, Recebimentos (desde 30/07/2026), Análise de Fornecedor, Agenda de Compras, Transferência e INATIVAR.
 
 ### Fonte de dados: `RAW_DATA_SEVEN`
 
@@ -408,7 +413,7 @@ Array JS embutido em `index.html` (~21.800 itens), gerado pelo script local `ger
 | `c` | Código do produto | `TMER_ESTOQUE.TMER_CODIGO_PRI_FK_PK` |
 | `u` | Unidade de negócio (3, 4 ou 5) | `TMER_ESTOQUE.TMER_UNIDADE_FK_PK` |
 | `d` | Descrição | `TMER_MERCADORIA.TMER_NOME` |
-| `p` | Custo médio | `TMER_ESTOQUE.TMER_CUSTO_MEDIO_REAL` — **sempre o `_REAL`, nunca o `TMER_CUSTO_MEDIO`** (decisão do usuário 24/07/2026): o `_REAL` está preenchido em mais itens (18.765 vs 17.386 nas unidades 3/4/5) e corrigiu 4.980 itens, vários que apareciam com custo 0 |
+| `p` | Custo | **Desde 05/10/2026:** custo real da última compra, `TENT_ENTRADA_ITEM.TENT_CUSTO_REAL_COMPRA`; sem entrada, `TMER_ESTOQUE.TMER_CUSTO_MEDIO_REAL` (**nunca** o `TMER_CUSTO_MEDIO`); sem nenhum, 60% do preço. Unidade 4: `precoCusto` do Bling. *(Até 05/10 era sempre o `TMER_CUSTO_MEDIO_REAL`, decisão de 24/07/2026.)* |
 | `k` | Pico de vendas mensal (máximo por mês nos últimos 12m, **nunca soma** — mesma regra da MC MOTO) | `vendas_para_ponto_de_pedido_12m` |
 | `e` | Estoque total | `TMER_ESTOQUE.TMER_ESTOQUE_TOTAL` — **sempre o TOTAL, nunca o `TMER_ESTOQUE_ATUAL`** (decisão do usuário 21/07/2026): o `ATUAL` fica muito negativo e não reflete o estoque real; `TOTAL = ATUAL + HIST` |
 | `s` | Sugestão de compra = **`pico − estoque` (`k − e`)**, recalculada ao vivo (igual à MC MOTO) e **editável na interface** — ver diferenças abaixo | calculada no navegador a partir de `k`/`e`; a rotina diária também grava `s = k − e` |
@@ -416,7 +421,7 @@ Array JS embutido em `index.html` (~21.800 itens), gerado pelo script local `ger
 | `f` | Fornecedor principal (fantasia, ou razão social) | `TFOR_FORNECEDOR` via `TMER_FORNECEDOR_PRINCIPAL_FK` |
 | `g` | Grupo de produto — **vem classificado do próprio banco** (`TMER_GRUPO_MERCADORIA`), sem reclassificação por palavra-chave como na MC MOTO | mapeamento fixo código→nome |
 
-Filtros aplicados na geração: só itens com `TMER_ATIVO_COMPRA='S'` e fornecedor principal ≠ 9999 (cadastro "DEMONSTRACAO"). Grupos `001`–`004` ("ERRO") caem em `DIVERSOS`.
+Filtros aplicados na geração: fornecedor principal ≠ 9999 (cadastro "DEMONSTRACAO"). **Desde 09/09/2026 o item inativo para compra (`TMER_ATIVO_COMPRA='N'`) entra**, marcado com `ia:1` (selo INATIVO NO ERP); só fica fora o inativo sem venda em 12 meses e sem estoque. Grupos `001`–`004` ("ERRO") caem em `DIVERSOS`. Campos acrescentados depois (`pc`, `pv`, `ce`, `ia`, `k6`, `gr`, `sg`, `ue`, `uv`, `up`) estão em [`08-origem-dos-dados.md`](08-origem-dos-dados.md), seção 7.1.
 
 ### Diferenças em relação ao Compras da MC MOTO
 
@@ -434,7 +439,17 @@ Todo o resto (busca E/OU, multi-seleção de fornecedor, "adicionar todos" com c
 
 Criada em 30/07/2026 seguindo **as mesmas regras da aba Recebimentos da MC MOTO** (ver [`01-compras.md`](01-compras.md) / [`03-financeiro-mc-moto.md`](03-financeiro-mc-moto.md)): lista dos recebimentos do mês (sistema + lançamentos manuais), filtro de **fornecedores de mercadoria**, **meta do mês** (automática = CMV do mês anterior, ou manual pelo ✏️) com barra de progresso (85% âmbar / 100% vermelho) e **quadro anual** Recebido × Meta × Desvio. Chave de permissão: `sv.recebimentos`.
 
-**⚠️ Diferença estrutural importante — de onde vêm os dados.** O espelho `projeto_f7` **não tem tabela de notas de entrada** (a MC MOTO usa `notas_entrada`). A única fonte de compras de fornecedor no espelho são os **títulos a pagar**. Então `gerar_recebimentos_seven.py` **reconstrói a nota** agrupando `TPAG_ABERTO` + `TPAG_BAIXADO` por `(unidade, tipo, número, fornecedor)` e usando **`TPAG_VALOR_FATURA`** — que é o valor da **nota**, não da parcela; assim uma NF em 5× conta **uma vez**. `SELECT DISTINCT` é obrigatório (o `TPAG_BAIXADO` do espelho tem duplicação ~66×). Consequências a ter em mente:
+> **Fonte atual (substitui o que vem logo abaixo):**
+> - **un. 3 e 5, e un. 4 até 28/09/2026:** entrada de mercadoria `TENT_ENTRADA` (status `'L'`),
+>   data `TENT_DATA_LIBERACAO`, valor `TENT_VALOR_TOTAL_PEDIDO` — regra de 02/09/2026;
+> - **RHS a partir de 29/09/2026:** Bling — pedido de compra **Atendido (31)** e NF de entrada
+>   **Registrada (7)**; pedido "Em aberto" (28) é intenção de compra e não conta (16/10/2026);
+> - **meta por EMPRESA** (`CMV_MENSAL_SEVEN = {"RHS":{…},"SEVEN":{…}}`), não mais por unidade
+>   (16/10/2026); mês futuro sem meta automática.
+>
+> O texto a seguir é o histórico de 30/07/2026, quando a nota era reconstruída pelos títulos.
+
+**⚠️ Diferença estrutural importante — de onde vinham os dados (até 02/09/2026).** Na época o espelho `projeto_f7` **não tinha tabela de notas de entrada** (a MC MOTO usa `notas_entrada`). A única fonte de compras de fornecedor no espelho são os **títulos a pagar**. Então `gerar_recebimentos_seven.py` **reconstrói a nota** agrupando `TPAG_ABERTO` + `TPAG_BAIXADO` por `(unidade, tipo, número, fornecedor)` e usando **`TPAG_VALOR_FATURA`** — que é o valor da **nota**, não da parcela; assim uma NF em 5× conta **uma vez**. `SELECT DISTINCT` é obrigatório (o `TPAG_BAIXADO` do espelho tem duplicação ~66×). Consequências a ter em mente:
 - entram também títulos que **não são mercadoria** (serviços, impostos…) — por isso o filtro de "fornecedores de mercadoria" existe aqui também, com lista **própria da SEVEN** (`seven_forn_nao_mercadoria`, separada da MC MOTO);
 - **a data do recebimento é a DATA DE LIBERAÇÃO DA NOTA** (decisão do usuário 30/07/2026) = `TPAG_DATA_CHEG_EXECUCAO` (chegada/execução, quando a loja libera a NF), **não** a emissão. Motivos: a emissão é a data do fornecedor e tem registros com ano inválido (ex. 0024, 0206); a liberação está 100% preenchida e é sempre ≥ emissão. Fallback para emissão só se a liberação vier nula. Efeito: notas emitidas no fim de um mês e liberadas no mês seguinte contam no mês da liberação (ex. jul/26 passou de R$ 129.204,00 por emissão para R$ 153.865,86 por liberação);
 - se `VALOR_FATURA` vier zerado, o script cai para a soma das parcelas.
@@ -469,6 +484,8 @@ Duas páginas geradas pelo script local `gerar_contas_seven.py` (não versionado
   - **Pagar quitadas (12m)**: `TPAG_BAIXADO`, situação `LQ`, pagamento (`TPAG_DATA_ULTIMO_PAGAMENTO`) nos últimos 12 meses. ⚠️ **Essa tabela-espelho tem duplicação massiva (~66x)** — verificado em 18/07/2026: 103.675 linhas correspondiam a apenas 1.575 títulos reais. A geração **deduplica obrigatoriamente** por chave natural (unidade, tipo, número, parcela, fornecedor). Detalhe: tabela agregada por fornecedor (títulos pagos, último pagamento, total pago), ordenada por total.
   - **Receber em aberto**: `TREC_ABERTO` com `TREC_RECEBER_PAGAR_FK='R'` e `TREC_SALDO_TITULO > 0`. Detalhe: tabela agregada **por cliente** (títulos, vencido, maior atraso em dias, vence em 30d, futuro, total), ordenada pelo maior valor vencido, linha vermelha para quem tem saldo vencido.
   - **Receber quitadas (12m)**: `TREC_BAIXADO`, situação `LQ`, baixa nos últimos 12 meses (essa tabela **não** tem a duplicação da TPAG — verificado; ainda assim a geração deduplica por segurança). Detalhe: tabela agregada por cliente (títulos recebidos, último recebimento, total recebido).
+
+**RHS a partir de 29/09/2026:** as duas páginas **somam** aos títulos do ERP (emitidos até 28/09) os **títulos nativos do Bling** em aberto (situação 1), lidos por `gerar_bling_un4.py`. Os títulos que vieram da carga Proton → Bling ficam fora, senão apareceriam duas vezes. Contas pagas/recebidas da RHS depois do corte ainda não entram no modo "Quitadas".
 
 Nota: **MC MOTO → Financeiro → Contas a Pagar** continua existindo em separado (deep-link para dentro do Mapa de Vendas, banco `mc_moto`) — são painéis distintos com fontes distintas.
 

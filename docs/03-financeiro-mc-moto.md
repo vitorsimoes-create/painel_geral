@@ -34,7 +34,11 @@ Página `contas-receber-mcmoto.html`, gerada pelo script local `gerar_contas_rec
 ## Fontes de dados
 
 ### `RECEBIMENTOS_DB` (sistema, somente leitura)
-Array embutido em `index.html`, alimentado por notas de entrada reais (NFs de fornecedores), regenerado diariamente pela tarefa agendada. Cada registro:
+Array em **`dados-mc.js`** (saiu do `index.html` em 28/09/2026), gerado por
+`gerar_recebimentos_mcmoto.py` a partir de `notas_entrada` dos últimos 12 meses, pela coluna
+**`DATA`** (entrada, não emissão). **Valor da nota = `TOTAL + OUTRAS_DESP`** (regra de 28/08/2026:
+o `TOTAL` do ERP deixa as outras despesas de fora — ex.: NF 109699/1 do EMBUS, 3.094,08 de `TOTAL`
+e 10.248,32 de nota). Fornecedor pela razão social de `_nomes.forn_mc()`. Cada registro:
 ```js
 { id: "db_...", fornecedor, data: "YYYY-MM-DD", valor, obs: "NF numero/serie", origem: "sistema" }
 ```
@@ -49,7 +53,9 @@ Guardados em `localStorage`, chave `mc_moto_recebimentos`, id `rec_{timestamp}`,
 Lista de exclusão em `localStorage`, chave `mc_moto_forn_nao_mercadoria` — permite marcar fornecedores que não representam compra de mercadoria (ex.: contabilidade, serviços, transportadoras) para que **todos os totais da aba** (mês atual e quadro anual) ignorem as notas desses fornecedores. Gerenciado por um modal dedicado ("⚙️ Fornecedores de mercadoria").
 
 ### `CMV_MENSAL`
-Objeto estático embutido em `index.html`, `{"YYYY-MM": valor, ...}` — Custo da Mercadoria Vendida por mês, também regenerado pela tarefa diária (cobre os últimos ~25 meses). Ver a consulta SQL exata em [`06-pipeline-dados.md`](06-pipeline-dados.md).
+Objeto em `dados-mc.js`, `{"YYYY-MM": valor, ...}` — Custo da Mercadoria Vendida por mês, gerado pelo mesmo `gerar_recebimentos_mcmoto.py` (25 meses): `SUM(itens.CUSTO × (QUANTIDADE − QTD_DEVOLVIDA − QTD_ESTORNADA))`, sem itens cancelados. Origem de cada campo em [`08-origem-dos-dados.md`](08-origem-dos-dados.md), seção 4.2.
+
+**Mês futuro não tem meta automática** (16/10/2026): o CMV do mês de referência ainda está correndo e sairia parcial. Meta digitada à mão vale para qualquer mês.
 
 ## Meta (objetivo de compras) — fórmula automática
 

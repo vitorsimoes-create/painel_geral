@@ -1,6 +1,6 @@
 # Referência rápida — fórmulas, thresholds e glossário
 
-Tabela de consulta rápida com todas as regras numéricas do painel. Para o contexto completo de cada regra, ver o documento da área correspondente.
+Tabela de consulta rápida com todas as regras numéricas do painel. Para o contexto completo de cada regra, ver o documento da área correspondente. De que tabela do banco sai cada número: [08-origem-dos-dados](08-origem-dos-dados.md).
 
 ## Tabela de fórmulas e thresholds
 
@@ -17,8 +17,7 @@ Tabela de consulta rápida com todas as regras numéricas do painel. Para o cont
 | Piso de quantidade | `Math.max(1, qty)` sempre | `index.html` | [01-compras](01-compras.md) |
 | Cotação: melhor preço | menor preço entre respostas de fornecedores, por item | `index.html`, `comprarMaisBarato` | [01-compras](01-compras.md) |
 | Pico de vendas mensal (`k`) | máximo (nunca soma) da quantidade líquida vendida por mês, últimos 12 meses | tarefa agendada + `RAW_DATA` | [01-compras](01-compras.md), [06-pipeline-dados](06-pipeline-dados.md) |
-| MC (Painel Mensal / Diárias / Clientes) | `vendas*(1-desconto%) - custo` | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
-| MC (Consistência por Grupo) | `(venda-custo) * (1-desconto%)` — nota: desconta a margem já pronta, não a receita | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
+| MC (todas as telas, MC MOTO, RHS e SEVEN) | `vendas × 0,93 − custo` — desconto **fixo de 7%** desde 23/10/2026; vendas sempre pelo valor real | `atualizar_mapa.py` (`DESCONTO_MC`), geradores de Vendas Históricas, Comissão e Gráficos, DASHBOARD | [02-vendas](02-vendas.md) |
 | Projeção do mês | `realizado / diasUteisDecorridos * diasUteisTotal` | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
 | Dias úteis decorridos | conta até **ontem**, exclui domingos e feriados cadastrados | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
 | % da meta (Painel Mensal) | `realizado/meta`, `≥100%`→verde, senão vermelho | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
@@ -61,7 +60,7 @@ Cuidado ao mexer: `gerar_forn_real_seven.py` reconhece os cadastros "que não id
 
 ## Glossário
 
-- **MC (Margem de Contribuição)**: venda menos custo da mercadoria, em R$. Fórmula exata varia por sub-aba — ver tabela acima.
+- **MC (Margem de Contribuição)**: `venda × 0,93 − custo da mercadoria`, em R$ — desconto fixo de 7%, igual em todas as telas desde 23/10/2026.
 - **MC%**: MC dividido pela venda, em percentual.
 - **CMV**: Custo da Mercadoria Vendida — soma do custo dos itens efetivamente vendidos em um período.
 - **Pico de vendas**: maior quantidade vendida em um único mês (não soma de meses), dentro da janela dos últimos 12 meses.
@@ -69,6 +68,6 @@ Cuidado ao mexer: `gerar_forn_real_seven.py` reconhece os cadastros "que não id
 - **Saldo devedor**: soma dos títulos a receber em aberto de um cliente em uma data de referência (reconstruído a partir de emissão/baixa de títulos, não de um snapshot diário real).
 - **Cobertura (de estoque)**: quantos meses o estoque atual dura, no ritmo médio de CMV mensal (`estoque_a_custo / cmv_mensal`).
 - **Giro**: quantas vezes o estoque "virou" no período (`cmv_12m / estoque`).
-- **Fator de desconto (`descontoPct`)**: ajuste manual global aplicado às vendas do Mapa de Vendas para simular descontos concedidos; aplicado de forma inconsistente entre sub-abas (ver [02-vendas](02-vendas.md), seção "Inconsistências conhecidas").
+- **Desconto da MC**: até 22/10/2026 era um percentual editável (`descontoPct`) e aplicado de forma diferente em cada sub-aba; **desde 23/10/2026 é fixo em 7%** e igual em todo o painel (ver [02-vendas](02-vendas.md)).
 - **Dias úteis**: segunda a sábado, excluindo feriados cadastrados manualmente; domingo nunca conta.
 - **Fornecedor de mercadoria**: fornecedor cujas notas de entrada representam compra de produto para revenda (por oposição a serviços/despesas), usado para filtrar os totais de Recebimentos.

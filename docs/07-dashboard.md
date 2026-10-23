@@ -13,7 +13,7 @@ O **DASHBOARD não é permissionável**: não está no `ABAS_CATALOGO`, não apa
 
 ## Fonte de dados
 
-`const DASHBOARD_DB` em `index.html`, gerado por `gerar_dashboard.py` (rotina diária, passo **B2d**, depois de A3 e B2 para bater com as demais abas). Consulta os **dois** bancos. Estrutura:
+`const DASHBOARD_DB` em `index.html`, gerado por `gerar_dashboard.py` (rotina diária, passo **B2d**, depois de A3 e B2 para bater com as demais abas). Consulta os **dois** bancos e, para a RHS depois de 28/09/2026, a venda e o estoque do Bling (títulos, custo fixo e quebras da RHS ainda não somam o Bling — ver [`08-origem-dos-dados.md`](08-origem-dos-dados.md), seções 3 e 12). Estrutura:
 
 ```js
 { geradoEm, hoje,
@@ -81,6 +81,11 @@ Daí saem **dois tickets diferentes**: `Ticket médio` = venda ÷ **pedidos** (v
 
 ## Margem de contribuição — deduções sobre a venda (01/08/2026)
 
+> **Desde 23/10/2026 as deduções estão travadas em 7%** (decisão do usuário): `dashDeducoes()` devolve
+> sempre `total = 7` e a faixa escura mostra o selo "MC: desconto fixo de 7%". O botão "% Deduções",
+> os quatro componentes e a herança do Mapa descritos abaixo **não valem mais** — o código antigo
+> continua no arquivo, depois de um `return`, só como histórico.
+
 Segue a **mesma regra do Painel Mensal**:
 
 ```
@@ -117,7 +122,7 @@ Conferência (jul/2026): todas R$ 326.976,62 · só Ipatinga R$ 206.322,67 · Co
 
 ## Chaves de `localStorage`
 
-`dash_empresa` · `dash_centros_fixo` · `dash_giro_ideal` · `dash_meta_seven` · `dash_deducoes` · `dash_unidades`. Lê (sem escrever) `mapa_meta_*_vendas`, `mapa_feriados` e `mapa_descontoPct`, do Mapa de Vendas.
+`dash_empresa` · `dash_centros_fixo` · `dash_giro_ideal` · `dash_meta_seven` · `dash_unidades` (`dash_deducoes` não é mais lido desde 23/10/2026). Lê (sem escrever) `mapa_meta_*_vendas` e `mapa_feriados`, do Mapa de Vendas.
 
 ## Atenção hoje, atalhos e detalhes recolhíveis (28/09/2026)
 

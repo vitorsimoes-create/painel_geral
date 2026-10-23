@@ -2,7 +2,23 @@
 
 A maior parte do conteúdo desta aba vive dentro do iframe `mapa-vendas.html` (cópia publicada de `Mapa de Vendas.html`, gerado por `atualizar_mapa.py` — ver [`06-pipeline-dados.md`](06-pipeline-dados.md)). O `index.html` faz deep-link para as sub-abas internas desse iframe via `trocarAba(id)` (Painel Mensal, Vendas Diárias, Grupo de Produto, Consistência por Grupo, Venda por Fornecedor). **Exceção**: a sub-aba **Vendas Históricas** é uma aba nativa de `index.html` (não passa pelo iframe do Mapa) — ver seção própria ao final.
 
-Termo recorrente: **"fator de desconto" (`descontoPct`)** — um campo global, editável pelo usuário e persistido em `localStorage`, que ajusta o valor de venda "bruto" para simular o efeito de descontos concedidos. É aplicado como `f = 1 - descontoPct/100`. **Importante: esse fator não é aplicado de forma consistente em todas as sub-abas** — ver seção "Inconsistências conhecidas" ao final.
+Termo recorrente: **desconto da MC**. **Desde 23/10/2026 ele é FIXO em 7%** (decisão do usuário),
+para MC MOTO, RHS e SEVEN e em todas as telas: `DESCONTO_MC = 7` e `F_MC = 0,93` no template do
+`atualizar_mapa.py`, `DESCONTO_MC = 0.07` em `gerar_vendas_historicas_mcmoto.py` e
+`gerar_vendas_comissao_mcmoto.py`, o mesmo valor em `gerar_graficos_mcmoto.py` e no DASHBOARD.
+
+```
+MC  = Vendas × 0,93 − CMV
+MC% = MC ÷ Vendas (venda real, sem desconto)
+```
+
+As **vendas aparecem sempre pelo valor real**; o desconto entra só na MC. O campo "% Desconto"
+continua na tela, mas mostra 7 e não grava nada; ao abrir, o Mapa apaga do navegador os valores
+antigos (`mapa_descontoPct`, `mapa_uni_desconto`).
+
+*Até 22/10/2026* o percentual era editável (`descontoPct`, em `localStorage`) e aplicado de jeitos
+diferentes em cada sub-aba. As fórmulas `vendas*(1 - descontoPct/100) - custo` que aparecem
+abaixo continuam certas — com `descontoPct = 7`.
 
 ## Painel Mensal (vendedores)
 
@@ -24,7 +40,7 @@ mc = venda * f - custo   // custo NÃO é ajustado pelo fator de desconto
 
 ## Grupo de Produto
 
-Soma vendas/quantidade/MC por grupo para o mês corrente. **Diferente do Painel Mensal, aqui NÃO há líquido de devoluções** — a consulta não faz join com a tabela de devoluções. `mc = venda - custo`, sem qualquer ajuste de desconto neste nível de agregação.
+Soma vendas/quantidade/MC por grupo para o mês corrente. **Diferente do Painel Mensal, aqui NÃO há líquido de devoluções** — a consulta não faz join com a tabela de devoluções. `mc = venda × 0,93 − custo` desde 23/10/2026 (antes: `venda − custo`, sem desconto).
 
 Produtos sem grupo definido (`DIVERSOS`/sem grupo) passam por uma reclassificação por palavra-chave na descrição, em duas listas ordenadas: frases compostas primeiro (ex. "DISCO FREIO" → grupo FREIO), depois palavras isoladas (ex. "PNEU" → grupo PNEUMATICO) — primeira correspondência vence.
 
@@ -117,7 +133,7 @@ mcPct      = vendas > 0 ? (vendas - cmv) / vendas : null
 Diferente das demais sub-abas de Vendas, esta **não** vive no iframe do Mapa — é a aba nativa `app-tab-vendashistoricas`, com iframe próprio (`vendas-historicas.html`), aberta por `abrirSubAbaVendasHist`. A página é gerada pelo script local `gerar_vendas_historicas_mcmoto.py` (não versionado; roda na rotina diária `atualizacao-diaria-painel`, Parte A) a partir do banco `mc_moto`.
 
 - Mostra o **faturamento mensal de todo o histórico disponível** (65 meses, desde 2021 — não só 12).
-- **Definição de "vendas líquidas"** idêntica à do Painel Mensal: `SUM(vendas.VL_TOTAL)` de vendas não canceladas (`STATUS <> '3'`) **menos devoluções** (`SUM(devolucoes.VL_TOTAL_LIQ)`), atribuídas ao mês da venda original. Custo líquido = `SUM(itens.QUANTIDADE*itens.CUSTO)` menos custo devolvido; `MC = vendas − custo`. *(O CMV mensal deste cálculo bate com a variável `CMV_MENSAL` do painel — validado.)*
+- **Definição de "vendas líquidas"** idêntica à do Painel Mensal: `SUM(vendas.VL_TOTAL)` de vendas não canceladas (`STATUS <> '3'`) **menos devoluções** (`SUM(devolucoes.VL_TOTAL_LIQ)`), atribuídas ao mês da venda original. Custo líquido = `SUM(itens.QUANTIDADE*itens.CUSTO)` menos custo devolvido; `MC = vendas × 0,93 − custo` (desconto fixo de 7% desde 23/10/2026; antes `vendas − custo`). *(O CMV mensal deste cálculo bate com a variável `CMV_MENSAL` do painel — validado.)*
 - Filtro de período (12 / 24 meses / todo o histórico), gráfico de barras por mês, e tabela por mês com: pedidos, itens, vendas líquidas, MC, MC%, ticket médio (`vendas/pedidos`) e **variação vs. o mesmo mês do ano anterior**.
 - O mês corrente é marcado como **parcial** e fica de fora da comparação anual (senão compararia mês incompleto com mês cheio).
 
@@ -128,7 +144,7 @@ Também aba nativa (`app-tab-vendascomissao`, iframe `vendas-comissao.html`, abe
 - Agrupa as vendas pela **faixa de comissão do produto** (`produtos.COMISSAO_AVISTA`): 8%, 5%, 2%, 1%, 0,5%, 0%, "Sem comissão" (e o que mais existir). Cada faixa aparece separada.
 - **Vendas líquidas seguem a mesma regra do Painel Mensal** (31/07/2026) — a página passou a reconciliar com ele dentro de **0,02%–0,17%** (antes divergia ~7%):
   - **Desconto abatido:** venda = `SUM(i.VL_TOTAL − COALESCE(i.DESCONTO,0))`, ou seja, **a comissão incide sobre o que foi efetivamente cobrado**, não sobre o preço cheio. `itens.DESCONTO` reconcilia exatamente com `vendas.DESCONTO` do cabeçalho; **`itens.VL_TOTAL_LIQ` não serve** (praticamente não é populado pelo ERP — soma ~R$48 num mês de R$250 mil).
-  - **Devolução pela tabela `devolucoes`:** `SUM(d.VL_TOTAL_LIQ)` (custo `SUM(d.QUANTIDADE × produtos.CUSTO)`), abatida no **mês da venda original** (`vendas.DATA`), do **vendedor da venda original** e da **faixa do produto devolvido**, ignorando vendas canceladas (`STATUS='3'`) — exatamente como `atualizar_mapa.py`. `MC = vendas − custo`.
+  - **Devolução pela tabela `devolucoes`:** `SUM(d.VL_TOTAL_LIQ)` (custo `SUM(d.QUANTIDADE × produtos.CUSTO)`), abatida no **mês da venda original** (`vendas.DATA`), do **vendedor da venda original** e da **faixa do produto devolvido**, ignorando vendas canceladas (`STATUS='3'`) — exatamente como `atualizar_mapa.py`. `MC = vendas × 0,93 − custo` (desde 23/10/2026).
   - *Antes* a netagem de devolução era feita na própria linha de `itens` (`QUANTIDADE − QTD_DEVOLVIDA − QTD_ESTORNADA`), como o CMV e o pico **ainda fazem**. As duas fontes divergem de 5% a 15% no valor devolvido por mês.
 - Filtro de período (3 / 6 / 12 meses / todo o histórico), **gráfico de barras por faixa** (valor + participação %), e tabela com participação %, MC, MC%, quantidade líquida e **Comissão** (= vendas líq. × alíquota da faixa), além de uma linha de total.
 - Além dos períodos em janela, dá para filtrar **um mês específico**: botão **"Mês vigente"** (mês corrente = último mês com dados) e um **seletor de mês** com todo o histórico (o mês atual aparece marcado como "(vigente)"). Escolher um mês filtra as duas visões para aquela competência; clicar num período em meses volta para a janela e limpa a seleção de mês. O helper `noPeriodo(ym)` centraliza esse filtro (mês único vs. janela) para as duas visões.
@@ -152,7 +168,7 @@ Aba nativa `app-tab-graficos` (iframe `graficos-mcmoto.html`, aberta por `abrirS
 - **Ticket médio** — linha (com área) do valor médio por pedido por mês.
 - **Grupo de mercadoria** — barras horizontais por grupo de produto (top 12 + "Outros"), com participação % e MC%.
 - **Grupo de comissão** — gráfico de **linhas ao longo dos meses** (mesmo formato do Ticket médio), uma linha por faixa `produtos.COMISSAO_AVISTA` mostrando a evolução mensal das vendas líquidas, com legenda de cores.
-- **% desconto na MC:** a página tem um campo *% desconto* que usa a **mesma chave `localStorage` `mapa_descontoPct` do Painel Mensal** (mesma origem = valor compartilhado; default 0). A MC de todos os gráficos e KPIs segue a fórmula do Painel Mensal — `MC = Vendas × (1 − % desconto) − Custo`. Como o payload traz `mc = vendas − custo` (sem desconto), a página aplica `mc_desc = mc − vendas × %desconto/100`. O desconto afeta **somente a MC**; venda histórica e ticket médio permanecem em valores reais (mesmo comportamento do Painel Mensal).
+- **% desconto na MC:** **fixo em 7% desde 23/10/2026** (antes lia a chave `mapa_descontoPct` do Painel Mensal). A MC de todos os gráficos e KPIs é `MC = Vendas × 0,93 − Custo`. Como o payload traz `mc = vendas − custo`, a página aplica `mc_desc = mc − vendas × 0,07`. O desconto afeta **somente a MC**; venda histórica e ticket médio ficam em valores reais.
 - **Definições (batem com as abas existentes):** a série mensal (venda histórica / MC / ticket) usa a **mesma base da aba Vendas Históricas** (vendas líquidas de devoluções no nível do pedido). Grupo de mercadoria e grupo de comissão usam a **mesma base da aba Vendas por Grupo de Comissão** (netagem por `QTD_DEVOLVIDA`/`QTD_ESTORNADA` na linha do item); grupo de mercadoria reaproveita a reclassificação de DIVERSOS/SEM GRUPO por palavra-chave do `atualizar_mapa.py`. Por usarem bases diferentes (nível pedido vs. nível item), os totais das duas visões não batem exatamente entre si — é a mesma inconsistência já documentada abaixo.
 - O mês corrente é marcado como **parcial**.
 
@@ -160,10 +176,11 @@ Aba nativa `app-tab-graficos` (iframe `graficos-mcmoto.html`, aberta por `abrirS
 
 Estas diferenças são reais no código atual e devem ser levadas em conta ao comparar números entre sub-abas — não são necessariamente erros a corrigir, mas comportamento que precisa ser conhecido:
 
-1. **Aplicação do fator de desconto (`descontoPct`) é inconsistente por sub-aba:**
-   - Painel Mensal / Diárias / Clientes: desconta a **receita**, depois subtrai custo (`venda*f - custo`).
-   - Consistência por Grupo (coluna MC): desconta a **margem já calculada** (`(venda-custo)*f`).
-   - Grupo de Produto (breakdown) e Venda por Fornecedor: **não aplicam** o desconto em nenhum momento.
+1. ~~**Aplicação do fator de desconto é inconsistente por sub-aba**~~ — **resolvido em 23/10/2026.**
+   Com o desconto fixo de 7%, todas as sub-abas calculam `MC = venda × 0,93 − custo`: Painel
+   Mensal, Diárias, Clientes, Consistência por Grupo (`mc − venda × 0,07`, que dá o mesmo
+   resultado), Grupo de Produto e Venda por Fornecedor (`venda × F_MC − cmv`). As seções acima que
+   falam em `(venda−custo)*f` ou "não aplica o desconto" descrevem o comportamento antigo.
 
 2. **Líquido de devoluções (devoluções/estornos subtraídos da venda e custo) também varia por nível de agregação:**
    - Aplicado: Painel Mensal (vendedores), ranking/histórico de Clientes.

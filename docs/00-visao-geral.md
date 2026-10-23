@@ -10,16 +10,26 @@ Não há API nem banco de dados acessado em tempo real pelo navegador. Todos os 
 
 | Arquivo | Papel | Como é gerado/atualizado |
 |---|---|---|
-| `index.html` | App principal — todo o shell de navegação, controle de acesso, e as abas de **Compras** (Montar Pedido, Cotação, Pedidos Salvos, Recebimentos) | Editado manualmente (features) + reescrita diária automática dos dados (`RAW_DATA`, `RECEBIMENTOS_DB`, `CMV_MENSAL`) por tarefa agendada |
+| `index.html` | App principal — shell de navegação, controle de acesso, DASHBOARD e as abas nativas de **Compras** | Editado à mão (funcionalidades) + constantes reescritas todo dia pelos geradores: `DASHBOARD_DB`, `PARAMS_PUB`, `DRE_DESPESAS`, `FORN_REAL_*`, `FORN_JUNTOS_*`, `AGENDA_COMPRAS_*`, `COMPRAS_MES_*` e a data do cabeçalho |
 | `dados-mc.js` / `dados-seven.js` | Dados de **Compras** (catálogo `RAW_DATA*`, recebimentos, itens de nota, CMV, transferência). Saíram do `index.html` em 28/09/2026 — ele tinha 10,5 MB e levava ~5 s para abrir; agora ~1 MB e ~0,4 s | Carregados sob demanda por `carregarDados(emp)` quando uma aba de Compras abre (`switchAppTab` / `switchAppTabSeven` esperam). Cada constante numa linha `const NOME = ...;`, reescrita pelos geradores diários |
-| `mapa-vendas.html` | Iframe embutido em `index.html`, cobre as abas de **Vendas**, **Financeiro → Contas a Pagar** (MC MOTO) e **Unidades de Negócio** (RHS/SEVEN) | É uma **cópia sincronizada** de `Mapa de Vendas.html` (ver abaixo) — nunca editado diretamente |
-| `Mapa de Vendas.html` | Arquivo **original**, fonte de verdade do conteúdo acima | Gerado do zero a cada execução do script local `atualizar_mapa.py` (agendado no Windows Task Scheduler). **Nunca deve ser editado à mão** — qualquer mudança de conteúdo tem que ir no template Python e o script tem que ser rerodado |
-| `crm-seven.html` | Iframe embutido, aba RHS/SEVEN → CRM | Arquivo separado, não coberto em detalhe nesta documentação |
-| `risco-cliente.html` | Iframe embutido, aba RHS/SEVEN → Financeiro → Risco/Cliente | Gerado diariamente pelo script `gerar_risco_cliente.py` |
+| `mapa-vendas.html` | Iframe com as abas de **Vendas** e **Financeiro → Contas a Pagar** da MC MOTO e as de **Vendas** da RHS/SEVEN | **Cópia sincronizada** de `Mapa de Vendas.html` (ver abaixo) — nunca editado diretamente |
+| `Mapa de Vendas.html` | Arquivo **original**, fonte de verdade do conteúdo acima | Gerado do zero por `atualizar_mapa.py`, no passo A6 da rotina diária (a antiga tarefa do Windows das 19h está desativada). **Nunca deve ser editado à mão** — qualquer mudança de conteúdo vai no template Python e o script é rerodado |
+| Páginas em iframe (`*-mcmoto.html`, `*-seven.html`, `risco-cliente.html`, `vendas-*.html`, `graficos-mcmoto.html`…) | Uma aba cada | Uma por gerador `gerar_*.py`, sobrescritas todo dia — lista completa em [`06-pipeline-dados.md`](06-pipeline-dados.md) |
+| `crm-seven.html` | Iframe, aba RHS/SEVEN → CRM | **Estático** (24/07/2026), sem gerador — não é atualizado |
+| `bling-un4.json` / `relatorio-historico.json` / `parametros-painel.json` | Estado publicado (venda da unidade 4 com custo congelado, fechamentos mensais, parâmetros digitados) | Nunca apagar — ver [`06-pipeline-dados.md`](06-pipeline-dados.md), seção 5 |
+
+**De que tabela sai cada número de cada aba:** [`08-origem-dos-dados.md`](08-origem-dos-dados.md).
 
 Regra crítica de manutenção: **`Mapa de Vendas.html` (com espaço no nome) nunca é commitado nem editado diretamente.** Toda mudança de conteúdo do Mapa de Vendas precisa: (1) alterar o template dentro de `atualizar_mapa.py`, (2) rerodar o script para regenerar `Mapa de Vendas.html`, (3) copiar o resultado para `mapa-vendas.html` (nome sem espaço, esse sim publicado), reaplicando o ajuste de CSS `.tabs{display:none!important}` (a barra de abas nativa do arquivo é escondida porque a navegação é controlada de fora, pelo `index.html`), (4) commitar apenas `mapa-vendas.html`.
 
 ## Estrutura de navegação
+
+> **Atualização (14/10/2026):** o topo passou a ter **DASHBOARD + três grupos — MC MOTO, RHS e
+> SEVEN** (RHS = antigas unidades 3 e 4, fonte Bling; SEVEN = unidade 5, fonte Proton). RHS e
+> SEVEN continuam sendo internamente o grupo `rhsseven`; a empresa viaja em `_empresaSeven` e
+> chega aos iframes por `?emp=RHS`. A lista oficial de abas é o `ABAS_CATALOGO` (42 chaves em
+> 23/10/2026). O texto abaixo descreve a estrutura original de dois grupos e continua valendo
+> para a mecânica de navegação; o menu atual da RHS/SEVEN está em [`04-rhs-seven.md`](04-rhs-seven.md).
 
 Há dois níveis principais de agrupamento, mais sub-níveis dentro de cada um.
 
@@ -41,7 +51,7 @@ Cada clique passa primeiro pelo gate de senha (ver seção abaixo) antes de troc
 **Dentro de RHS/SEVEN** (`abrirSubAbaRHSSeven`, botões em `#subtabs-rhsseven`):
 - 🏢 **Unidades de Negócio** (`unidades`, padrão) → **também** é um deep-link para dentro do mesmo iframe `mapa-vendas.html` (chama `trocarAba('unidades')`) — ou seja, é o mesmo arquivo/iframe usado pela aba Vendas da MC MOTO, só que mostrando dados agregados por unidade de negócio (banco `projeto_f7`).
 - 👥 **CRM** (`crm`) → mostra o iframe separado `crm-seven.html`.
-- 💰 **Financeiro** (`financeiroseven`) → mostra um painel nativo de `index.html` com 3 pills (`switchCategoriaFinanceiroSeven`): Contas a Pagar (placeholder "Em breve"), Contas a Receber (placeholder "Em breve"), Risco/Cliente (iframe `risco-cliente.html`, funcional).
+- 💰 **Financeiro** (`financeiroseven`) → painel nativo de `index.html` com pills (`switchCategoriaFinanceiroSeven`): Contas a Pagar (`contas-pagar-seven.html`), Contas a Receber (`contas-receber-seven.html`), Posição de Caixa (`posicao-caixa-seven.html`), Risco/Cliente (`risco-cliente.html`) e Relatório Gerencial (`relatorio-seven.html`) — todos gerados todo dia.
 
 Os 19 iframes têm `data-src` e só recebem o `src` quando aparecem na tela (`carregarIframesVisiveis()`, disparado por um MutationObserver a cada troca de aba) — antes todos carregavam na abertura. Se o iframe `mapa-vendas.html` ainda não terminou de carregar quando o usuário clica em uma sub-aba que depende dele, o `index.html` guarda o alvo pendente em `_mapaTabPendente` e dispara a troca assim que o evento `load` do iframe ocorre.
 
