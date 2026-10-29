@@ -278,6 +278,7 @@
   <button id="tabbtn-recebimentos" class="app-tab" onclick="switchAppTab('recebimentos')">📦 Recebimentos</button>
   <button id="tabbtn-analise" class="app-tab" onclick="switchAppTab('analise')">🔎 Análise de Fornecedor</button>
   <button id="tabbtn-agenda" class="app-tab" onclick="switchAppTab('agenda')">📅 Agenda de Compras</button>
+  <button id="tabbtn-vendacompra" class="app-tab" onclick="switchAppTab('vendacompra')">📊 Vendas × Compras</button>
   <button id="tabbtn-inativar" class="app-tab" onclick="switchAppTab('inativar')">🚫 INATIVAR</button>
 </div>
 <div id="subtabs-vendas" style="background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;display:flex;gap:4px" class="hidden">
@@ -816,6 +817,8 @@
   <div id="af-tabela-grupo" style="display:none"></div>
 </div>
 
+<div id="app-tab-vendacompra" class="main hidden"><div id="vc-mc"></div></div>
+
 <div id="app-tab-agenda" class="main hidden">
   <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
     <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">📅 Agenda de Compras — quando pedir de cada fornecedor</h2>
@@ -855,6 +858,7 @@
     <button id="tabbtn-recebimentos-seven" class="app-tab" onclick="switchAppTabSeven('recebimentos')">📦 Recebimentos</button>
     <button id="tabbtn-analise-seven" class="app-tab" onclick="switchAppTabSeven('analise')">🔎 Análise de Fornecedor</button>
     <button id="tabbtn-agenda-seven" class="app-tab" onclick="switchAppTabSeven('agenda')">📅 Agenda de Compras</button>
+    <button id="tabbtn-vendacompra-seven" class="app-tab" onclick="switchAppTabSeven('vendacompra')">📊 Vendas × Compras</button>
     <button id="tabbtn-transferencia" class="app-tab" onclick="switchAppTabSeven('transferencia')">🔄 Transferência</button>
     <button id="tabbtn-inativar-seven" class="app-tab" onclick="switchAppTabSeven('inativar')">🚫 INATIVAR</button>
   </div>
@@ -1145,6 +1149,8 @@
     <div id="afs-tabela"></div>
   <div id="afs-tabela-grupo" style="display:none"></div>
   </div>
+
+  <div id="app-tab-vendacompra-seven" class="main hidden" style="padding:0"><div id="vc-seven"></div></div>
 
   <div id="app-tab-agenda-seven" class="main hidden" style="padding:0">
     <div style="background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;border:1px solid #e2e8f0">
@@ -1662,6 +1668,8 @@ function definirEmpresaSeven(emp){
   if(mudou) recarregarIframesEmpresa();
   marcarSubAbasDaEmpresa();
   fixarEmpresaNosFiltros();
+  try{ const vc=document.getElementById('app-tab-vendacompra-seven');
+       if(vc && !vc.classList.contains('hidden')) renderVendaCompra('seven'); }catch(e){}
 }
 function recarregarIframesEmpresa(){
   IFRAMES_COM_EMPRESA.forEach(function(id){
@@ -2743,6 +2751,7 @@ function switchAppTab(tab){
   document.getElementById('app-tab-recebimentos').classList.toggle('hidden',tab!=='recebimentos');
   document.getElementById('app-tab-analise').classList.toggle('hidden',tab!=='analise');
   document.getElementById('app-tab-agenda').classList.toggle('hidden',tab!=='agenda');
+  document.getElementById('app-tab-vendacompra').classList.toggle('hidden',tab!=='vendacompra');
   document.getElementById('app-tab-inativar').classList.toggle('hidden',tab!=='inativar');
   document.getElementById('app-tab-mapavendas').classList.add('hidden');
   document.getElementById('app-tab-crmseven').classList.add('hidden');
@@ -2760,9 +2769,11 @@ function switchAppTab(tab){
   document.getElementById('tabbtn-recebimentos').classList.toggle('active',tab==='recebimentos');
   document.getElementById('tabbtn-analise').classList.toggle('active',tab==='analise');
   document.getElementById('tabbtn-agenda').classList.toggle('active',tab==='agenda');
+  document.getElementById('tabbtn-vendacompra').classList.toggle('active',tab==='vendacompra');
   document.getElementById('tabbtn-inativar').classList.toggle('active',tab==='inativar');
   if(tab==='analise') renderAnalise('mc');
   if(tab==='agenda') renderAgenda('mc');
+  if(tab==='vendacompra') renderVendaCompra('mc');
   if(tab==='inativar') renderInativarTab('mc');
   if(tab==='salvos') renderPedidosSalvos();
   if(tab==='cotacao') renderCotacaoTab();
@@ -2772,7 +2783,9 @@ function switchAppTab(tab){
   if(chip) chip.classList.toggle('hidden',tab!=='montar' && tab!=='cotacao');
 }
 
-const GRUPOS_MAIN=['app-tab-dashboard','app-tab-clientesmc','app-tab-clientesseven','app-tab-premiacaoseven','app-tab-relatoriomc','app-tab-caixamc','app-tab-montar','app-tab-salvos','app-tab-cotacao','app-tab-recebimentos','app-tab-mapavendas','app-tab-crmseven','app-tab-cadastroseven','app-tab-financeiroseven','app-tab-comprasseven','app-tab-contasrecebermc','app-tab-vendashistoricas','app-tab-vendascomissao','app-tab-graficos','app-tab-premiacaomc','app-tab-monitorfechamento','app-tab-comparativo','app-tab-comparativoseven'];
+const GRUPOS_MAIN=['app-tab-dashboard','app-tab-clientesmc','app-tab-clientesseven','app-tab-premiacaoseven','app-tab-relatoriomc','app-tab-caixamc','app-tab-montar','app-tab-salvos','app-tab-cotacao','app-tab-recebimentos','app-tab-mapavendas','app-tab-crmseven','app-tab-cadastroseven','app-tab-financeiroseven','app-tab-comprasseven','app-tab-contasrecebermc','app-tab-vendashistoricas','app-tab-vendascomissao','app-tab-graficos','app-tab-premiacaomc','app-tab-monitorfechamento','app-tab-comparativo','app-tab-comparativoseven',
+  /* sub-abas de Compras da MC que faltavam aqui: ficavam na tela ao ir para Vendas/Financeiro (29/10/2026) */
+  'app-tab-analise','app-tab-agenda','app-tab-inativar','app-tab-vendacompra'];
 const SUBTABS_ROWS=['subtabs-compras','subtabs-vendas','subtabs-financeiro','subtabs-rhsseven','subtabs-sevenvendas','subtabs-crm'];
 const CATEGORIAS_MCMOTO=['compras','vendas','financeiro'];
 let _mapaTabPendente=null;
@@ -2796,6 +2809,7 @@ const ABAS_CATALOGO={
   'mc.recebimentos':  {g:'mcmoto', cat:'compras',    rot:'Recebimentos',             sel:'#tabbtn-recebimentos'},
   'mc.analise':       {g:'mcmoto', cat:'compras',    rot:'Análise de Fornecedor',    sel:'#tabbtn-analise'},
   'mc.agenda':        {g:'mcmoto', cat:'compras',    rot:'Agenda de Compras',        sel:'#tabbtn-agenda'},
+  'mc.vendacompra':   {g:'mcmoto', cat:'compras',    rot:'Vendas × Compras',         sel:'#tabbtn-vendacompra'},
   'mc.inativar':      {g:'mcmoto', cat:'compras',    rot:'INATIVAR',                 sel:'#tabbtn-inativar'},
   'mc.painel':        {g:'mcmoto', cat:'vendas',     rot:'Painel Mensal',            sel:'#subtabs-vendas [data-mapatab="painel"]'},
   'mc.diarias':       {g:'mcmoto', cat:'vendas',     rot:'Vendas Diárias',           sel:'#subtabs-vendas [data-mapatab="diarias"]'},
@@ -2827,6 +2841,7 @@ const ABAS_CATALOGO={
   'sv.compras':       {g:'rhsseven', cat:'seven',    rot:'Compras',                  sel:'#subtabs-rhsseven [data-target="comprasseven"]'},
   'sv.analise':       {g:'rhsseven', cat:'seven',    rot:'Compras › Análise de Fornecedor', sel:'#tabbtn-analise-seven'},
   'sv.agenda':        {g:'rhsseven', cat:'seven',    rot:'Compras › Agenda de Compras',     sel:'#tabbtn-agenda-seven'},
+  'sv.vendacompra':   {g:'rhsseven', cat:'seven',    rot:'Compras › Vendas × Compras',      sel:'#tabbtn-vendacompra-seven'},
   'sv.transferencia': {g:'rhsseven', cat:'seven',    rot:'Compras › Transferência',         sel:'#tabbtn-transferencia'},
   'sv.inativar':      {g:'rhsseven', cat:'seven',    rot:'Compras › INATIVAR',              sel:'#tabbtn-inativar-seven'},
   'sv.recebimentos':  {g:'rhsseven', cat:'seven',    rot:'Compras › Recebimentos',   sel:'#tabbtn-recebimentos-seven'},
@@ -3113,7 +3128,7 @@ function aplicarPermissoes(){
      - o botão Compras aparece se o usuário tiver sv.compras OU sv.analise;
      - com apenas sv.analise, escondemos Montar/Cotação/Pedidos Salvos. */
   const btnComprasSv=document.querySelector('#subtabs-rhsseven [data-target="comprasseven"]');
-  if(btnComprasSv) btnComprasSv.classList.toggle('hidden', !(podeAba('sv.compras')||podeAba('sv.analise')||podeAba('sv.recebimentos')||podeAba('sv.agenda')||podeAba('sv.transferencia')||podeAba('sv.inativar')));
+  if(btnComprasSv) btnComprasSv.classList.toggle('hidden', !(podeAba('sv.compras')||podeAba('sv.analise')||podeAba('sv.recebimentos')||podeAba('sv.agenda')||podeAba('sv.vendacompra')||podeAba('sv.transferencia')||podeAba('sv.inativar')));
   ['tabbtn-montar-seven','tabbtn-cotacao-seven','tabbtn-salvos-seven'].forEach(id=>{
     const b=document.getElementById(id);
     if(b) b.classList.toggle('hidden', !podeAba('sv.compras'));
@@ -3290,6 +3305,10 @@ function verificarSenhaAba(grupo){ return podeGrupo(grupo); }
    Nao confundir com o "grupo" do Montar Pedido, que o painel deduz da descricao por
    palavra-chave — este e o do cadastro, e e o que tem subgrupo. */
 
+/* Vendas x CMV x Compras por mes, todo o historico — gerar_comparativo_compras.py.
+   Cada linha: [AAAA-MM, vendas, CMV, compras]. */
+const COMPARATIVO_COMPRAS = {"geradoEm":"29/10/2026 15:46","mesAtual":"2026-10","MC":[["2021-01",220242.5,134711.98,250870.4],["2021-02",339089.96,206268.36,381867.85],["2021-03",303782.14,192448.51,292315.54],["2021-04",335908.22,212559.97,202225.76],["2021-05",338645.5,217537.63,118627.8],["2021-06",317060.94,206284.81,211342.16],["2021-07",283906.55,183666.28,253374.94],["2021-08",282808.29,180532.96,313500.6],["2021-09",286021.52,185287.15,219972.09],["2021-10",290157.79,186510.46,184080.82],["2021-11",303390.52,194635.79,123231.88],["2021-12",318118.52,201954.55,128621.88],["2022-01",273472.73,174821.52,265872.17],["2022-02",244931.36,156578.14,123679.55],["2022-03",302647.41,194404.13,352265.69],["2022-04",302083.1,195997.03,148427.92],["2022-05",316072.52,203957.81,257467.12],["2022-06",303913.35,196266.12,222036.3],["2022-07",259201.51,165767.77,173063.16],["2022-08",311027.61,203231.06,165105.84],["2022-09",275769.22,179057.8,174169.86],["2022-10",287780.08,186452.59,236279.97],["2022-11",285614.29,183596.51,227793.96],["2022-12",330477.57,210795.67,160235.74],["2023-01",326826.71,210020.39,227973.04],["2023-02",303159.26,194479.08,185798.34],["2023-03",351987.93,225948.37,275740.96],["2023-04",319676.75,204930.31,272783.83],["2023-05",324175.97,206773.11,181930.43],["2023-06",280360.01,178666.74,104953.24],["2023-07",285249.17,182247.45,173542.69],["2023-08",304426.92,193097.16,226753.38],["2023-09",271052.56,171476.15,100159.6],["2023-10",270377.22,169124.83,185164.96],["2023-11",264652.24,170956.05,157985.54],["2023-12",68748.5,43662.89,144716.01],["2024-01",0.0,0.0,75130.14],["2024-02",0.0,0.0,50877.49],["2024-03",259439.83,164275.14,189525.64],["2024-04",318934.11,205905.79,182328.12],["2024-05",325766.56,204088.46,236475.54],["2024-06",295261.2,185353.44,145600.44],["2024-07",310363.74,197162.09,192818.82],["2024-08",319515.96,201351.08,258824.09],["2024-09",267028.36,167123.17,150628.92],["2024-10",312191.2,193796.21,229382.97],["2024-11",293402.49,182617.72,91816.56],["2024-12",299230.93,186349.07,141264.0],["2025-01",286872.85,172929.41,210428.09],["2025-02",275816.03,168705.99,239463.12],["2025-03",288161.36,179280.25,172431.08],["2025-04",269798.49,164425.72,124316.36],["2025-05",260750.86,155737.24,196412.54],["2025-06",240837.54,145535.51,342834.05],["2025-07",264535.88,159086.61,326092.73],["2025-08",274761.73,169569.11,110303.1],["2025-09",238246.17,146196.48,44439.9],["2025-10",256082.38,157366.47,69550.83],["2025-11",230894.09,143988.0,125069.93],["2025-12",265182.81,164048.53,171059.95],["2026-01",251574.15,157899.79,176302.77],["2026-02",241112.67,150845.42,117955.84],["2026-03",261908.4,160528.51,199322.37],["2026-04",280192.17,173545.41,167095.41],["2026-05",265068.71,162422.22,109683.11],["2026-06",221747.63,134440.74,76642.86],["2026-07",243609.65,151214.93,226595.95],["2026-08",237170.21,145326.79,156722.33],["2026-09",241410.45,151099.21,128542.62],["2026-10",231504.24,146732.18,118300.96]],"RHS":[["2023-03",66822.07,37638.57,18779.41],["2023-04",65649.08,36354.73,29854.14],["2023-05",82374.84,44945.97,24060.77],["2023-06",68051.63,37542.9,24439.93],["2023-07",92509.11,51321.49,33836.68],["2023-08",64048.92,36890.19,30811.14],["2023-09",71250.51,39962.48,45144.65],["2023-10",71089.88,39458.45,41132.75],["2023-11",59780.79,34140.77,16998.55],["2023-12",70451.93,39693.12,19710.14],["2024-01",61062.0,33362.77,38834.13],["2024-02",50209.84,26977.78,29264.38],["2024-03",58782.96,32848.88,26560.4],["2024-04",82372.61,45605.47,34804.3],["2024-05",76311.07,42096.14,30571.58],["2024-06",67275.96,35387.58,36790.38],["2024-07",62526.11,33736.45,24477.62],["2024-08",37329.05,20261.8,26548.29],["2024-09",58259.0,33652.09,11339.49],["2024-10",51146.72,27612.08,18537.7],["2024-11",63904.99,32946.37,17550.48],["2024-12",55358.06,31023.08,8380.26],["2025-01",65660.8,34844.88,25363.46],["2025-02",67444.85,37725.22,21593.6],["2025-03",71261.78,39129.71,26155.0],["2025-04",72389.94,40926.15,19847.26],["2025-05",64025.08,36977.2,43647.6],["2025-06",63976.94,35853.73,25121.58],["2025-07",74870.51,41474.13,29481.82],["2025-08",149275.59,92110.85,157555.12],["2025-09",222157.55,140603.53,46465.24],["2025-10",297591.27,197875.42,204719.82],["2025-11",237694.3,155947.62,131012.04],["2025-12",206099.39,137996.63,72398.32],["2026-01",205205.05,133440.02,84293.98],["2026-02",172470.25,108637.63,146969.3],["2026-03",253736.8,171821.42,151888.6],["2026-04",202923.42,128771.66,105676.87],["2026-05",118696.19,74052.49,86604.52],["2026-06",148763.14,93040.18,24549.57],["2026-07",120653.95,73991.46,57259.43],["2026-08",87117.51,51787.54,28404.15],["2026-09",86375.71,51458.63,30882.88],["2026-10",71204.11,41319.61,19125.46]],"SEVEN":[["2025-07",147919.94,92600.94,156556.36],["2025-08",136494.05,84679.67,88637.8],["2025-09",137010.65,85028.29,125147.56],["2025-10",172757.6,112711.04,139760.38],["2025-11",149784.89,96310.38,161676.83],["2025-12",180312.33,118824.52,172380.78],["2026-01",181430.49,119792.24,111132.01],["2026-02",172066.49,114777.19,126760.45],["2026-03",176742.84,114423.39,177421.93],["2026-04",192036.3,126279.19,86271.98],["2026-05",164045.63,101357.98,138832.36],["2026-06",210410.8,135605.52,137408.66],["2026-07",206322.67,133207.05,106806.13],["2026-08",170282.34,110683.3,142780.5],["2026-09",151940.22,99673.7,158116.95],["2026-10",160372.45,103626.54,118578.32]]};
+
 const ANALISE_FONTES={
   mc:{
     px:'af', titulo:'MC MOTO', temUnidade:false,
@@ -3425,6 +3444,231 @@ function setUsarFornRealMc(v,fonte){
   localStorage.setItem('af_forn_real',v?'1':'0');
   _analiseAberto.mc=null; _analiseAberto.seven=null;
   renderAnalise(fonte||'mc');
+}
+
+
+/* ============================ VENDAS x COMPRAS ============================
+   Pedido do usuario (29/10/2026): o que vendeu, o que custou (CMV) e o que comprou, mes a
+   mes, com todo o historico que as bases tem.
+   Vendas e CMV sao a serie do Dashboard (mesmas consultas, janela ampliada pelo gerador);
+   compras seguem a aba Recebimentos. MC = vendas x 0,93 - CMV (regra travada do painel).
+   COMPRAS / CMV e a leitura que importa: abaixo de 100% a empresa repos menos do que vendeu
+   (o estoque encolheu); acima, o estoque cresceu.
+   Cores: azul/laranja/verde-agua, as tres primeiras do tema categorico, validadas para
+   daltonismo. O verde-agua fica abaixo de 3:1 no fundo claro — por isso cada linha tem
+   rotulo direto no fim e a tabela mostra todos os numeros. */
+const VC_SERIES=[['venda','Vendas','#2a78d6'],['cmv','CMV','#eb6834'],['compras','Compras','#1baf7a']];
+let _vcPer={mc:'24',seven:'24'};
+const VC_MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function vcMes(ym){ return VC_MESES[+ym.slice(5,7)-1]+'/'+ym.slice(2,4); }
+function vcMil(v){ return 'R$ '+Math.round((v||0)/1000).toLocaleString('pt-BR')+' mil'; }
+function vcPct(v){ return (isFinite(v)?v:0).toFixed(1).replace('.',',')+'%'; }
+function vcEmpresa(fonte){ return fonte==='mc'?'MC':empresaSeven(); }
+function vcLinhas(fonte){
+  const D=(typeof COMPARATIVO_COMPRAS!=='undefined'&&COMPARATIVO_COMPRAS)||{};
+  return (D[vcEmpresa(fonte)]||[]).map(r=>({ym:r[0],venda:r[1]||0,cmv:r[2]||0,compras:r[3]||0}));
+}
+function vcFiltra(L,per){
+  if(per==='tudo') return L;
+  if(/^\d{4}$/.test(per)) return L.filter(x=>x.ym.slice(0,4)===per);
+  return L.slice(-(+per||24));
+}
+function setVcPer(fonte,per){ _vcPer[fonte]=per; renderVendaCompra(fonte); }
+/* aviso de cobertura: ate onde cada base enxerga */
+function vcAviso(emp){
+  if(emp==='RHS') return 'A RHS soma as unidades 3 e 4. O espelho do ERP só tem venda da unidade 4 a partir de ago/2025 — antes disso a RHS é só a unidade 3 (Ultra Motos), que encerrou em 30/07/2026. A unidade 4 vem do Bling desde 29/09/2026.';
+  if(emp==='SEVEN') return 'O espelho do ERP só tem venda da unidade 5 a partir de jul/2025.';
+  return 'O CMV de meses fechados usa o custo atual do cadastro (é assim que o ERP grava): quando um produto é recomprado mais caro, o CMV dos meses antigos sobe junto.';
+}
+function renderVendaCompra(fonte){
+  const el=document.getElementById('vc-'+fonte);
+  if(!el) return;
+  const emp=vcEmpresa(fonte), nome=(emp==='MC'?'MC MOTO':emp);
+  const todas=vcLinhas(fonte);
+  if(!todas.length){
+    el.innerHTML='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:30px;text-align:center;color:#94a3b8">Sem dados de '+escHtml(nome)+' — a rotina diária ainda não gerou o comparativo.</div>';
+    return;
+  }
+  const mesAtual=(COMPARATIVO_COMPRAS.mesAtual)||'';
+  const anos=[...new Set(todas.map(x=>x.ym.slice(0,4)))];
+  let per=_vcPer[fonte];
+  if(/^\d{4}$/.test(per) && anos.indexOf(per)<0) per=_vcPer[fonte]='24';
+  const L=vcFiltra(todas,per);
+  const soma=k=>L.reduce((t,x)=>t+x[k],0);
+  const V=soma('venda'), C=soma('cmv'), Cp=soma('compras'), MC=V*0.93-C;
+  const rep=C>0?Cp/C*100:0, dif=Cp-C;
+  const temParcial=L.some(x=>x.ym===mesAtual);
+
+  const btn=(p,rot)=>'<button class="per-vc'+(per===p?' ativo':'')+'" onclick="setVcPer(\''+fonte+'\',\''+p+'\')">'+rot+'</button>';
+  const tile=(lbl,val,sub)=>'<div style="flex:1;min-width:150px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px">'+
+    '<div style="font-size:11px;color:#64748b;margin-bottom:4px">'+lbl+'</div>'+
+    '<div style="font-size:20px;font-weight:700;color:#0b0b0b">'+val+'</div>'+
+    (sub?'<div style="font-size:11px;color:#64748b;margin-top:2px">'+sub+'</div>':'')+'</div>';
+
+  // ---- tabela por ano (sempre com o historico inteiro)
+  const porAno={};
+  todas.forEach(x=>{ const a=porAno[x.ym.slice(0,4)]||(porAno[x.ym.slice(0,4)]={n:0,venda:0,cmv:0,compras:0,parcial:false});
+    a.n++; a.venda+=x.venda; a.cmv+=x.cmv; a.compras+=x.compras; if(x.ym===mesAtual) a.parcial=true; });
+  const thS='padding:8px 10px;font-size:11px;color:#64748b;text-transform:uppercase;text-align:right;white-space:nowrap';
+  const tdS='padding:7px 10px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums';
+  const linhaTab=(rot,o,destaque)=>{
+    const mc=o.venda*0.93-o.cmv, r=o.cmv>0?o.compras/o.cmv*100:0, d=o.compras-o.cmv;
+    return '<tr style="border-top:1px solid #f1f5f9'+(destaque?';background:#f8fafc;font-weight:700':'')+'">'+
+      '<td style="'+tdS+';text-align:left">'+rot+'</td>'+
+      '<td style="'+tdS+'">'+fmt(o.venda)+'</td><td style="'+tdS+'">'+fmt(o.cmv)+'</td>'+
+      '<td style="'+tdS+'">'+fmt(mc)+'</td><td style="'+tdS+'">'+vcPct(o.venda?mc/o.venda*100:0)+'</td>'+
+      '<td style="'+tdS+'">'+fmt(o.compras)+'</td>'+
+      '<td style="'+tdS+';font-weight:700;color:'+(r>100?'#b45309':'#0b0b0b')+'">'+(o.cmv?Math.round(r)+'%':'—')+'</td>'+
+      '<td style="'+tdS+';color:#52514e">'+(d>=0?'+':'−')+fmt(Math.abs(d))+'</td></tr>';
+  };
+  const cab='<thead><tr style="background:#f8fafc">'+['','Vendas','CMV','MC','MC%','Compras','Compras ÷ CMV','Compras − CMV']
+    .map((h,i)=>'<th style="'+thS+(i===0?';text-align:left':'')+'">'+h+'</th>').join('')+'</tr></thead>';
+  const tabAno='<table style="width:100%;border-collapse:collapse;font-size:12px">'+cab+'<tbody>'+
+    Object.keys(porAno).sort().reverse().map(a=>{const o=porAno[a];
+      return linhaTab(a+' <span style="font-weight:400;color:#94a3b8">('+o.n+(o.n===1?' mês':' meses')+(o.parcial?', mês atual parcial':'')+')</span>',o);}).join('')+
+    '</tbody></table>';
+  const tabMes='<table style="width:100%;border-collapse:collapse;font-size:12px">'+cab+'<tbody>'+
+    L.slice().reverse().map(x=>linhaTab(vcMes(x.ym)+(x.ym===mesAtual?' <span style="font-weight:400;color:#94a3b8">(parcial)</span>':''),x)).join('')+
+    linhaTab('Total do período',{venda:V,cmv:C,compras:Cp},true)+'</tbody></table>';
+
+  el.innerHTML=
+    '<style>.per-vc{padding:6px 14px;border:1px solid #e2e8f0;border-radius:20px;background:#fff;cursor:pointer;font-size:12px;font-weight:600;color:#52514e}'+
+    '.per-vc.ativo{background:#1a1a2e;border-color:#1a1a2e;color:#fff}.vc-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:16px}'+
+    '.vc-card h3{font-size:13px;font-weight:700;color:#1a1a2e;margin:0 0 2px}.vc-card .sub{font-size:11px;color:#64748b;margin-bottom:10px}</style>'+
+    '<div class="vc-card"><h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin:0 0 4px">📊 Vendas × Compras — '+escHtml(nome)+'</h2>'+
+    '<div style="font-size:12px;color:#64748b;margin-bottom:12px">O que vendeu, o que isso custou (CMV) e o que comprou, mês a mês. '+
+    '<strong>Compras ÷ CMV</strong> abaixo de 100% = comprou menos do que vendeu a custo e o estoque <strong>encolheu</strong>; acima = o estoque <strong>cresceu</strong>.</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:#64748b;margin-right:4px">Período:</span>'+
+    btn('12','12 meses')+btn('24','24 meses')+btn('tudo','Tudo')+
+    '<span style="width:1px;height:20px;background:#e2e8f0;margin:0 4px"></span>'+anos.slice().reverse().map(a=>btn(a,a)).join('')+'</div></div>'+
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">'+
+      tile('Vendas',vcMil(V),L.length+(L.length===1?' mês':' meses')+(temParcial?' (inclui o mês atual, parcial)':''))+
+      tile('CMV',vcMil(C),V?vcPct(C/V*100)+' das vendas':'')+
+      tile('MC (vendas × 0,93 − CMV)',vcMil(MC),vcPct(V?MC/V*100:0)+' das vendas')+
+      tile('Compras',vcMil(Cp),'')+
+      tile('Compras ÷ CMV',Math.round(rep)+'%',(dif>=0?'estoque cresceu ':'estoque encolheu ')+vcMil(Math.abs(dif)))+
+    '</div>'+
+    '<div class="vc-card"><h3>Vendas, CMV e compras por mês</h3><div class="sub">passe o mouse para ver o mês</div><div id="vc-graf-'+fonte+'" style="position:relative"></div></div>'+
+    '<div class="vc-card"><h3>Compras ÷ CMV por mês</h3><div class="sub">a linha tracejada é 100%: acima dela o estoque cresceu naquele mês</div><div id="vc-rep-'+fonte+'" style="position:relative"></div></div>'+
+    '<div class="vc-card"><h3>Por ano</h3><div class="sub">histórico inteiro</div><div style="overflow-x:auto">'+tabAno+'</div></div>'+
+    '<div class="vc-card"><h3>Mês a mês</h3><div class="sub">período escolhido, do mais recente para o mais antigo</div><div style="overflow-x:auto">'+tabMes+'</div></div>'+
+    '<div style="font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 14px;margin-bottom:16px">'+
+      'ℹ️ '+vcAviso(emp)+' Compras seguem a aba Recebimentos (só nota com mercadoria). Gerado em '+escHtml(COMPARATIVO_COMPRAS.geradoEm||'—')+'.</div>';
+
+  vcGrafLinhas('vc-graf-'+fonte, L, mesAtual);
+  vcGrafRep('vc-rep-'+fonte, L, mesAtual);
+}
+/* Largura real do grafico. Logo depois de a aba aparecer o navegador pode ainda nao ter
+   medido o espaco (largura 0): ai espera o proximo quadro e redesenha, em vez de cair num
+   tamanho fixo e deixar o grafico ocupando so parte do cartao. */
+function vcLargura(cont,refazer){
+  const w=cont.clientWidth;
+  if(w>0){ cont._vcTent=0; return w; }
+  cont._vcTent=(cont._vcTent||0)+1;
+  if(cont._vcTent<40) requestAnimationFrame(refazer);
+  return 0;
+}
+/* janela mudou de tamanho: redesenha a aba aberta */
+let _vcResize=null;
+window.addEventListener('resize',function(){
+  clearTimeout(_vcResize);
+  _vcResize=setTimeout(function(){
+    [['mc','app-tab-vendacompra'],['seven','app-tab-vendacompra-seven']].forEach(function(p){
+      const a=document.getElementById(p[1]);
+      if(a && !a.classList.contains('hidden')) renderVendaCompra(p[0]);
+    });
+  },200);
+});
+/* eixo x: rotulo a cada N meses para nao encavalar */
+function vcPassoX(n,larg){ return Math.max(1,Math.ceil(n/Math.max(4,Math.floor(larg/58)))); }
+function vcTooltip(cont){
+  let t=cont.querySelector('.vc-tip');
+  if(!t){ t=document.createElement('div'); t.className='vc-tip';
+    t.style.cssText='position:absolute;pointer-events:none;background:#fff;border:1px solid rgba(11,11,11,.12);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.10);padding:8px 10px;font-size:12px;color:#0b0b0b;white-space:nowrap;display:none;z-index:5';
+    cont.appendChild(t); }
+  return t;
+}
+function vcGrafLinhas(id,L,mesAtual){
+  const cont=document.getElementById(id); if(!cont) return;
+  const larg=vcLargura(cont,()=>vcGrafLinhas(id,L,mesAtual)); if(!larg) return;
+  const W=Math.max(320,larg), H=280, m={l:70,r:78,t:12,b:30};
+  const iw=W-m.l-m.r, ih=H-m.t-m.b, n=L.length;
+  const max=Math.max(1,...L.map(x=>Math.max(x.venda,x.cmv,x.compras)));
+  const passoY=Math.pow(10,Math.floor(Math.log10(max/4))); const stepY=[1,2,2.5,5,10].map(k=>k*passoY).find(s=>max/s<=6)||passoY*10;
+  const topo=Math.ceil(max/stepY)*stepY;
+  const X=i=>m.l+(n<=1?iw/2:i*iw/(n-1)), Y=v=>m.t+ih-(v/topo)*ih;
+  let svg='<svg width="'+W+'" height="'+H+'" style="display:block;font-family:system-ui,-apple-system,Segoe UI,sans-serif">';
+  for(let v=0; v<=topo+1e-6; v+=stepY){
+    svg+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="'+(v===0?'#c3c2b7':'#e1e0d9')+'" stroke-width="1"/>'+
+      '<text x="'+(m.l-8)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="#898781" style="font-variant-numeric:tabular-nums">'+vcMil(v).replace('R$ ','')+'</text>';
+  }
+  const px=vcPassoX(n,iw);
+  L.forEach((x,i)=>{ if(i%px===0||(i===n-1&&(n-1)%px>=px/2)) svg+='<text x="'+X(i)+'" y="'+(H-10)+'" text-anchor="middle" font-size="11" fill="#898781">'+vcMes(x.ym)+'</text>'; });
+  // rotulos diretos no fim, afastados para nao se sobreporem
+  const fim=VC_SERIES.map(([k,rot,cor])=>({rot,cor,y:Y(L[n-1][k])})).sort((a,b)=>a.y-b.y);
+  for(let i=1;i<fim.length;i++) if(fim[i].y-fim[i-1].y<14) fim[i].y=fim[i-1].y+14;
+  VC_SERIES.forEach(([k,rot,cor])=>{
+    const d=L.map((x,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(x[k]).toFixed(1)).join(' ');
+    svg+='<path d="'+d+'" fill="none" stroke="'+cor+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  });
+  fim.forEach(f=>{ svg+='<circle cx="'+(W-m.r+8)+'" cy="'+(f.y-4)+'" r="4" fill="'+f.cor+'"/>'+
+    '<text x="'+(W-m.r+16)+'" y="'+f.y+'" font-size="11" fill="#52514e">'+f.rot+'</text>'; });
+  svg+='<line class="vc-cross" x1="0" x2="0" y1="'+m.t+'" y2="'+(m.t+ih)+'" stroke="#898781" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>';
+  svg+='<rect x="'+m.l+'" y="'+m.t+'" width="'+iw+'" height="'+ih+'" fill="transparent"/></svg>';
+  // legenda (sempre presente com 2+ series)
+  const leg='<div style="display:flex;gap:16px;font-size:12px;color:#52514e;margin-top:4px;flex-wrap:wrap">'+
+    VC_SERIES.map(([k,rot,cor])=>'<span><i style="display:inline-block;width:14px;height:3px;border-radius:2px;background:'+cor+';vertical-align:middle;margin-right:6px"></i>'+rot+'</span>').join('')+'</div>';
+  cont.innerHTML=svg+leg;
+  const tip=vcTooltip(cont), cross=cont.querySelector('.vc-cross'), alvo=cont.querySelector('rect');
+  alvo.addEventListener('mousemove',ev=>{
+    const r=cont.querySelector('svg').getBoundingClientRect();
+    const i=Math.max(0,Math.min(n-1,Math.round((ev.clientX-r.left-m.l)/(n<=1?1:iw/(n-1)))));
+    const x=L[i], xx=X(i);
+    cross.setAttribute('x1',xx); cross.setAttribute('x2',xx); cross.style.display='';
+    tip.innerHTML='<div style="font-weight:700;margin-bottom:4px">'+vcMes(x.ym)+(x.ym===mesAtual?' (parcial)':'')+'</div>'+
+      VC_SERIES.map(([k,rot,cor])=>'<div><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+cor+';margin-right:6px"></i>'+rot+': <b>'+fmt(x[k])+'</b></div>').join('')+
+      '<div style="margin-top:4px;color:#52514e">Compras ÷ CMV: <b>'+(x.cmv?Math.round(x.compras/x.cmv*100)+'%':'—')+'</b></div>';
+    tip.style.display='block';
+    const tw=tip.offsetWidth; tip.style.left=Math.min(Math.max(0,xx+12),W-tw-4)+'px'; tip.style.top=(m.t+4)+'px';
+  });
+  alvo.addEventListener('mouseleave',()=>{ tip.style.display='none'; cross.style.display='none'; });
+}
+function vcGrafRep(id,L,mesAtual){
+  const cont=document.getElementById(id); if(!cont) return;
+  const larg=vcLargura(cont,()=>vcGrafRep(id,L,mesAtual)); if(!larg) return;
+  const W=Math.max(320,larg), H=170, m={l:70,r:78,t:10,b:28};
+  const iw=W-m.l-m.r, ih=H-m.t-m.b, n=L.length;
+  const vals=L.map(x=>x.cmv>0?x.compras/x.cmv*100:null);
+  const max=Math.max(150,...vals.filter(v=>v!=null).map(v=>Math.min(v,400)));
+  const topo=Math.ceil(max/50)*50;
+  const X=i=>m.l+(n<=1?iw/2:i*iw/(n-1)), Y=v=>m.t+ih-(Math.min(v,topo)/topo)*ih;
+  let svg='<svg width="'+W+'" height="'+H+'" style="display:block;font-family:system-ui,-apple-system,Segoe UI,sans-serif">';
+  for(let v=0; v<=topo; v+=50){
+    svg+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="'+(v===0?'#c3c2b7':'#e1e0d9')+'"/>'+
+      '<text x="'+(m.l-8)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="#898781">'+v+'%</text>';
+  }
+  svg+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(100)+'" y2="'+Y(100)+'" stroke="#52514e" stroke-width="1.5" stroke-dasharray="5 4"/>'+
+    '<text x="'+(W-m.r+6)+'" y="'+(Y(100)+4)+'" font-size="11" fill="#52514e">100%</text>';
+  const px=vcPassoX(n,iw);
+  L.forEach((x,i)=>{ if(i%px===0||(i===n-1&&(n-1)%px>=px/2)) svg+='<text x="'+X(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="11" fill="#898781">'+vcMes(x.ym)+'</text>'; });
+  const d=vals.map((v,i)=>v==null?'':((i&&vals[i-1]!=null?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1))).join(' ');
+  svg+='<path d="'+d+'" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>';
+  vals.forEach((v,i)=>{ if(v!=null) svg+='<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="'+(n>36?2.5:4)+'" fill="#2a78d6" stroke="#fff" stroke-width="2"/>'; });
+  svg+='<line class="vc-cross" x1="0" x2="0" y1="'+m.t+'" y2="'+(m.t+ih)+'" stroke="#898781" stroke-dasharray="3 3" style="display:none"/>'+
+    '<rect x="'+m.l+'" y="'+m.t+'" width="'+iw+'" height="'+ih+'" fill="transparent"/></svg>';
+  cont.innerHTML=svg;
+  const tip=vcTooltip(cont), cross=cont.querySelector('.vc-cross'), alvo=cont.querySelector('rect');
+  alvo.addEventListener('mousemove',ev=>{
+    const r=cont.querySelector('svg').getBoundingClientRect();
+    const i=Math.max(0,Math.min(n-1,Math.round((ev.clientX-r.left-m.l)/(n<=1?1:iw/(n-1)))));
+    const x=L[i], xx=X(i), v=vals[i];
+    cross.setAttribute('x1',xx); cross.setAttribute('x2',xx); cross.style.display='';
+    tip.innerHTML='<b>'+vcMes(x.ym)+(x.ym===mesAtual?' (parcial)':'')+'</b>: '+(v==null?'sem CMV':Math.round(v)+'%')+
+      (v==null?'':'<div style="color:#52514e">'+(v>=100?'estoque cresceu ':'estoque encolheu ')+fmt(Math.abs(x.compras-x.cmv))+'</div>');
+    tip.style.display='block';
+    const tw=tip.offsetWidth; tip.style.left=Math.min(Math.max(0,xx+12),W-tw-4)+'px'; tip.style.top='4px';
+  });
+  alvo.addEventListener('mouseleave',()=>{ tip.style.display='none'; cross.style.display='none'; });
 }
 
 /* ============================== AGENDA DE COMPRAS ==============================
@@ -7365,9 +7609,9 @@ function switchAppTabSeven(tab){
   if(!dadosOk.seven){ carregarDados('seven').then(function(){
     if(_grupoAtual==='rhsseven' && !document.getElementById('app-tab-comprasseven').classList.contains('hidden')) switchAppTabSeven(tab); }); return; }
   // respeita as permissões: cai na primeira sub-aba de Compras que o usuário pode ver
-  const _permSv={montar:'sv.compras',cotacao:'sv.compras',salvos:'sv.compras',analise:'sv.analise',recebimentos:'sv.recebimentos',agenda:'sv.agenda',transferencia:'sv.transferencia',inativar:'sv.inativar'};
+  const _permSv={montar:'sv.compras',cotacao:'sv.compras',salvos:'sv.compras',analise:'sv.analise',recebimentos:'sv.recebimentos',agenda:'sv.agenda',vendacompra:'sv.vendacompra',transferencia:'sv.transferencia',inativar:'sv.inativar'};
   if(!podeAba(_permSv[tab]||'sv.compras')){
-    const alt=['montar','recebimentos','analise','agenda','transferencia','inativar'].find(t=>podeAba(_permSv[t]));
+    const alt=['montar','recebimentos','analise','agenda','vendacompra','transferencia','inativar'].find(t=>podeAba(_permSv[t]));
     if(alt) tab=alt;
   }
   window._ultimoTabSeven=tab;
@@ -7377,6 +7621,7 @@ function switchAppTabSeven(tab){
   document.getElementById('app-tab-analise-seven').classList.toggle('hidden',tab!=='analise');
   document.getElementById('app-tab-recebimentos-seven').classList.toggle('hidden',tab!=='recebimentos');
   document.getElementById('app-tab-agenda-seven').classList.toggle('hidden',tab!=='agenda');
+  document.getElementById('app-tab-vendacompra-seven').classList.toggle('hidden',tab!=='vendacompra');
   document.getElementById('app-tab-transferencia').classList.toggle('hidden',tab!=='transferencia');
   document.getElementById('app-tab-inativar-seven').classList.toggle('hidden',tab!=='inativar');
   document.getElementById('tabbtn-montar-seven').classList.toggle('active',tab==='montar');
@@ -7385,10 +7630,12 @@ function switchAppTabSeven(tab){
   document.getElementById('tabbtn-analise-seven').classList.toggle('active',tab==='analise');
   document.getElementById('tabbtn-recebimentos-seven').classList.toggle('active',tab==='recebimentos');
   document.getElementById('tabbtn-agenda-seven').classList.toggle('active',tab==='agenda');
+  document.getElementById('tabbtn-vendacompra-seven').classList.toggle('active',tab==='vendacompra');
   document.getElementById('tabbtn-transferencia').classList.toggle('active',tab==='transferencia');
   document.getElementById('tabbtn-inativar-seven').classList.toggle('active',tab==='inativar');
   if(tab==='analise') renderAnalise('seven');
   if(tab==='agenda') renderAgenda('seven');
+  if(tab==='vendacompra') renderVendaCompra('seven');
   if(tab==='transferencia') renderTransferencia();
   if(tab==='inativar') renderInativarTab('seven');
   if(tab==='recebimentos') renderRecebimentosSeven();
