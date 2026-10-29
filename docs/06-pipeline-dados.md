@@ -70,7 +70,7 @@ A ordem **importa**: vários geradores leem o que o anterior acabou de gravar. A
 | A10 | `gerar_vendas_comissao_mcmoto.py` | `mc_moto` | `vendas-comissao.html` | — | — |
 | A11 | `gerar_graficos_mcmoto.py` | `mc_moto` | `graficos-mcmoto.html` | — | — |
 | A12 | `gerar_monitor_fechamento_mcmoto.py` | `mc_moto` | `monitor-fechamento-mcmoto.html` + `monitor_fechamento\snapshot_AAAA-MM-DD.json` | snapshot do dia anterior | — |
-| A12b | `gerar_comparativo_mcmoto.py` | `mc_moto` | `comparativo-mcmoto.html` | — | — (não publicar se o pico ou o atual vierem vazios) |
+| A12b | `gerar_comparativo_mcmoto.py` (+ módulo `_comparativo.py`) | `mc_moto` | `comparativo-mcmoto.html` | — | — (não publicar se o pico ou o atual vierem vazios) |
 | A13 | `gerar_posicao_caixa_mcmoto.py` | `mc_moto` | `posicao-caixa-mcmoto.html` | — | — |
 | B1 | `gerar_risco_cliente.py` | `projeto_f7` | `risco-cliente.html`, `atualizar_risco.log` | — | — (segunda-feira com "0 clientes" é esperado) |
 | B2 | `gerar_raw_data_seven.py` | `projeto_f7` + `bling-un4*.json` | `dados-seven.js`: `RAW_DATA_SEVEN`, `GRUPO_NOMES_SEVEN`, `SUBGRUPO_NOMES_SEVEN`, `UV_DESDE_SEVEN` | A0 | — (se o total cair para ~18.600 itens, o filtro de inativo voltou por engano) |
@@ -85,6 +85,7 @@ A ordem **importa**: vários geradores leem o que o anterior acabou de gravar. A
 | B2i | `gerar_cadastro_clientes.py` | `projeto_f7` | `cadastro-clientes-seven.html` | — | — |
 | B2i' | `gerar_transferencia_seven.py` | `projeto_f7` | `dados-seven.js`: `TRANSF_EXTRA_SEVEN` | **B2** (só grava o que falta no `RAW_DATA_SEVEN`) | complemento vazio |
 | B2j | `gerar_premiacao_mcmoto.py` | `mc_moto` | `premiacao-mcmoto.html` | — | — |
+| B2k | `gerar_comparativo_seven.py` (+ módulo `_comparativo.py`) | `projeto_f7` (unidades 2 e 5) | `comparativo-seven.html` | — | — |
 | B3 | `gerar_contas_seven.py` | `projeto_f7` + Bling | `contas-pagar-seven.html`, `contas-receber-seven.html` | A0 | — |
 | B3b | `gerar_posicao_caixa.py` | `projeto_f7` | `posicao-caixa-seven.html` | — | — |
 | A5 / B4 | validação de sintaxe | — | — | todos | qualquer arquivo com JS inválido **não é publicado** |

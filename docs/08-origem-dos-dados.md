@@ -287,6 +287,7 @@ da unidade 4 **não é igual em todas as consultas** do `atualizar_mapa.py`:
 | **Clientes** | `clientes-seven.html` · `gerar_clientes.py` (B2e) | compras `VPED_PEDIDO_HISTORICO` + `TCLI_CLIENTE` + `TVND_VENDEDOR` + `TLOC_CIDADE_CEP`; produtos `VPED_PEDIDO_HISTORICO_ITEM` (`TPED_NOME_MERCADORIA`, `TPED_VALOR_TOTAL_ITEM`); vencido `TREC_ABERTO`, atraso `TREC_BAIXADO` (sem cartão). ⚠️ **Não lê o Bling: a RHS para em 28/09/2026** |
 | **Premiação** (só RHS) | `premiacao-seven.html` · `gerar_premiacao.py` (B2h) | **só a unidade 4**: `VPED_PEDIDO_HISTORICO.TPED_VALOR_LIQUIDO_PEDIDO` até 28/09 menos `TMOV_EXTRA 'DC'`, e o Bling (`_un4.dias()`) depois. Meta, dias úteis e prêmios: `localStorage` |
 | **Relatório Gerencial** | `relatorio-seven.html` · `gerar_relatorio.py` (B2f) | ver seção 9 |
+| **Comparativo** (só SEVEN) | `comparativo-seven.html` · `gerar_comparativo_seven.py` (B2k) | **unidades 2 e 5** (a 2 é a SEVEN de Ipatinga até 30/06/2025); item `TPED_VALOR_LIQUIDO_ITEM` (soma igual ao `TPED_VALOR_LIQUIDO_PEDIDO`) menos `TMOV_EXTRA 'DC'` no mês da devolução; custo `qtd × TMER_CUSTO_MEDIO_REAL` de hoje na unidade 5; categoria `TMER_GRUPO_MERCADORIA`; fornecedor `TMER_FORNECEDOR_PRINCIPAL_FK` da unidade 5; cliente `TPED_CLIENTE_FK` sem o CONSUMIDOR FINAL (19, 31161) |
 
 ---
 

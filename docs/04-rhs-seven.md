@@ -543,3 +543,41 @@ Checkboxes "Unidade 3 / 4 / 5" no topo do relatório, todas marcadas por padrão
 - 3 KPIs: nº de clientes em risco, nº de clientes analisados, soma do saldo devedor dos clientes em risco — todos recalculados conforme o filtro ativo.
 - Tabela com **todos** os clientes analisáveis da semana para o filtro ativo (risco e não-risco), ordenados por `crescimentoMedio` decrescente — clientes em risco destacados em vermelho com tag "⚠️ RISCO". Colunas: cliente, saldo devedor atual, crescimento médio diário, evolução do saldo dia a dia (segunda → hoje), média de compra semanal (13 semanas).
 - O relatório só reflete a última execução da tarefa agendada (a busca no banco e a montagem dos dados brutos por unidade) — o filtro em si é interativo e roda inteiramente no navegador, sem consulta ao vivo.
+
+## Vendas › Comparativo (só SEVEN) — 29/10/2026
+
+Aba nativa (`app-tab-comparativoseven`, iframe `comparativo-seven.html`), aberta por
+`abrirSubAbaVendasSeven('comparativo')` e escondida quando a empresa escolhida é a RHS
+(`SUBABA_SO_EMPRESA.comparativo = 'SEVEN'`). Permissão `sv.comparativo`. Gerada por
+`gerar_comparativo_seven.py` (rotina diária, passo B2k) com o mesmo módulo `_comparativo.py`
+do Comparativo da MC MOTO — as regras de período, cascata, categorias e resumo estão em
+[`02-vendas.md`](02-vendas.md#comparativo-aba-nativa-de-indexhtml).
+
+### A SEVEN mudou de código no Proton: unidade 2 → unidade 5
+
+Descoberto ao montar esta aba. O Proton tem as **unidades 1 e 2**, que o painel nunca leu:
+
+| Unidade | Período | Cidades dos clientes | Continua como |
+|---|---|---|---|
+| 1 | 06/11/2023 a 22/10/2025 (último movimento real em ago/2025) | Contagem, Belo Horizonte, Ribeirão das Neves | **unidade 4** (desde 18/08/2025) — 247 clientes em comum |
+| 2 | 06/11/2023 a **30/06/2025** | Ipatinga, Santana do Paraíso, Timóteo | **unidade 5** (desde **01/07/2025**) — 208 clientes em comum |
+
+A unidade 2 termina num dia e a 5 começa no seguinte, nas mesmas cidades: é a mesma loja
+com código novo. Por isso o Comparativo da SEVEN soma as **unidades 2 e 5** (histórico desde
+nov/2023). As outras abas da SEVEN continuam lendo só a unidade 5 e, para elas, a SEVEN
+começa em jul/2025. A unidade 1 (histórico da Contagem/RHS antes de ago/2025) também está
+fora de todas as abas.
+
+### O que difere da MC MOTO
+
+- **Sem balcão:** na SEVEN todo pedido tem cliente (o CONSUMIDOR FINAL, códigos 19 e 31161,
+  não tem venda). O bloco "quem deixou de comprar" mostra só os clientes divididos em
+  pararam / compram menos / compram mais / novos.
+- **A loja cresce:** 2024 ~R$ 127 mil/mês, últimos 12 meses ~R$ 177 mil/mês. Não há pico de
+  12 meses no passado acima de hoje, então a página abre em **melhor trimestre (abr–jun/2026)
+  × últimos 3 meses (jul–set/2026)**, que é onde está a queda recente (jun/jul ~R$ 208 mil,
+  set R$ 152 mil).
+- **Custo de hoje:** o Proton não guarda o custo da época; a MC de períodos antigos usa o
+  custo médio atual da unidade 5 e é aproximada.
+- **Categoria** = grupo de mercadoria do Proton (já é limpo, sem DIVERSOS); **marca** = última
+  palavra do nome da mercadoria.
