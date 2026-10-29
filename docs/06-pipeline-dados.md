@@ -70,6 +70,7 @@ A ordem **importa**: vários geradores leem o que o anterior acabou de gravar. A
 | A10 | `gerar_vendas_comissao_mcmoto.py` | `mc_moto` | `vendas-comissao.html` | — | — |
 | A11 | `gerar_graficos_mcmoto.py` | `mc_moto` | `graficos-mcmoto.html` | — | — |
 | A12 | `gerar_monitor_fechamento_mcmoto.py` | `mc_moto` | `monitor-fechamento-mcmoto.html` + `monitor_fechamento\snapshot_AAAA-MM-DD.json` | snapshot do dia anterior | — |
+| A12b | `gerar_comparativo_mcmoto.py` | `mc_moto` | `comparativo-mcmoto.html` | — | — (não publicar se o pico ou o atual vierem vazios) |
 | A13 | `gerar_posicao_caixa_mcmoto.py` | `mc_moto` | `posicao-caixa-mcmoto.html` | — | — |
 | B1 | `gerar_risco_cliente.py` | `projeto_f7` | `risco-cliente.html`, `atualizar_risco.log` | — | — (segunda-feira com "0 clientes" é esperado) |
 | B2 | `gerar_raw_data_seven.py` | `projeto_f7` + `bling-un4*.json` | `dados-seven.js`: `RAW_DATA_SEVEN`, `GRUPO_NOMES_SEVEN`, `SUBGRUPO_NOMES_SEVEN`, `UV_DESDE_SEVEN` | A0 | — (se o total cair para ~18.600 itens, o filtro de inativo voltou por engano) |
@@ -87,6 +88,7 @@ A ordem **importa**: vários geradores leem o que o anterior acabou de gravar. A
 | B3 | `gerar_contas_seven.py` | `projeto_f7` + Bling | `contas-pagar-seven.html`, `contas-receber-seven.html` | A0 | — |
 | B3b | `gerar_posicao_caixa.py` | `projeto_f7` | `posicao-caixa-seven.html` | — | — |
 | A5 / B4 | validação de sintaxe | — | — | todos | qualquer arquivo com JS inválido **não é publicado** |
+| B5 | `copiar_dados_gestor.py` | — | cópia de `dados-seven.js` em `Interface-grafica-bling\dados\painel\` (Google Drive), fora do git | **B4** aprovar o `dados-seven.js` | `RAW_DATA_SEVEN` ausente, JSON inválido ou menos de 1.000 itens da RHS; pasta do gestor inacessível (a cópia de ontem continua) |
 | F1–F3 | publicação (seção 4) | — | commit + push | A5/B4 | — |
 
 > Os nomes B2h' e B2i' não existem no `SKILL.md`: lá os dois passos aparecem repetidos como
@@ -142,6 +144,16 @@ node -e "new Function(require('fs').readFileSync('dados-mc.js','utf-8'))"
 
 O mesmo vale para `dados-seven.js`, `mapa-vendas.html` e cada página gerada. Arquivo com erro de
 sintaxe **não entra no commit**.
+
+### 3.1 Cópia para o Gestão Bling (passo B5)
+
+O Gestão Bling lê o `RAW_DATA_SEVEN` para achar os itens da RHS em excesso (Integração Mercado
+Livre › Promoção de itens em excesso e Promoção automática). Como esta pasta só existe neste
+computador, `copiar_dados_gestor.py` grava uma cópia em
+`G:\.shortcut-targets-by-id\…\Interface-grafica-bling\dados\painel\dados-seven.js`, a pasta
+compartilhada do aplicativo. A cópia só acontece depois do B4, confere o JSON antes, troca o
+arquivo de uma vez (`.tmp` + `os.replace`) e preserva a data de modificação, que o gestor usa para
+recusar arquivo com mais de 2 dias. Falha na cópia não impede a publicação.
 
 ---
 
