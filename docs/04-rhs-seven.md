@@ -564,9 +564,31 @@ Descoberto ao montar esta aba. O Proton tem as **unidades 1 e 2**, que o painel 
 
 A unidade 2 termina num dia e a 5 começa no seguinte, nas mesmas cidades: é a mesma loja
 com código novo. Por isso o Comparativo da SEVEN soma as **unidades 2 e 5** (histórico desde
-nov/2023). As outras abas da SEVEN continuam lendo só a unidade 5 e, para elas, a SEVEN
-começa em jul/2025. A unidade 1 (histórico da Contagem/RHS antes de ago/2025) também está
-fora de todas as abas.
+nov/2023).
+
+**Histórico das outras abas (decisão do Vitor, 29/10/2026):** as unidades antigas entram no
+histórico de venda da RHS/SEVEN — **1 → RHS** e **2 → SEVEN** (`_emp.DE_UNIDADE`). No
+`atualizar_mapa.py` elas estão numa lista à parte, `UNIDADES_F7_HIST`, usada **só** pelas
+quatro consultas de histórico mensal, que agora começam em `INICIO_HIST_F7` = nov/2023 (antes,
+jul/2025):
+
+| Consulta | Aba |
+|---|---|
+| `buscar_unidades_hist_mensal` | Vendas Históricas |
+| `buscar_unidades_historico` | Painel Mensal › acompanhamento mensal e histórico de fechamentos |
+| `buscar_unidades_hist_vendedor` | Gráficos (evolução, por vendedor) |
+| `buscar_unidades_hist_grupo` | Gráficos (por grupo de produto) |
+
+Ficam **fora** de propósito: estoque (seria o estoque morto das lojas antigas), mês corrente,
+Vendas Diárias, clientes, fornecedor, cidade e o aviso de atraso de sincronização (a unidade
+antiga apareceria sempre "atrasada"). As unidades 1 e 2 têm custo em 99,7% dos itens, então
+a regra dos 60% não se aplica a elas. Escala: a unidade 1 vendia ~R$ 326 mil/mês em 2024 —
+bem acima da RHS de hoje; os gráficos da RHS mostram esse degrau.
+
+**Conserto junto (29/10/2026):** desde a troca para empresa (14/10), o `unidadesHistorico`
+saía com os rótulos por empresa e os meses ainda por unidade ("3", "4", "5"); o histórico de
+fechamentos da RHS/SEVEN no Painel Mensal ficava vazio. O `_emp_payload.py` ganhou a regra
+`mes_chaves`, que colapsa também os meses.
 
 ### O que difere da MC MOTO
 

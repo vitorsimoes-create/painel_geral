@@ -257,11 +257,11 @@ da unidade 4 **não é igual em todas as consultas** do `atualizar_mapa.py`:
 | `buscar_unidades_seven` | Painel Mensal (totais do mês) | ERP cortado + Bling (`mapa_un4_no_periodo`) ✅ |
 | `buscar_unidades_vendedores` + `vendedores_rhs` | Painel Mensal › detalhe por vendedor | ERP cortado + Bling por vendedor ✅ |
 | `buscar_unidades_fornecedor` + `estoque_forn_rhs` | Vendas por Fornecedor | estoque **do Bling** ✅; venda e CMV: ERP cortado, **sem** Bling ⚠️ |
-| `buscar_unidades_hist_mensal` | Vendas Históricas | Bling somado ✅ (o SQL do ERP **não tem corte** — só não dobra enquanto o ERP não tiver movimento da un. 4 depois de 28/09) |
+| `buscar_unidades_hist_mensal` | Vendas Históricas | Bling somado ✅ (o SQL do ERP **não tem corte** — só não dobra enquanto o ERP não tiver movimento da un. 4 depois de 28/09). **Lê também as unidades 1 e 2** (lojas antigas, desde nov/2023) |
 | `buscar_unidades_diarias` | Vendas Diárias | Bling somado ✅ (mesma observação: SQL sem corte) |
-| `buscar_unidades_historico` | Painel Mensal › acompanhamento mensal | ERP cortado, **sem** Bling ⚠️ |
-| `buscar_unidades_grupos`, `buscar_unidades_hist_grupo` | Gráficos › grupo de produto | ERP cortado, **sem** Bling ⚠️ |
-| `buscar_unidades_hist_vendedor` | histórico por vendedor | ERP sem corte, **sem** Bling ⚠️ |
+| `buscar_unidades_historico` | Painel Mensal › acompanhamento mensal | ERP cortado, **sem** Bling ⚠️ · unidades 1 e 2 incluídas, desde nov/2023 |
+| `buscar_unidades_grupos`, `buscar_unidades_hist_grupo` | Gráficos › grupo de produto | ERP cortado, **sem** Bling ⚠️ · o histórico inclui as unidades 1 e 2, desde nov/2023 |
+| `buscar_unidades_hist_vendedor` | histórico por vendedor | ERP sem corte, **sem** Bling ⚠️ · unidades 1 e 2 incluídas, desde nov/2023 |
 | `buscar_unidades_cidade`, `buscar_unidades_fornecedor_mensal` | quebras por cidade e por fornecedor/mês | ERP sem corte, **sem** Bling ⚠️ |
 | `buscar_unidades_ranking_clientes`, `buscar_unidades_clientes_historico` | ranking e evolução de clientes | ERP cortado, **sem** Bling ⚠️ |
 
