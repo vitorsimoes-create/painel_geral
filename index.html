@@ -785,6 +785,8 @@
         <input type="text" id="af-busca" oninput="renderAnalise('mc')" placeholder="fornecedor, item, código ou referência..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
       <label style="font-size:12px;color:#475569;display:flex;align-items:center;gap:6px;padding-bottom:9px;cursor:pointer" title="Itens que o cadastro deixou no fornecedor padrão ou na F7 Bretas aparecem no fornecedor real, descoberto pela nota de entrada ou pela marca">
         <input type="checkbox" id="af-forn-real" checked onchange="setUsarFornRealMc(this.checked,'mc')"> corrigir fornecedor padrão</label>
+      <label style="font-size:12px;color:#475569;display:flex;align-items:center;gap:6px;padding-bottom:9px;cursor:pointer;font-weight:700" title="Mostra só os itens que NÃO tiveram venda no período (pico zero, na janela de pico escolhida no Montar Pedido). Todo o estoque deles é dinheiro parado.">
+          <input type="checkbox" id="af-pico0" onchange="renderAnalise('mc')"> PICO 0</label>
       <button class="btn btn-outline" onclick="exportarAnaliseResumo('mc')">⬇ Excel (resumo)</button>
       <button class="btn btn-outline" onclick="exportarAnaliseItens('mc')">⬇ Excel (itens)</button>
     </div>
@@ -1113,6 +1115,8 @@
           <input type="text" id="afs-busca" oninput="renderAnalise('seven')" placeholder="fornecedor, item, código ou referência..." style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:13px;outline:none"></div>
         <label style="font-size:12px;color:#475569;display:flex;align-items:center;gap:6px;padding-bottom:9px;cursor:pointer" title="Itens que o cadastro deixou na F7 Bretas aparecem no fornecedor real, descoberto pelo cadastro de outra unidade, pela nota de entrada ou pela marca">
           <input type="checkbox" id="afs-forn-real" checked onchange="setUsarFornRealMc(this.checked,'seven')"> corrigir fornecedor padrão</label>
+        <label style="font-size:12px;color:#475569;display:flex;align-items:center;gap:6px;padding-bottom:9px;cursor:pointer;font-weight:700" title="Mostra só os itens que NÃO tiveram venda no período (pico zero, na janela de pico escolhida no Montar Pedido). Todo o estoque deles é dinheiro parado.">
+          <input type="checkbox" id="afs-pico0" onchange="renderAnalise('seven')"> PICO 0</label>
         <button class="btn btn-outline" onclick="exportarAnaliseResumo('seven')">⬇ Excel (resumo)</button>
         <button class="btn btn-outline" onclick="exportarAnaliseItens('seven')">⬇ Excel (itens)</button>
       </div>
@@ -2041,27 +2045,15 @@ function filterData(){
   if(f.grupo) d=d.filter(x=>x.g===f.grupo);
 
   if(f.busca){
-    const terms=f.busca.split(/\s+/).filter(Boolean);
+    const terms=buscaTermos(f.busca), termsC=terms.map(buscaCompacta);
+    const conta=x=>{ buscaPrepara(x,x.r); let n=0; terms.forEach((t,i)=>{ if(buscaTem(x,t,termsC[i])) n++; }); return n; };
     if(f.modo==='OU'){
-      // OU: pelo menos UMA das palavras presente
-      d=d.filter(x=>{
-        const hay=(x.d+' '+x.r+' '+String(x.c)).toUpperCase();
-        return terms.some(t=>hay.includes(t));
-      });
-      // Ordena por relevância: mais termos encontrados primeiro
-      d.sort((a,b)=>{
-        const hayA=(a.d+' '+a.r).toUpperCase();
-        const hayB=(b.d+' '+b.r).toUpperCase();
-        const countA=terms.filter(t=>hayA.includes(t)).length;
-        const countB=terms.filter(t=>hayB.includes(t)).length;
-        return countB - countA;
-      });
+      // OU: pelo menos UMA das palavras presente; mais palavras encontradas, mais acima
+      d=d.filter(x=>(x._bn=conta(x))>0);
+      d.sort((a,b)=>b._bn-a._bn);
     } else {
-      // E (padrão): TODAS as palavras presentes no mesmo item
-      d=d.filter(x=>{
-        const hay=(x.d+' '+x.r+' '+String(x.c)).toUpperCase();
-        return terms.every(t=>hay.includes(t));
-      });
+      // E (padrão): TODAS as palavras no mesmo item, em qualquer ordem
+      d=d.filter(x=>conta(x)===terms.length);
     }
   }
 
@@ -2090,6 +2082,28 @@ function filterData(){
    casava dentro do proprio <mark class="highlight"> recem-inserido: buscar "FILTRO A" fazia
    a linha sair como 'ELEMENTO ark class="highlight">FILTR...' na tela.
    Termo mais longo primeiro, para ele ganhar quando dois se sobrepoem. */
+/* ---- Busca do Montar Pedido (MC e SEVEN) -----------------------------------------
+   Cada palavra digitada tem de aparecer no item, EM QUALQUER ORDEM (modo E) — como na
+   busca do ERP. Tres coisas que faziam item certo nao aparecer (28/10/2026):
+     - separador: "TITAN-150" digitado nao achava "TITAN150/FAN150". Agora a palavra
+       tambem casa sem pontuacao nem espaco dos dois lados ("TITAN150" = "TITAN-150" =
+       "TITAN 150" = "TITAN/150");
+     - acento: "ELETRICA" acha "ELÉTRICA" e vice-versa;
+     - o % do ERP: quem esta acostumado a digitar "ENGRE%VELO" la, pode digitar igual aqui —
+       o % separa palavras.
+   Pedaco de palavra continua valendo ("ENGRE" acha ENGRENAGEM). Erro de digitacao NAO e
+   corrigido de proposito: busca "parecida" traz item errado e tira a confianca no resto. */
+function buscaNorm(s){ return String(s==null?'':s).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function buscaCompacta(s){ return buscaNorm(s).replace(/[^A-Z0-9]/g,''); }
+function buscaTermos(txt){ return buscaNorm(txt).split(/[\s%]+/).filter(Boolean); }
+/* texto pesquisavel do item, guardado no proprio item enquanto a descricao nao mudar */
+function buscaPrepara(x,ref){
+  const base=(x.d||'')+' '+(ref||'')+' '+String(x.c);
+  if(x._bk!==base){ x._bk=base; x._bh=buscaNorm(base); x._bhc=buscaCompacta(base); }
+  return x;
+}
+function buscaTem(x,t,tc){ return x._bh.indexOf(t)>=0 || (tc.length>=2 && x._bhc.indexOf(tc)>=0); }
+
 function highlight(text, terms){
   const src=String(text==null?'':text);
   const all=(Array.isArray(terms)?terms:[terms]).filter(Boolean).map(String)
@@ -2184,7 +2198,7 @@ function render(){
   }
   filtered=filterData();
   const f=getFilters();
-  const terms=f.busca?f.busca.split(/\s+/).filter(Boolean):[];
+  const terms=f.busca?buscaTermos(f.busca):[];
   const start=page*PAGE_SIZE;
   const pageItems=filtered.slice(start,start+PAGE_SIZE);
   const fornecedores=new Set(filtered.map(x=>x.f)).size;
@@ -5440,6 +5454,10 @@ function calcularAnalise(fonte){
   if(!(dias>=0)) dias=45;
   const corte=corteEntradaRecente(dias);
   const busca=((document.getElementById(cfg.px+'-busca')||{}).value||'').trim().toUpperCase();
+  /* PICO 0: so o item que nao vendeu nada na janela de pico (12 ou 6 meses, a do Montar
+     Pedido). E o pior caso do excesso: com pico zero o ideal e zero, entao o estoque INTEIRO
+     e dinheiro parado. */
+  const soPico0=!!((document.getElementById(cfg.px+'-pico0')||{}).checked);
   const grupoSel=((document.getElementById(cfg.px+'-grupo')||{}).value||'');
   const subgrupoSel=((document.getElementById(cfg.px+'-subgrupo')||{}).value||'');
 
@@ -5464,6 +5482,7 @@ function calcularAnalise(fonte){
     const estVal=Math.max(0,estoque)*custo;
     estoqueForn[forn]=(estoqueForn[forn]||0)+estVal;
     totalEstoque+=estVal;
+    if(soPico0 && pico>0) return;          // PICO 0: so quem nao vendeu no periodo
     const ideal=pico*fator;
     const pedido=ideal-estoque;
     if(pedido>=0) return;                 // não há excesso
@@ -5502,7 +5521,7 @@ function calcularAnalise(fonte){
     });
   }
   return {lista,totalValor,totalItens,fator,totalGeral,fornecedoresTotal,dias,ignoradosRecentes,
-          valorIgnorado,totalEstoque,corrigidos,mesesCompra,busca,achouItem};
+          valorIgnorado,totalEstoque,corrigidos,mesesCompra,busca,achouItem,soPico0};
 }
 
 /* ---- Sub-aba "Por grupo" ------------------------------------------------------------
@@ -5605,10 +5624,16 @@ function renderAnalise(fonte){
   const lbl=document.getElementById(cfg.px+'-fator-lbl');
   if(lbl) lbl.textContent=r.fator;
 
+  /* com PICO 0 ligado os numeros falam so do item sem venda: o rotulo tem de dizer isso,
+     senao "Valor em excesso" menor do que o de costume parece engano */
+  const janela=(fonte==='mc'?janelaPicoMc:janelaPicoSeven)||12;
+  const sufixo=r.soPico0?' sem venda ('+janela+' m)':' em excesso';
   document.getElementById(cfg.px+'-kpis').innerHTML=
-    '<div class="stat red"><div class="val">'+fmt(r.totalValor)+'</div><div class="lbl">Valor em excesso</div></div>'+
-    '<div class="stat"><div class="val">'+r.fornecedoresTotal+'</div><div class="lbl">Fornecedores com excesso</div></div>'+
-    '<div class="stat"><div class="val">'+r.totalItens.toLocaleString('pt-BR')+'</div><div class="lbl">Itens com excesso</div></div>';
+    '<div class="stat red"><div class="val">'+fmt(r.totalValor)+'</div><div class="lbl">Valor'+(r.soPico0?' parado sem venda':' em excesso')+'</div></div>'+
+    '<div class="stat"><div class="val">'+r.fornecedoresTotal+'</div><div class="lbl">Fornecedores'+(r.soPico0?' com item sem venda':' com excesso')+'</div></div>'+
+    '<div class="stat"><div class="val">'+r.totalItens.toLocaleString('pt-BR')+'</div><div class="lbl">Itens'+sufixo+'</div></div>'+
+    (r.soPico0?'<div class="stat" style="background:#fef2f2;border-color:#fecaca"><div class="val" style="font-size:13px;color:#991b1b">PICO 0 ligado</div>'+
+      '<div class="lbl">só itens sem nenhuma venda nos últimos '+janela+' meses</div></div>':'');
 
   // aviso do fornecedor corrigido
   {
@@ -7453,22 +7478,13 @@ function filterDataSeven(){
   if(f.grupo) d=d.filter(x=>x.g===f.grupo);
 
   if(f.busca){
-    const terms=f.busca.split(/\s+/).filter(Boolean);
+    const terms=buscaTermos(f.busca), termsC=terms.map(buscaCompacta);
+    const conta=x=>{ buscaPrepara(x,x.cf); let n=0; terms.forEach((t,i)=>{ if(buscaTem(x,t,termsC[i])) n++; }); return n; };
     if(f.modo==='OU'){
-      d=d.filter(x=>{
-        const hay=(x.d+' '+x.cf+' '+String(x.c)).toUpperCase();
-        return terms.some(t=>hay.includes(t));
-      });
-      d.sort((a,b)=>{
-        const hayA=(a.d+' '+a.cf).toUpperCase();
-        const hayB=(b.d+' '+b.cf).toUpperCase();
-        return terms.filter(t=>hayB.includes(t)).length-terms.filter(t=>hayA.includes(t)).length;
-      });
+      d=d.filter(x=>(x._bn=conta(x))>0);
+      d.sort((a,b)=>b._bn-a._bn);
     }else{
-      d=d.filter(x=>{
-        const hay=(x.d+' '+x.cf+' '+String(x.c)).toUpperCase();
-        return terms.every(t=>hay.includes(t));
-      });
+      d=d.filter(x=>conta(x)===terms.length);   // todas as palavras, em qualquer ordem
     }
   }
 
@@ -7499,7 +7515,7 @@ function renderSeven(){
   }
   filteredSeven=filterDataSeven();
   const f=getFiltersSeven();
-  const terms=f.busca?f.busca.split(/\s+/).filter(Boolean):[];
+  const terms=f.busca?buscaTermos(f.busca):[];
   const start=pageSeven*PAGE_SIZE;
   const pageItems=filteredSeven.slice(start,start+PAGE_SIZE);
   const nForn=new Set(filteredSeven.map(x=>x.f)).size;
