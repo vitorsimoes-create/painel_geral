@@ -497,7 +497,7 @@
               <th class="num" id="th-pico" title="Maior venda mensal da janela escolhida">Pico 12m</th>
               <th class="num" id="th-pico-mult" title="Pico multiplicado pelo horizonte escolhido em &quot;Comprar para&quot;">Pico × 1</th>
               <th class="num">Sugestão</th>
-              <th title="Mesma peça de outra marca equivalente (EMBUS, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALLEN, ALPHA, NIKKI, MCA, R1, COMANDER; VEDAMOTORS e MAGNETRON só na linha elétrica): pico e estoque somados do grupo">Equiv.</th>
+              <th title="Mesma peça de outra marca equivalente — família 1: EMBUS, MHX, WW3, SCT, ALLEN, SOLIDEZ, GEAR, MCA, RTK, RITSUKA, CONDOR, GP, GP7, MEGATRON, RHINO, UNIFORT, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALPHA, NIKKI, R1, COMANDER; família 2: SCUD, MAGNETRON, DANIDREA, VEDAMOTORS, WGK. Uma família não junta com a outra: pico e estoque somados do grupo">Equiv.</th>
               <th>Comprar?</th>
               <th title="Há quanto tempo o item está em estoque sem vender">Parado</th>
               <th title="Item com estoque excedente e margem baixa ou sem giro — candidato a inativar, para não comprar de novo">Inativar</th>
@@ -985,7 +985,7 @@
                 <th class="num" id="th-pico-seven" title="Maior venda mensal da janela escolhida">Pico 12m</th>
                 <th class="num" id="th-pico-mult-seven" title="Pico multiplicado pelo horizonte escolhido em &quot;Comprar para&quot;">Pico × 1</th>
                 <th class="num" title="Sugestão de compra (pico − estoque) — editável">Sugestão</th>
-                <th title="Mesma peça de outra marca equivalente (EMBUS, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALLEN, ALPHA, NIKKI, MCA, R1, COMANDER; VEDAMOTORS e MAGNETRON só na linha elétrica): pico e estoque somados do grupo">Equiv.</th>
+                <th title="Mesma peça de outra marca equivalente — família 1: EMBUS, MHX, WW3, SCT, ALLEN, SOLIDEZ, GEAR, MCA, RTK, RITSUKA, CONDOR, GP, GP7, MEGATRON, RHINO, UNIFORT, CATIMOTO, TMAC, SMARTFOX, ILLION, K&amp;D, ALPHA, NIKKI, R1, COMANDER; família 2: SCUD, MAGNETRON, DANIDREA, VEDAMOTORS, WGK. Uma família não junta com a outra: pico e estoque somados do grupo">Equiv.</th>
                 <th title="Há quanto tempo o item está em estoque sem vender">Parado</th>
                 <th title="Item com estoque excedente e margem baixa ou sem giro — candidato a inativar, para não comprar de novo">Inativar</th>
                 <th></th>
@@ -1851,8 +1851,8 @@ try{ const v=parseInt(localStorage.getItem(LS_MESES_MC),10); if(v>=1&&v<=6) mese
 
 /* ============================ EQUIVALENCIA DE MARCAS ============================
    Pedido do usuario (21/10/2026): marcas paralelas — EMBUS, CATIMOTO, TMAC, SMARTFOX,
-   ILLION, K&D, ALLEN, ALPHA, NIKKI, MCA, R1, COMANDER, e VEDAMOTORS/MAGNETRON so na linha
-   eletrica — fazem a mesma peca. Quando uma tem estoque e a outra tem venda, o
+   ILLION, K&D, ALLEN, ALPHA, NIKKI, MCA, R1, COMANDER — fazem a mesma peca. Desde 28/10/2026
+   sao duas familias (ver EQUIV_FAMILIA). Quando uma tem estoque e a outra tem venda, o
    pedido nao pode mandar comprar como se fossem itens soltos. Caso que originou a regra:
    RHS 4365 CATIMOTO (estoque 6, pico 0) e 105274 EMBUS (estoque 0, pico 1) — e a mesma
    ARVORE COMANDO TITAN 160/BROS/XRE190; somados, pico 1 e estoque 6: nao precisa comprar.
@@ -1874,28 +1874,30 @@ try{ const v=parseInt(localStorage.getItem(LS_MESES_MC),10); if(v>=1&&v<=6) mese
    compraria em dobro. Pela propria conta, o grupo NUNCA compra mais do que item a item.
    Somar os picos e conservador: picos de meses diferentes somam como se fossem do mesmo.
    ================================================================================== */
-const EQUIV_MARCAS={EMBUS:'EMBUS',EMBU:'EMBUS',EMB:'EMBUS',CATIMOTO:'CATIMOTO',CATI:'CATIMOTO',
-  TMAC:'TMAC','T-MAC':'TMAC',SMARTFOX:'SMARTFOX',ILLION:'ILLION',ILION:'ILLION',ALLEN:'ALLEN','K&D':'K&D',
-  VEDAMOTORS:'VEDAMOTORS',VEDAMOTOR:'VEDAMOTORS',MAGNETRON:'MAGNETRON',
-  /* 21/10/2026: ALPHA (tambem escrita ALFA), NIKKI, MCA, R1, COMANDER */
-  ALPHA:'ALPHA',ALFA:'ALPHA',NIKKI:'NIKKI',NIKKY:'NIKKI',MCA:'MCA',
-  R1:'R1','R-1':'R1',COMANDER:'COMANDER',COMMANDER:'COMANDER'};
-/* VEDAMOTORS e MAGNETRON so contam como equivalentes em item de LINHA ELETRICA (decisao
-   do usuario 21/10/2026). Fora dela continuam marca solta: VEDAMOTORS faz junta, retentor
-   e kit de motor, MAGNETRON faz cabo de acelerador — nada disso entra no grupo.
-   "Eletrica" = grupo do cadastro ELETRICA OU o classificador por descricao do painel
-   (getGrupo) dizer ELETRICA. Precisa dos dois porque cada um erra para um lado: o cadastro
-   da SEVEN poe ESTATOR em MOTOR, o da MC deixa 242 MAGNETRON em DIVERSOS, e a descricao
-   nao reconhece BOBINA IGNICAO nem SONDA LAMBDA. Testado: nenhum dos dois marca junta,
-   cabo de acelerador/embreagem, kit cilindro, retentor ou filtro como eletrico. */
-const EQUIV_SO_ELETRICA={VEDAMOTORS:1,MAGNETRON:1};
-function equivEhEletrica(it,resto){
-  const nomes=it.u?(typeof GRUPO_NOMES_SEVEN!=='undefined'?GRUPO_NOMES_SEVEN:{})
-                  :(typeof GRUPO_NOMES_MC!=='undefined'?GRUPO_NOMES_MC:{});
-  if(it.gr!=null && String(nomes[String(it.gr)]||'').trim()==='ELETRICA') return true;
-  try{ if(typeof getGrupo==='function' && getGrupo(resto)==='ELETRICA') return true; }catch(e){}
-  return false;
-}
+/* DUAS FAMILIAS (decisao do usuario 28/10/2026). Marca so e equivalente a outra da MESMA
+   familia — um item EMBUS nunca junta com um SCUD, mesmo com a descricao identica.
+     familia 1: EMBUS, MHX, WW3, SCT, ALLEN, SOLIDEZ, GEAR, MCA, RTK, RITSUKA, CONDOR, GP, GP7,
+                MEGATRON, RHINO, UNIFORT — e as que ja eram equivalentes ao EMBUS antes:
+                CATIMOTO, TMAC, SMARTFOX, ILLION, K&D, ALPHA, NIKKI, R1, COMANDER
+     familia 2: SCUD, MAGNETRON, DANIDREA, VEDAMOTORS, WGK
+   VEDAMOTORS e MAGNETRON estavam na familia do EMBUS so na linha eletrica (21/10); passaram
+   para a familia 2, em qualquer linha, e deixaram de juntar com o EMBUS (28/10).
+   GP TECH e outra marca: como so a ULTIMA palavra conta, "... GP TECH" termina em TECH e
+   nao vira GP. GEAR no meio da descricao e modelo de capacete (KYT TT COURSE GEAR). */
+const EQUIV_MARCAS={
+  // familia 1
+  EMBUS:'EMBUS',EMBU:'EMBUS',EMB:'EMBUS',MHX:'MHX',WW3:'WW3',SCT:'SCT',ALLEN:'ALLEN',
+  SOLIDEZ:'SOLIDEZ',GEAR:'GEAR',MCA:'MCA',RTK:'RTK',RITSUKA:'RITSUKA',CONDOR:'CONDOR',
+  GP:'GP',GP7:'GP7','GP-7':'GP7',MEGATRON:'MEGATRON',RHINO:'RHINO',UNIFORT:'UNIFORT',UNIFORTE:'UNIFORT',
+  CATIMOTO:'CATIMOTO',CATI:'CATIMOTO',TMAC:'TMAC','T-MAC':'TMAC',SMARTFOX:'SMARTFOX',
+  ILLION:'ILLION',ILION:'ILLION','K&D':'K&D',ALPHA:'ALPHA',ALFA:'ALPHA',NIKKI:'NIKKI',NIKKY:'NIKKI',
+  R1:'R1','R-1':'R1',COMANDER:'COMANDER',COMMANDER:'COMANDER',
+  // familia 2
+  SCUD:'SCUD',MAGNETRON:'MAGNETRON',DANIDREA:'DANIDREA',DANIDREAS:'DANIDREA',
+  VEDAMOTORS:'VEDAMOTORS',VEDAMOTOR:'VEDAMOTORS',WGK:'WGK'};
+const EQUIV_FAMILIA={SCUD:2,MAGNETRON:2,DANIDREA:2,VEDAMOTORS:2,WGK:2};   // o resto e familia 1
+function equivFamilia(marca){ return EQUIV_FAMILIA[marca]||1; }
+
 function equivSepara(desc){
   let d=String(desc||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
          .replace(/\s+/g,' ').trim()
@@ -1908,12 +1910,15 @@ function equivSepara(desc){
   if(EQUIV_MARCAS[ultimo]==='R1' && (/\/$/.test(anterior) || /^CAPACETE\b/.test(d))) return null;
   let resto=partes.join(' ');
   if(resto.endsWith(' -')) resto=resto.slice(0,-2);
-  if(EQUIV_MARCAS[ultimo]) return {rotulo:ultimo, resto:resto, soEletrica:!!EQUIV_SO_ELETRICA[EQUIV_MARCAS[ultimo]]};
+  if(EQUIV_MARCAS[ultimo]) return {rotulo:ultimo, resto:resto, familia:equivFamilia(EQUIV_MARCAS[ultimo])};
   // marca composta; com ponto fica de fora ("C/RETENT.ALLEN" e "com retentor", nao marca)
   if(/[\/-]/.test(ultimo) && ultimo.indexOf('.')<0){
     const eq=ultimo.split(/[\/-]/).map(p=>EQUIV_MARCAS[p]).filter(Boolean);
-    // composta so de marca condicional (ex.: "VEDAMOTORS/MAGNETRON") tambem exige eletrica
-    if(eq.length) return {rotulo:ultimo, resto:resto, soEletrica:eq.every(m=>EQUIV_SO_ELETRICA[m])};
+    if(eq.length){
+      const fams=[...new Set(eq.map(equivFamilia))];
+      // composta com marca das DUAS familias nao tem como decidir: fica de fora
+      if(fams.length===1) return {rotulo:ultimo, resto:resto, familia:fams[0]};
+    }
   }
   return null;
 }
@@ -1923,9 +1928,10 @@ function aplicarEquivalencia(lista,meses){
   lista.forEach(it=>{
     it.eq=null;
     if(it._eqChave===undefined){            // a descricao nao muda: calcula uma vez so
-      let sp=equivSepara(it.d);
-      if(sp && sp.soEletrica && !equivEhEletrica(it,sp.resto)) sp=null;   // VEDAMOTORS/MAGNETRON fora da eletrica
-      it._eqChave=sp?((it.u||'MC')+'|'+sp.resto.replace(/[^A-Z0-9]/g,'')):null;
+      const sp=equivSepara(it.d);
+      // empresa | familia | descricao sem a marca: a familia na chave e o que impede um
+      // EMBUS de juntar com um SCUD de descricao identica
+      it._eqChave=sp?((it.u||'MC')+'|F'+sp.familia+'|'+sp.resto.replace(/[^A-Z0-9]/g,'')):null;
       it._eqRot=sp?sp.rotulo:null;
     }
     if(!it._eqChave) return;
