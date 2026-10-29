@@ -172,6 +172,21 @@ Aba nativa `app-tab-graficos` (iframe `graficos-mcmoto.html`, aberta por `abrirS
 - **Definições (batem com as abas existentes):** a série mensal (venda histórica / MC / ticket) usa a **mesma base da aba Vendas Históricas** (vendas líquidas de devoluções no nível do pedido). Grupo de mercadoria e grupo de comissão usam a **mesma base da aba Vendas por Grupo de Comissão** (netagem por `QTD_DEVOLVIDA`/`QTD_ESTORNADA` na linha do item); grupo de mercadoria reaproveita a reclassificação de DIVERSOS/SEM GRUPO por palavra-chave do `atualizar_mapa.py`. Por usarem bases diferentes (nível pedido vs. nível item), os totais das duas visões não batem exatamente entre si — é a mesma inconsistência já documentada abaixo.
 - O mês corrente é marcado como **parcial**.
 
+## Comparativo (aba nativa de `index.html`)
+
+Aba nativa (`app-tab-comparativo`, iframe `comparativo-mcmoto.html`, aberta por `abrirSubAbaComparativo`), gerada pelo script local `gerar_comparativo_mcmoto.py` (rotina diária, passo A12b) a partir do banco `mc_moto`. Pedido do Vitor de 29/10/2026: achar as épocas de pico e comparar o que se vendia nelas com o que se vende hoje, para ver onde a venda foi perdida.
+
+- **Períodos.** *Hoje* = últimos 12 meses fechados (o mês em curso fica de fora). *Época* = escolhida na tela: o **pico de 12 meses** (a janela de 12 meses seguidos com a maior venda líquida, recalculada a cada geração — em 29/10/2026, ago/2022 a jul/2023) ou um ano civil com pelo menos 6 meses completos. Ano que cabe inteiro no período de hoje não é oferecido.
+- **Tudo em média por mês**, para períodos de tamanhos diferentes (2023 tem 11 meses, 2024 tem 10) ficarem comparáveis.
+- **Mês incompleto** (pedidos abaixo de 50% da mediana) não entra em período nenhum: é o buraco do banco de dez/2023 a fev/2024.
+- **Venda** = `itens.VL_TOTAL − itens.DESCONTO` de vendas não canceladas e itens não cancelados, menos devoluções no mês da venda original — mesma regra de Vendas por Grupo de Comissão. `MC = venda × 0,93 − custo`.
+- **Tipo de peça** = primeira palavra da descrição (PNEU, CAPACETE, CORRENTE, COROA…); **família** = três primeiras palavras (ex.: `PNEU 90/90 18`). Existem porque o grupo do ERP foi reorganizado em 2025/2026 (o DIVERSOS caiu de R$ 120 mil para R$ 45 mil por mês só por reclassificação) e porque troca de marca muda o código do item.
+- **Cascata** ("De onde veio a diferença"): época → o que sumiu → o que caiu → o que cresceu → o que é novo → hoje, em três níveis (família, tipo de peça, código de item). Por código, a troca de marca aparece como "parou" + "novo" e exagera os dois lados; por família, a cascata mostra a demanda que realmente foi perdida. Abaixo dela, a perda por código separada pelo estoque de hoje (zerado, com estoque, bloqueado).
+- **Situação de cada item** (lista de itens): parou de vender e está com estoque zerado, sem outra marca da família no lugar → **Recompra** (ruptura); parou mas a família manteve 70% ou mais da venda → **Trocado na família**; parou com estoque → **Parou com estoque**; bloqueado no cadastro → **Bloqueado**; queda de 30% ou mais → **Em queda**; alta de 30% ou mais → **Crescendo**; não vendia na época → **Novo**. Filtro extra **Preço subiu, volume caiu**: preço médio por peça +25% ou mais e volume −25% ou mais. A lista leva só itens com venda de R$ 25/mês ou mais em algum período e exporta CSV.
+- **Clientes**: só os com cadastro (sem o CLIENTE CONSUMIDOR), separados em sumiram / caíram (abaixo de 70%) / cresceram (acima de 130%) / novos.
+- **Sazonalidade**: índice de cada mês do ano = venda do mês ÷ média mensal do ano, na média dos anos com os 12 meses completos no banco (2021, 2022 e 2025 em 29/10/2026). Os três meses seguintes ao último mês com dados ficam em destaque.
+- **"O que os números dizem"**: frases montadas no navegador a partir do período escolhido (queda total, pedidos × ticket, sortimento, tipos que mais perderam e ganharam, transmissão, recompra, troca de marca, estoque parado, preço, clientes, equipe, sazonalidade e itens cadastrados desde 2025).
+
 ## Inconsistências conhecidas (documentadas como fato, não como bug pendente)
 
 Estas diferenças são reais no código atual e devem ser levadas em conta ao comparar números entre sub-abas — não são necessariamente erros a corrigir, mas comportamento que precisa ser conhecido:
