@@ -119,6 +119,7 @@ Gerador `gerar_raw_data_mcmoto.py` (passo A3). Um objeto por produto.
 | `ma` | Filtro de marca | `produtos.MARCA`, só quando o código existe em `marcas`; nomes em `MARCA_NOMES_MC` |
 | `ue` | Corte "chegou há N dias" | `produtos.ULT_DATA_ENTRADA` |
 | `uv` / `up` | Selo "parado há 3/6/12 meses", "Voltaram a vender" | última e penúltima data de venda em `itens.DATA` (histórico inteiro, quantidade líquida > 0) |
+| `mv` / `fv` | Curva A/B/C (Análise e Agenda) | meses com venda líquida > 0 e faturamento líquido (`COALESCE(VL_TOTAL_LIQ, VL_TOTAL)` proporcional à quantidade não devolvida/estornada) em `itens`, do mês atual e dos 11 anteriores; só quando o item vendeu |
 | `g` | Grupo do Montar Pedido | **não vem do banco**: o navegador deduz pela descrição (`getGrupo`, `GRUPO_RULES`) |
 | `UV_DESDE_MC` | "desde quando há histórico" | data mais antiga de `itens.DATA` lida |
 
@@ -143,7 +144,7 @@ Cotação e Pedidos Salvos **não têm fonte no banco**: vivem no `localStorage`
 | Fornecedor real de item em "FORNECEDOR DEMONSTRACAO"/cadastro repetido (`FORN_REAL_MC*`, `FORN_JUNTOS_MC`) | `gerar_forn_real_mcmoto.py` (B2g) | `itens_entrada` + `notas_entrada` (último fornecedor que entregou o item) + `fornecedores` |
 | Coluna "Comprado" por mês (`COMPRAS_MES_MC`) | `gerar_agenda_compras.py` | `SUM(itens_entrada.VALOR_TOTAL_LIQ)` por fornecedor e mês de `notas_entrada.DATA` |
 | Última compra, ritmo, valor típico (`AGENDA_COMPRAS_MC`) | idem | mesma consulta; ritmo = **mediana** dos intervalos entre datas de nota, só fornecedor com compra em 12 meses |
-| Ruptura, curva ABC, quantidade da agenda | — (navegador) | `RAW_DATA` |
+| Ruptura, curva A/B/C, quantidade da agenda | — (navegador) | `RAW_DATA` (curva por `mv` + `fv` desde 29/10/2026 — ver `01-compras.md`) |
 
 ---
 
@@ -216,6 +217,7 @@ Gerador `gerar_raw_data_seven.py` (passo B2). Um objeto por **produto + unidade*
 | `ia` | selo INATIVO NO ERP | `TMER_ESTOQUE.TMER_ATIVO_COMPRA = 'N'` (inativo sem venda e sem estoque fica fora) | — |
 | `ue` | Corte "chegou há N dias" | `TMER_ESTOQUE.TMER_DATA_ULT_ENTRADA` | — |
 | `uv` / `up` | Última / penúltima venda | `VPED_PEDIDO_HISTORICO(_ITEM)`, histórico inteiro | idem + Bling |
+| `mv` / `fv` | Curva A/B/C (Análise e Agenda) | meses com venda da série mensal do pico; faturamento = `SUM(TPED_VALOR_TOTAL_ITEM)` de `VPED_PEDIDO_HISTORICO_ITEM` sem cancelados, do mês atual e dos 11 anteriores | série ERP + Bling emendada; faturamento do Bling = quantidade × valor dos itens vendidos |
 | `UV_DESDE_SEVEN` | início do histórico | `MIN(TPED_DATA_EMISSAO)` por unidade | — |
 
 Na unidade 4 o Bling **substitui** `e`, `p`, `ce`, `pv`, `f` e `cf` do registro do ERP; código

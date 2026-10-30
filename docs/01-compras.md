@@ -163,6 +163,28 @@ Itens com `pedido ≥ 0` são ignorados (não há excesso). O fator é editável
 - **Exportação Excel (CSV):** dois botões — "resumo" (uma linha por fornecedor) e "itens" (uma linha por item, com o fornecedor em cada linha). Ambos com BOM UTF-8, `;` como separador e decimal com vírgula (padrão pt-BR).
 - **SEVEN:** tem ainda um seletor de **unidade** (Todas / 3 / 4 / 5) e respeita a permissão de unidade do usuário — o seletor só lista as unidades liberadas e o cálculo considera apenas elas.
 
+### Curva A/B/C e a visão "⭐ Curva A/B em excesso" (29/10/2026)
+
+**Curva da empresa (decisão do usuário, vale na Análise de Fornecedor e na Agenda de Compras)** — `agCurvas()` no `index.html`:
+```
+A = vende com regularidade (9+ dos últimos 12 meses)  E  está nos 80% do faturamento de 12 meses
+B = só uma das duas
+C = nenhuma
+```
+- Os números vêm dos geradores, por item: `mv` (meses com venda líquida > 0) e `fv` (faturamento líquido). "12 meses" = o mês atual e os 11 anteriores.
+- O Pareto dos 80% é calculado no navegador sobre os itens da empresa (na RHS/SEVEN, das unidades permitidas/selecionadas), ordenados por `fv`.
+- A régua anterior (Pareto 80/95 pelo pico, ficando com a melhor entre valor e quantidade) punha 56% dos itens que venderam como A na MC (3.700 de 6.640, inclusive 893 que vendem 1 unidade/mês) e não separava nada.
+- Em 30/10/2026: MC MOTO 317 A e 1.259 B; RHS/SEVEN 89 A e 586 B.
+
+**Visão "⭐ Curva A/B em excesso"** — terceiro botão da Análise (ao lado de "Por fornecedor" e "Por grupo e subgrupo"), nas duas empresas (`af-tabela-curva` / `afs-tabela-curva`, `renderAnaliseCurva`):
+- Lista os itens A/B que estão no excesso **da mesma conta** das outras visões (mesma cobertura × pico, mesmo corte de chegadas recentes, mesma busca e filtros).
+- Cada item recebe um diagnóstico, nesta ordem:
+  - **Parou de vender**: última venda (`uv`) há mais de 90 dias;
+  - **Venda caiu**: pico de 6 meses (`k6`) ≤ metade do pico de 12;
+  - **Comprou demais**: continua vendendo no ritmo de sempre, o estoque é que passou da conta.
+- Três cartões no topo (valor e nº de itens por diagnóstico) que funcionam como filtro; tabela com curva, código, descrição, fornecedor, estoque, pico 12m/6m, meses com venda, faturamento 12m, última venda, cobertura em meses, excesso (R$ e un.) e diagnóstico. Mostra os 400 de maior excesso.
+- Em 30/10/2026 (cobertura 3, chegadas de 45 dias fora): MC MOTO 40 A (R$ 21.290) e 137 B (R$ 85.382) em excesso; RHS/SEVEN 12 A (R$ 5.324) e 22 B (R$ 10.404).
+
 **Permissões:** na SEVEN a Análise é uma sub-aba *dentro* de Compras, então o botão "Compras" aparece se o usuário tiver `sv.compras` **ou** `sv.analise`; com apenas `sv.analise`, as sub-abas Montar Pedido/Cotação/Pedidos Salvos ficam ocultas e a Análise abre direto.
 
 **Números de referência** (validados em 29/07/2026 contra os dados reais): MC MOTO **R$ 1.071.441,99** parados em 5.884 itens de 143 fornecedores; RHS/SEVEN **R$ 653.899,98** em 5.093 itens de 104 fornecedores.
