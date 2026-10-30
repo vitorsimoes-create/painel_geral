@@ -26,6 +26,7 @@ lista cresce (19.542 em 08/10/2026). Um objeto por produto.
 | `cf` | Código do fabricante (exibido na coluna "Cód. Fabricante") | **Sim**, diariamente |
 | `f` | Nome do fornecedor | **Sim**, diariamente |
 | `g` | Grupo de produto | Calculado no navegador ao carregar a página (não vem no JSON, é preenchido por `getGrupo(item.d)` — ver seção seguinte) |
+| `ean`, `ncm`, `cest`, `or`, `ap`, `un` | Código de barras, NCM, CEST, origem, aplicação e sigla da unidade do cadastro (`produtos` + `unidades`), omitidos quando vazios. O painel não usa; quem lê é o Gestão Bling, para mandar esses dados aos produtos que importa na conta MCMOTO (28/10/2026) | **Sim**, diariamente |
 
 ### Nota sobre o campo `s` (sugestão de compra)
 

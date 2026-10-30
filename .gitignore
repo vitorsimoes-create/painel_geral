@@ -40,3 +40,7 @@ _bling_forn_cache.json
 
 # Plantao do diagnostico da carga (local, nunca publicar)
 _diag_*.cmd
+
+# E-mail diario 7:30 - preview local com dados financeiros (nunca publicar)
+email-diario-preview-*.html
+email-tarde-preview-*.html
