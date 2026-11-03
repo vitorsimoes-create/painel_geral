@@ -144,6 +144,8 @@ estado **conferido no código em 23/10/2026** — o detalhe campo a campo está 
 
 **Código com letras (03/11/2026):** o Bling da RHS tem códigos como `FT1508`, que não existem no ERP. O `gerar_raw_data_seven.py` convertia o código da venda em número e descartava esses itens em silêncio: eles apareciam com pico 0 mesmo vendendo (43 códigos, 377 unidades no corte de 03/11). Agora código numérico continua número e o com letras fica como texto, nos dois casos entrando no pico.
 
+**Dois cadastros do mesmo produto (03/11/2026):** quando o código com letras é a referência de um único produto do ERP e o código desse produto também está no catálogo do Bling, as duas linhas viram uma só, com o código do ERP: a venda é somada mês a mês e o saldo é somado. O código do Bling fica no código de fabricante, para continuar aparecendo na busca. No corte de 03/11 são 3 casos: FT1663 (4686), FT1670 (108661) e FT1568 (106151).
+
 ### Segurança
 
 As credenciais do Bling **nunca** entram no repositório. O `.gitignore` já barra `_bling*.py`, `_bling*.json`, `bling_token.json` e `.env.bling` antes de o primeiro arquivo existir. O Bling v3 usa OAuth 2.0: o `access_token` vale poucas horas e o `refresh_token` precisa ser renovado, então o cache de token é um arquivo local — estado, como o `relatorio-historico.json`, nunca publicado.
