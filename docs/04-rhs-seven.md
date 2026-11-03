@@ -142,6 +142,8 @@ estado **conferido no código em 23/10/2026** — o detalhe campo a campo está 
 | `gerar_transferencia_seven.py` | Transferência entre unidades (4 e 5) | **Não** (o complemento da un. 4 traz estoque do ERP) |
 | `gerar_premiacao.py` | Premiação — **só unidade 4** | Sim |
 
+**Código com letras (03/11/2026):** o Bling da RHS tem códigos como `FT1508`, que não existem no ERP. O `gerar_raw_data_seven.py` convertia o código da venda em número e descartava esses itens em silêncio: eles apareciam com pico 0 mesmo vendendo (43 códigos, 377 unidades no corte de 03/11). Agora código numérico continua número e o com letras fica como texto, nos dois casos entrando no pico.
+
 ### Segurança
 
 As credenciais do Bling **nunca** entram no repositório. O `.gitignore` já barra `_bling*.py`, `_bling*.json`, `bling_token.json` e `.env.bling` antes de o primeiro arquivo existir. O Bling v3 usa OAuth 2.0: o `access_token` vale poucas horas e o `refresh_token` precisa ser renovado, então o cache de token é um arquivo local — estado, como o `relatorio-historico.json`, nunca publicado.
