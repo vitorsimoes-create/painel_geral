@@ -157,7 +157,7 @@ Cotação e Pedidos Salvos **não têm fonte no banco**: vivem no `localStorage`
 | **Painel Mensal** | Venda, pedidos por vendedor | `vendas.VL_TOTAL`, `COUNT(*)`, `vendas.VENDEDOR → vendedores.DESCRICAO`, menos `devolucoes.VL_TOTAL_LIQ` das vendas do período |
 | | Custo, itens | `itens.QUANTIDADE × itens.CUSTO`, menos `devolucoes.QUANTIDADE × produtos.CUSTO` |
 | | Metas, feriados | `localStorage` (`mapa_meta_*`, `mapa_feriados`), com `parametros-painel.json` como padrão publicado |
-| | Dias úteis | automáticos pelos dias com venda (desde 19/10/2026) |
+| | Dias úteis | automáticos: dias com venda (desde 19/10/2026) + dias que faltam na grade da loja, menos feriados cadastrados. Grade desde 04/11/2026: MC seg. a sáb.; RHS e SEVEN seg. a sex. |
 | **Vendas Diárias** | Por dia e vendedor | `vendas` (+ custo/itens de `itens` agregados por pedido) menos `devolucoes` do dia |
 | **Grupo de Produto** | Venda, quantidade, custo por grupo no mês | `itens` × `produtos.GRUPO → grupos.DESCRICAO`; `DIVERSOS`/sem grupo reclassificado por palavra-chave da descrição. **Sem** abater devolução |
 | **Consistência por Grupo** | Mês × média histórica | mesmas consultas por grupo + `buscar_hist_grupo` / `buscar_media_grupo` (histórico mensal desde a data-base) |

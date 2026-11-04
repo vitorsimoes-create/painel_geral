@@ -19,7 +19,8 @@ Tabela de consulta rápida com todas as regras numéricas do painel. Para o cont
 | Pico de vendas mensal (`k`) | máximo (nunca soma) da quantidade líquida vendida por mês, últimos 12 meses | tarefa agendada + `RAW_DATA` | [01-compras](01-compras.md), [06-pipeline-dados](06-pipeline-dados.md) |
 | MC (todas as telas, MC MOTO, RHS e SEVEN) | `vendas × 0,93 − custo` — desconto **fixo de 7%** desde 23/10/2026; vendas sempre pelo valor real | `atualizar_mapa.py` (`DESCONTO_MC`), geradores de Vendas Históricas, Comissão e Gráficos, DASHBOARD | [02-vendas](02-vendas.md) |
 | Projeção do mês | `realizado / diasUteisDecorridos * diasUteisTotal` | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
-| Dias úteis decorridos | conta até **ontem**, exclui domingos e feriados cadastrados | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
+| Dias úteis decorridos | dias com venda na grade da loja (MC seg. a sáb.; RHS e SEVEN seg. a sex.), até **ontem** no máximo | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
+| Dias úteis do mês | decorridos + dias da grade que faltam, menos feriados cadastrados | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
 | % da meta (Painel Mensal) | `realizado/meta`, `≥100%`→verde, senão vermelho | `atualizar_mapa.py` | [02-vendas](02-vendas.md) |
 | Consistência — filtro "Tudo" | exclui mês corrente, cobre todos os grupos | `atualizar_mapa.py` (Python) | [02-vendas](02-vendas.md) |
 | Consistência — filtro 3/6/12 meses | inclui mês corrente parcial, só top-7 grupos + "Outros" | `atualizar_mapa.py` (JS) | [02-vendas](02-vendas.md) |
@@ -69,5 +70,5 @@ Cuidado ao mexer: `gerar_forn_real_seven.py` reconhece os cadastros "que não id
 - **Cobertura (de estoque)**: quantos meses o estoque atual dura, no ritmo médio de CMV mensal (`estoque_a_custo / cmv_mensal`).
 - **Giro**: quantas vezes o estoque "virou" no período (`cmv_12m / estoque`).
 - **Desconto da MC**: até 22/10/2026 era um percentual editável (`descontoPct`) e aplicado de forma diferente em cada sub-aba; **desde 23/10/2026 é fixo em 7%** e igual em todo o painel (ver [02-vendas](02-vendas.md)).
-- **Dias úteis**: segunda a sábado, excluindo feriados cadastrados manualmente; domingo nunca conta.
+- **Dias úteis**: na MC MOTO, segunda a sábado; na RHS e na SEVEN, segunda a sexta. Domingo nunca conta e feriado sai da conta (regra completa em [02-vendas](02-vendas.md)). No Relatório e na Premiação da MC, "dias úteis" tem outro sentido: são os dias que tiveram faturamento (decisão de 03/08/2026).
 - **Fornecedor de mercadoria**: fornecedor cujas notas de entrada representam compra de produto para revenda (por oposição a serviços/despesas), usado para filtrar os totais de Recebimentos.

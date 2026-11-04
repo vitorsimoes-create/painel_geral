@@ -923,39 +923,22 @@ function listaFeriados(){
   return document.getElementById('feriadosTxt').value.split('\n').map(s=>s.trim()).filter(Boolean);
 }
 
-function isDiaUtil(date, feriadosSet){
-  const dow = date.getDay(); // 0=domingo
-  if (dow === 0) return false;
-  const iso = date.toISOString().slice(0,10);
-  if (feriadosSet.has(iso)) return false;
-  return true;
-}
-function contarDiasUteis(inicio, fim, feriadosSet){
-  // inclusive de inicio e fim
-  let count = 0;
-  let d = new Date(inicio);
-  while (d <= fim){
-    if (isDiaUtil(d, feriadosSet)) count++;
-    d.setDate(d.getDate()+1);
-  }
-  return count;
-}
-
 function primeiroDiaMes(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
 function ultimoDiaMes(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
 
-/* DIAS UTEIS PELA VENDA (pedido do usuario 19/10/2026), igual para MC MOTO, RHS e SEVEN.
-   Ninguem digita mais dia: a cada atualizacao diaria o painel recalcula sozinho.
-     decorridos = dias do mes, ate o ultimo dia com dado, em que a empresa TEVE VENDA
-                  (venda liquida do dia > 0). Vendeu em feriado? Conta: foi dia trabalhado.
-     total      = decorridos + dias que ainda faltam. O dia que falta conta se aquele DIA DA
-                  SEMANA ja teve venda no mes (a RHS nao vende sabado, entao sabado futuro nao
-                  entra; a MC vende, entao entra). Dia da semana que ainda nao passou no mes
-                  (comeco do mes) vale seg. a sab. Feriado futuro da lista sai da conta.
+/* DIAS UTEIS POR LOJA (regra do usuario, 04/11/2026). Ninguem digita dia: a cada atualizacao
+   diaria o painel recalcula sozinho.
+     grade      = MC MOTO trabalha de segunda a sabado; RHS e SEVEN, de segunda a sexta.
+                  Domingo nunca. Venda fora da grade nao vira dia util.
+     decorridos = dias da grade, ate o ultimo dia com dado, em que a loja TEVE VENDA (venda
+                  liquida do dia > 0). Assim feriado passado sem venda sai da conta mesmo sem
+                  estar na lista; feriado em que a loja vendeu conta, porque foi dia trabalhado.
+     total      = decorridos + dias da grade que ainda faltam, menos os feriados da lista.
    O corte e o ultimo dia com dado da empresa (nunca depois de ontem): se a carga atrasou, o
    dia sem dado vira "dia que falta" em vez de dia sem venda — senao a projecao afundaria. */
 function _isoDia(ym, d){ return ym + '-' + String(d).padStart(2, '0'); }
-function diasUteisPorVenda(vendaPorDia, ultimaData){
+function _lojaTrabalha(loja, dow){ return dow !== 0 && (loja === 'MC' || dow !== 6); }
+function diasUteisPorVenda(vendaPorDia, ultimaData, loja){
   const ym = P.mesCorrente || (P.refData || '').slice(0, 7);
   const ontem = P.refData || _isoDia(ym, 31);
   const datas = Object.keys(vendaPorDia).filter(d => d.slice(0, 7) === ym && vendaPorDia[d] > 0);
@@ -964,24 +947,14 @@ function diasUteisPorVenda(vendaPorDia, ultimaData){
   const fer = new Set(listaFeriados());
   const comVenda = new Set(datas);
   const ano = +ym.slice(0, 4), mes = +ym.slice(5, 7), nDias = new Date(ano, mes, 0).getDate();
-  const visto = [0,0,0,0,0,0,0], vendeu = [0,0,0,0,0,0,0];
   let dec = 0, resto = 0;
-  const futuros = [];
   for (let d = 1; d <= nDias; d++){
     const iso = _isoDia(ym, d), dow = new Date(ano, mes - 1, d).getDay();
-    if (iso <= corte){
-      if (!fer.has(iso)) visto[dow]++;
-      if (comVenda.has(iso)){ dec++; vendeu[dow]++; }
-    } else futuros.push([iso, dow]);
+    if (!_lojaTrabalha(loja, dow)) continue;
+    if (iso <= corte){ if (comVenda.has(iso)) dec++; }
+    else if (!fer.has(iso)) resto++;
   }
-  const semVendaNaSemana = [];
-  futuros.forEach(([iso, dow]) => {
-    if (fer.has(iso)) return;
-    const conta = visto[dow] ? vendeu[dow] > 0 : dow !== 0;
-    if (conta) resto++;
-  });
-  ['dom','seg','ter','qua','qui','sex','sáb'].forEach((n, i) => { if (visto[i] && !vendeu[i]) semVendaNaSemana.push(n); });
-  return {dec, tot: dec + resto, resto, corte, semVendaNaSemana};
+  return {dec, tot: dec + resto, resto, corte, grade: loja === 'MC' ? 'seg. a sáb.' : 'seg. a sex.'};
 }
 function _vendaPorDiaMc(){
   const m = {};
@@ -999,14 +972,13 @@ function _ultimaDataEmpresa(emp){
 }
 const _diasEmpCache = {};
 function diasEmpresa(emp){
-  if (!_diasEmpCache[emp]) _diasEmpCache[emp] = diasUteisPorVenda(_vendaPorDiaEmpresa(emp), _ultimaDataEmpresa(emp));
+  if (!_diasEmpCache[emp]) _diasEmpCache[emp] = diasUteisPorVenda(_vendaPorDiaEmpresa(emp), _ultimaDataEmpresa(emp), emp);
   return _diasEmpCache[emp];
 }
 function _notaDias(r){
   const br = r.corte ? r.corte.split('-').reverse().slice(0, 2).join('/') : '—';
-  return 'Automático: dia útil = dia que teve venda (até ' + br + '). Faltam ' + r.resto +
-    ' pelo padrão do mês' + (r.semVendaNaSemana.length ? ' (sem venda: ' + r.semVendaNaSemana.join(', ') + ')' : '') +
-    ', menos feriados.';
+  return 'Automático: dia útil = dia ' + r.grade + ' com venda (até ' + br + '). Faltam ' + r.resto +
+    ' na grade da loja, menos feriados.';
 }
 function salvarDias(){}
 
@@ -1019,7 +991,7 @@ function recalcularDias(){
   let dataRef = ref ? new Date(ref + 'T00:00:00') : primeiroDiaMes(hoje);
 
   // dias uteis pela venda da MC MOTO, ate ontem (os dados do painel sao sempre do mes corrente)
-  const r = diasUteisPorVenda(_vendaPorDiaMc(), P.refData);   // banco direto, sem atraso de carga
+  const r = diasUteisPorVenda(_vendaPorDiaMc(), P.refData, 'MC');   // banco direto, sem atraso de carga
   document.getElementById('diasUteisDecorridos').value = r.dec;
   document.getElementById('diasUteisTotal').value = r.tot;
   document.getElementById('diasUteisNota').textContent = _notaDias(r);
@@ -1534,10 +1506,10 @@ function getUniDesconto(){ return DESCONTO_MC; }
    projecao de cada linha usa os dias da propria empresa. */
 function _uniDias(){
   const rs = unidadesVisiveis().map(u => diasEmpresa(u.unidade));
-  if (!rs.length) return {dec:0, tot:0, resto:0, corte:null, semVendaNaSemana:[]};
+  if (!rs.length) return {dec:0, tot:0, resto:0, corte:null};
   if (rs.length === 1) return rs[0];
   return rs.reduce((a, b) => ({dec: Math.max(a.dec, b.dec), tot: Math.max(a.tot, b.tot),
-    resto: Math.max(a.resto, b.resto), corte: (a.corte > b.corte ? a.corte : b.corte), semVendaNaSemana: []}));
+    resto: Math.max(a.resto, b.resto), corte: (a.corte > b.corte ? a.corte : b.corte)}));
 }
 function getUniDiasDec(){ return _uniDias().dec; }
 function getUniDiasTot(){ return _uniDias().tot; }

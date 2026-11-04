@@ -4372,24 +4372,34 @@ function dashSemana(){
   const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   return [iso(ini),iso(fim)];
 }
-/* dias úteis pela MESMA regra do Painel Mensal: exclui domingo e os feriados
-   cadastrados no Mapa de Vendas (localStorage 'mapa_feriados', 1 data ISO por linha).
-   "Decorridos" vai até ONTEM — o dia corrente pode estar incompleto. */
-function dashDiasUteis(ym){
+/* dias úteis pela MESMA regra do Painel Mensal (diasUteisPorVenda, atualizar_mapa.py):
+   grade = MC de segunda a sábado; RHS e SEVEN de segunda a sexta (regra do usuário, 04/11/2026).
+   Decorridos = dias da grade com venda, até o último dia com dado (nunca depois de ontem: o
+   dia corrente pode estar incompleto). Total = decorridos + dias da grade que faltam, menos os
+   feriados cadastrados no Mapa de Vendas ('mapa_feriados', 1 data ISO por linha).
+   Mês antigo sem o dia a dia completo na série cai no calendário da grade menos feriados. */
+function dashDiasUteis(ym,D){
   let fer=new Set();
   try{ (lsGet('mapa_feriados')||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(d=>fer.add(d)); }catch(e){}
+  const trabalha=dow=>dow!==0&&(dashEmpresa==='mc'||dow!==6);
+  const serie=(D&&D.diario)||{};
+  const datas=Object.keys(serie).sort();
+  const cobre=datas.length>0&&datas[0]<=ym+'-01';
+  const vendeu=iso=>!!serie[iso]&&serie[iso][0]>0;
+  const doMes=datas.filter(d=>d.slice(0,7)===ym&&vendeu(d));
+  const ultima=doMes.length?doMes[doMes.length-1]:'';
+  const ontem=dashIsoMais(dashHoje(),-1);
+  const corte=ym<dashMesAtual()?ym+'-31':(ultima&&ultima<ontem?ultima:ontem);
   const [a,m]=ym.split('-').map(Number);
   const ultimo=new Date(a,m,0).getDate();
-  const hoje=new Date(dashHoje()+'T00:00:00');
-  let total=0,dec=0;
+  let dec=0,resto=0;
   for(let dia=1;dia<=ultimo;dia++){
-    const d=new Date(a,m-1,dia);
+    if(!trabalha(new Date(a,m-1,dia).getDay())) continue;
     const iso=ym+'-'+String(dia).padStart(2,'0');
-    if(d.getDay()===0||fer.has(iso)) continue;
-    total++;
-    if(d<hoje) dec++;
+    if(iso<=corte){ if(cobre?vendeu(iso):!fer.has(iso)) dec++; }
+    else if(!fer.has(iso)) resto++;
   }
-  return {total,dec:Math.max(dec,0)};
+  return {total:dec+resto,dec};
 }
 /* meta do mês: soma das metas por vendedor do Painel Mensal (mesmo localStorage,
    mesma origem). A SEVEN não tem meta por vendedor, então lá é um valor digitado. */
@@ -4960,7 +4970,7 @@ function renderDashboard(){
   const mes=D.mensal[ym]||[0,0,0,0,0];
   const [venda,custo,qc,itens,pedidos]=mes;
   const ant=D.mensal[ymAnt]||[0,0,0,0,0];
-  const du=dashDiasUteis(ym);
+  const du=dashDiasUteis(ym,D);
   const H=dashHistorico(D.mensal,12,ym);
   const meta=dashMeta(ym);
   const ded=dashDeducoes();

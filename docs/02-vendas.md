@@ -26,7 +26,11 @@ Fonte: uma consulta por vendedor que já **líquida devoluções** — vendas e 
 
 - **MC (margem de contribuição)**: `calcMc(vendas, custo) = vendas*(1 - descontoPct/100) - custo`
 - **Projeção do mês**: `realizado / diasUteisDecorridos * diasUteisTotal`
-- **Dias úteis**: contados excluindo domingos e datas cadastradas como feriado (textarea configurável). `diasUteisDecorridos` **sempre conta até ontem**, nunca até hoje — para não distorcer a projeção com um dia de faturamento ainda incompleto.
+- **Dias úteis** (regra do usuário de 04/11/2026, em `diasUteisPorVenda`): cada loja tem a sua grade fixa. **MC MOTO trabalha de segunda a sábado; RHS e SEVEN, de segunda a sexta.** Domingo nunca conta.
+  - `diasUteisDecorridos` = dias da grade **com venda**, até o último dia com dado e **nunca até hoje**, para não distorcer a projeção com um dia de faturamento ainda incompleto. Feriado passado sem venda sai da conta mesmo sem estar cadastrado; feriado em que a loja vendeu conta, porque foi dia trabalhado (decisão de 19/10/2026). Venda fora da grade (sábado na RHS ou na SEVEN, domingo na MC) entra no valor, mas não vira dia útil.
+  - `diasUteisTotal` = decorridos + dias da grade que ainda faltam, **menos as datas cadastradas como feriado** (textarea do Mapa de Vendas, `mapa_feriados`). Feriado futuro só sai da conta se estiver cadastrado.
+  - Exemplo de nov/2026, com a venda até 03/11 e sem feriado cadastrado: MC 1/24; RHS e SEVEN 1/20. Cadastrando 20/11: MC 1/23; RHS e SEVEN 1/19.
+  - A mesma regra vale no DASHBOARD (`dashDiasUteis`) e nos e-mails (`dias_uteis_por_venda`, em `gerar_email_diario.py`). Ao mudar uma, mude as três.
 - **Metas**: por vendedor e por campo (vendas/MC/pedidos/itens), guardadas em `localStorage` (chave `mapa_meta_{vendedor}_{campo}`).
 - **% da meta**: `realizado / meta`, colorido de verde (`pct-ok`) se `≥ 100%`, vermelho (`pct-bad`) caso contrário.
 - Colunas e sub-colunas (Realizado/Projeção/Meta/%) são reordenáveis por arrastar-e-soltar, com a ordem persistida em `localStorage`.
